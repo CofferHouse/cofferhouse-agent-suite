@@ -36,3 +36,12 @@ test("reports new and removed markets", () => {
   const result = compareMarketSnapshots([market], [replacement], policyProfiles.balanced);
   assert.deepEqual(result.changes.map((change) => change.type).sort(), ["new", "removed"]);
 });
+
+test("uses user-defined material-change limits", () => {
+  const next = { ...market, liquidityUsd: 9_700_000, utilizationPct: 51 };
+  const result = compareMarketSnapshots([market], [next], policyProfiles.balanced, undefined, {
+    liquidityChangePct: 2,
+    utilizationChangePts: 0.5
+  });
+  assert.equal(result.materialChanges, 2);
+});

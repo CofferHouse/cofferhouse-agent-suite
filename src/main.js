@@ -7,6 +7,7 @@ import { createScoutReceipt, createSimulationReceipt, downloadScoutReceipt } fro
 import { simulateBorrow, suggestedBorrowAmount } from "./simulator.js";
 import { compareMarketSnapshots } from "./monitor.js";
 import { addMonitorObservation, clearMonitorHistory, loadMonitorHistory, saveMonitorHistory } from "./history.js";
+import { loadAlertLimits, saveAlertLimits } from "./alert-limits.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const formatMoney = (value) => value === null || value === undefined ? "Unavailable" : money.format(value);
@@ -26,6 +27,7 @@ let simulationAmount = 100_000;
 let simulationHasRun = false;
 let monitoring = { state: "baseline", materialChanges: 0, changes: [] };
 let monitoringHistory = loadMonitorHistory(window.localStorage);
+let alertLimits = loadAlertLimits(window.localStorage);
 
 function valueFor(ruleItem) {
   if (ruleItem.value === null || ruleItem.value === undefined) return "Unavailable";
@@ -87,6 +89,12 @@ function render() {
           <div><span>SNAPSHOT MONITOR</span><b>${monitoring.state === "compared" ? `${monitoring.materialChanges} MATERIAL CHANGE${monitoring.materialChanges === 1 ? "" : "S"}` : "BASELINE READY"}</b></div>
           <p>${monitoring.state === "compared" ? (monitoring.changes[0]?.message ?? "No material liquidity, utilization or policy changes detected.") : "Run a new scan to compare fresh Arc data against this snapshot."}</p>
           ${monitoring.state === "compared" && monitoring.changes.length ? `<div class="monitor-list">${monitoring.changes.slice(0, 4).map((change) => `<button type="button" data-id="morpho-${change.marketId}" class="monitor-item ${change.level}"><b>${change.market}</b><span>${change.message}</span></button>`).join("")}</div>` : ""}
+          <form class="alert-limits">
+            <span>CHANGE ALERT LIMITS</span>
+            <label>LIQUIDITY CHANGE %<input name="liquidity" type="number" min="0.1" step="0.1" value="${alertLimits.liquidityChangePct}"></label>
+            <label>UTILIZATION POINTS<input name="utilization" type="number" min="0.1" step="0.1" value="${alertLimits.utilizationChangePts}"></label>
+            <button type="submit">SAVE LIMITS</button>
+          </form>
           <div class="history-head"><span>HISTORICAL OBSERVATIONS · THIS BROWSER</span>${monitoringHistory.length ? `<button class="clear-history" type="button">CLEAR</button>` : ""}</div>
           <div class="history-list">
             ${monitoringHistory.length ? monitoringHistory.map((entry) => `<details class="history-entry" ${entry === monitoringHistory[0] ? "open" : ""}>
@@ -216,6 +224,16 @@ function render() {
     monitoringHistory = clearMonitorHistory(window.localStorage);
     render();
   });
+  document.querySelector(".alert-limits")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const values = new FormData(event.currentTarget);
+    alertLimits = saveAlertLimits(window.localStorage, {
+      liquidityChangePct: Number(values.get("liquidity")),
+      utilizationChangePts: Number(values.get("utilization"))
+    });
+    monitoring = { state: "baseline", materialChanges: 0, changes: [] };
+    render();
+  });
   document.querySelector(".receipt-button")?.addEventListener("click", () => downloadScoutReceipt(receipt));
   document.querySelector("#policy-profile")?.addEventListener("change", (event) => {
     selectedPolicyId = event.target.value;
@@ -244,7 +262,7 @@ async function refreshMarkets() {
     const liveMarkets = await fetchMorphoArcMarkets();
     markets = liveMarkets;
     if (previousLiveMarkets) {
-      const comparison = compareMarketSnapshots(previousLiveMarkets, liveMarkets, activePolicy);
+      const comparison = compareMarketSnapshots(previousLiveMarkets, liveMarkets, activePolicy, evaluateMarket, alertLimits);
       monitoring = { state: "compared", ...comparison };
       monitoringHistory = addMonitorObservation(monitoringHistory, comparison);
       saveMonitorHistory(window.localStorage, monitoringHistory);

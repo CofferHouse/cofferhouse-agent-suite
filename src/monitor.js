@@ -2,7 +2,9 @@ import { evaluateMarket } from "./policy.js";
 
 const percentChange = (before, after) => before > 0 ? ((after - before) / before) * 100 : null;
 
-export function compareMarketSnapshots(previousMarkets, currentMarkets, activePolicy, evaluator = evaluateMarket) {
+export function compareMarketSnapshots(previousMarkets, currentMarkets, activePolicy, evaluator = evaluateMarket, limits = {}) {
+  const liquidityThreshold = Number.isFinite(limits.liquidityChangePct) ? limits.liquidityChangePct : 5;
+  const utilizationThreshold = Number.isFinite(limits.utilizationChangePts) ? limits.utilizationChangePts : 2;
   const previousById = new Map(previousMarkets.map((market) => [market.marketId, market]));
   const changes = [];
 
@@ -28,7 +30,7 @@ export function compareMarketSnapshots(previousMarkets, currentMarkets, activePo
         message: `Policy result changed from ${previousReport.status} to ${currentReport.status}.`
       });
     }
-    if (liquidityChangePct !== null && Math.abs(liquidityChangePct) >= 5) {
+    if (liquidityChangePct !== null && Math.abs(liquidityChangePct) >= liquidityThreshold) {
       changes.push({
         marketId: market.marketId,
         market: market.name,
@@ -37,7 +39,7 @@ export function compareMarketSnapshots(previousMarkets, currentMarkets, activePo
         message: `Available liquidity ${liquidityChangePct < 0 ? "fell" : "rose"} ${Math.abs(liquidityChangePct).toFixed(1)}%.`
       });
     }
-    if (utilizationChangePts !== null && Math.abs(utilizationChangePts) >= 2) {
+    if (utilizationChangePts !== null && Math.abs(utilizationChangePts) >= utilizationThreshold) {
       changes.push({
         marketId: market.marketId,
         market: market.name,
