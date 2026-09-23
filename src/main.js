@@ -16,6 +16,7 @@ const formatMoney = (value) => value === null || value === undefined ? "Unavaila
 const formatPct = (value, digits = 1) => value === null || value === undefined ? "Unavailable" : `${value.toFixed(digits)}%`;
 const shortId = (value) => value && value.startsWith("0x") && value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value || "Unavailable";
 const explorerAddress = (address) => address ? `https://arc.etherscan.io/address/${address}` : null;
+const infoTip = (text) => `<span class="info-tip" tabindex="0" role="note" aria-label="${h(text)}">i<span class="info-card">${h(text)}</span></span>`;
 const identityValue = (label, value, url = null) => `<div><span>${h(label)}</span>${url ? `<a href="${h(safeExternalUrl(url))}" target="_blank" rel="noreferrer" title="${h(value)}">${h(shortId(value))} ↗</a>` : `<b title="${h(value || "")}">${h(shortId(value))}</b>`}</div>`;
 const app = document.querySelector("#app");
 let markets = demoMarkets;
@@ -75,7 +76,7 @@ function render() {
 
       <section class="agent-panel" aria-labelledby="agent-title">
         <div class="agent-head">
-          <div><p class="eyebrow">BOUNDED AGENT · NO EXECUTION</p><h2 id="agent-title">Scout every market.</h2><p>The agent applies the same public policy to every observation, ranks the results and exposes the first reason that needs attention.</p></div>
+          <div><p class="eyebrow">BOUNDED AGENT · NO EXECUTION</p><h2 id="agent-title">Scout every market. ${infoTip("Evaluates and ranks every loaded market with the same visible policy. It cannot sign or execute transactions.")}</h2><p>The agent applies the same public policy to every observation, ranks the results and exposes the first reason that needs attention.</p></div>
           <div class="agent-actions">
             <button class="receipt-button" type="button">DOWNLOAD RECEIPT</button>
             <button class="verify-receipt-button" type="button">VERIFY RECEIPT FILE</button>
@@ -89,7 +90,7 @@ function render() {
           ${receiptVerification.computedHash ? `<code>SHA-256 ${h(receiptVerification.computedHash)}</code>` : ""}
         </div>` : ""}
         <div class="policy-selector">
-          <label for="policy-profile"><span>ACTIVE POLICY PROFILE</span><b>${activePolicy.name}</b><small>${activePolicy.description}</small></label>
+          <label for="policy-profile"><span>ACTIVE POLICY PROFILE ${infoTip("Changes the risk limits used to evaluate the same market data. It does not change the market itself.")}</span><b>${activePolicy.name}</b><small>${activePolicy.description}</small></label>
           <select id="policy-profile" aria-label="Risk policy profile">
             ${Object.values(policyProfiles).map((profile) => `<option value="${profile.id}" ${profile.id === selectedPolicyId ? "selected" : ""}>${profile.name}</option>`).join("")}
           </select>
@@ -102,7 +103,7 @@ function render() {
           <div class="reject"><span>REJECT</span><b>${agentScan.counts.REJECT}</b></div>
         </div>
         <div class="agent-runtime ${runtimeState.enabled ? "armed" : ""}">
-          <div class="runtime-title"><span>AGENT MODE · SESSION RUNTIME</span><b>${runtimeState.enabled ? "AUTONOMOUS MONITORING ON" : "AUTONOMOUS MONITORING OFF"}</b><small>Observe → evaluate → decide → record. No execution authority.</small></div>
+          <div class="runtime-title"><span>AGENT MODE · SESSION RUNTIME ${infoTip("Runs repeated scans only while this browser tab remains active. Choose 1, 5 or 15 minute intervals.")}</span><b>${runtimeState.enabled ? "AUTONOMOUS MONITORING ON" : "AUTONOMOUS MONITORING OFF"}</b><small>Observe → evaluate → decide → record. No execution authority.</small></div>
           <div class="runtime-status"><span>CURRENT PHASE</span><b>${h(runtimeState.phase)}</b><small>${h(runtimeState.lastDecision)}</small></div>
           <div class="runtime-metric"><span>CYCLES</span><b>${runtimeState.cycles}</b><small>Last ${runtimeTime(runtimeState.lastRunAt)}</small></div>
           <div class="runtime-metric"><span>NEXT RUN</span><b>${runtimeTime(runtimeState.nextRunAt)}</b><small>While this page remains open</small></div>
@@ -110,7 +111,7 @@ function render() {
           <button class="runtime-toggle" type="button">${runtimeState.enabled ? "STOP AGENT" : "START AGENT"}</button>
         </div>
         <div class="server-runtime ${serverRuntime.configured && serverRuntime.status && !serverRuntime.status.error ? "online" : serverRuntime.status?.error ? "degraded" : "setup"}">
-          <div><span>SERVER AGENT · 24/7 CORE</span><b>${serverRuntime.mode === "checking" ? "CHECKING RUNTIME…" : serverRuntime.configured ? (serverRuntime.status?.error ? "AGENT DEGRADED · SOURCE FAILURE" : serverRuntime.status ? "DURABLE AGENT ONLINE" : "READY FOR FIRST SCHEDULED RUN") : "DEPLOYMENT SETUP REQUIRED"}</b></div>
+          <div><span>SERVER AGENT · 24/7 CORE ${infoTip("Shows whether unattended monitoring, durable memory and protected scheduling are actually configured on the deployment.")}</span><b>${serverRuntime.mode === "checking" ? "CHECKING RUNTIME…" : serverRuntime.configured ? (serverRuntime.status?.error ? "AGENT DEGRADED · SOURCE FAILURE" : serverRuntime.status ? "DURABLE AGENT ONLINE" : "READY FOR FIRST SCHEDULED RUN") : "DEPLOYMENT SETUP REQUIRED"}</b></div>
           <div><span>LAST SERVER RUN</span><b>${runtimeTime(serverRuntime.status?.ranAt)}</b></div>
           <div><span>${serverRuntime.status?.error ? "LAST SOURCE DIAGNOSTIC" : "LAST DECISION"}</span><b>${h(serverRuntime.status?.error ? `${serverRuntime.status.source?.provider ?? "DATA SOURCE"} · ${serverRuntime.status.source?.code ?? "ERROR"}` : serverRuntime.status?.decision?.action ?? "—")}</b><small>${h(serverRuntime.status?.error ?? serverRuntime.status?.decision?.reason ?? "Connect the protected durable store to activate unattended history.")}</small></div>
           <div><span>DURABLE HISTORY</span><b>${serverRuntime.history?.length ?? 0} CYCLES</b><small>Stored independently of this browser</small></div>
@@ -129,7 +130,7 @@ function render() {
           ${serverRuntime.status?.alert ? `<div class="operator-review"><span>HUMAN OVERSIGHT</span><b>${serverRuntime.acknowledgment?.fingerprint === serverRuntime.status.alert.fingerprint ? `ACKNOWLEDGED BY ${h(serverRuntime.acknowledgment.operator)}` : "OPERATOR ACKNOWLEDGMENT REQUIRED"}</b><small>${serverRuntime.acknowledgment?.fingerprint === serverRuntime.status.alert.fingerprint ? `${runtimeTime(serverRuntime.acknowledgment.acknowledgedAt)} · ${h(serverRuntime.acknowledgment.note || "No note")}` : "A protected operator token is required. The agent cannot acknowledge itself."}</small>${serverRuntime.acknowledgment?.fingerprint === serverRuntime.status.alert.fingerprint ? "" : `<button class="acknowledge-alert" type="button" data-fingerprint="${h(serverRuntime.status.alert.fingerprint)}">ACKNOWLEDGE ALERT</button>`}</div>` : ""}
         </div>
         <div class="monitoring">
-          <div><span>SNAPSHOT MONITOR</span><b>${monitoring.state === "compared" ? `${monitoring.materialChanges} MATERIAL CHANGE${monitoring.materialChanges === 1 ? "" : "S"}` : "BASELINE READY"}</b></div>
+          <div><span>SNAPSHOT MONITOR ${infoTip("Compares consecutive scans and flags market listings, policy status, liquidity or utilization changes above your alert limits.")}</span><b>${monitoring.state === "compared" ? `${monitoring.materialChanges} MATERIAL CHANGE${monitoring.materialChanges === 1 ? "" : "S"}` : "BASELINE READY"}</b></div>
           <p>${h(monitoring.state === "compared" ? (monitoring.changes[0]?.message ?? "No material liquidity, utilization or policy changes detected.") : "Run a new scan to compare fresh Arc data against this snapshot.")}</p>
           ${monitoring.state === "compared" && monitoring.changes.length ? `<div class="monitor-list">${monitoring.changes.slice(0, 4).map((change) => `<button type="button" data-id="morpho-${h(change.marketId)}" class="monitor-item ${change.level}"><b>${h(change.market)}</b><span>${h(change.message)}</span></button>`).join("")}</div>` : ""}
           <form class="alert-limits">
@@ -169,17 +170,17 @@ function render() {
 
         <article class="report">
           <div class="report-head">
-            <div><span class="category">${h(market.category)}</span><h2>${h(market.name)}</h2><p>${h(market.protocol)} · ${h(market.network)}</p></div>
+            <div><span class="category">${h(market.category)}</span><h2>${h(market.name)} ${infoTip("Confirm the Market ID and contract addresses: markets with the same asset pair may use different parameters or oracles.")}</h2><p>${h(market.protocol)} · ${h(market.network)}</p></div>
             <div class="verdict ${report.status.toLowerCase()}"><span>${report.status}</span><b>${report.score}</b><small>/ 100</small></div>
           </div>
 
           <div class="summary ${report.status.toLowerCase()}"><b>${h(report.summary)}</b><span>${h(market.note)}</span></div>
 
           <div class="metrics">
-            <div><span>LIQUIDITY</span><b>${formatMoney(market.liquidityUsd)}</b></div>
-            <div><span>UTILIZATION</span><b>${formatPct(market.utilizationPct)}</b></div>
-            <div><span>SUPPLY APY</span><b>${formatPct(market.apyPct, 3)}</b></div>
-            <div><span>DATA AGE</span><b>${market.ageMinutes} min</b></div>
+            <div><span>LIQUIDITY ${infoTip("Currently available market liquidity. Low liquidity may limit exits or make one borrow materially change utilization.")}</span><b>${formatMoney(market.liquidityUsd)}</b></div>
+            <div><span>UTILIZATION ${infoTip("Share of supplied assets already borrowed. Higher utilization generally leaves less available liquidity.")}</span><b>${formatPct(market.utilizationPct)}</b></div>
+            <div><span>SUPPLY APY ${infoTip("Observed annualized supply rate. It is variable and is not a guaranteed return.")}</span><b>${formatPct(market.apyPct, 3)}</b></div>
+            <div><span>DATA AGE ${infoTip("Age of the normalized observation. Fresh data can still be incomplete or incorrect.")}</span><b>${market.ageMinutes} min</b></div>
           </div>
 
           <div class="identity" aria-label="Market identity">
@@ -192,7 +193,7 @@ function render() {
           </div>
 
           <section class="profile-comparison" aria-labelledby="comparison-title">
-            <div class="comparison-head"><h3 id="comparison-title">Policy comparison</h3><span>Same market · three visible bounds</span></div>
+            <div class="comparison-head"><h3 id="comparison-title">Policy comparison ${infoTip("Compares the same inputs under conservative, balanced and yield-oriented limits. A looser profile does not verify missing data.")}</h3><span>Same market · three visible bounds</span></div>
             <div class="comparison-grid">
               ${profileComparison.map(({ profile, report: profileReport }) => `<div class="comparison-card ${profile.id === selectedPolicyId ? "active" : ""}">
                 <span>${profile.name}</span>
@@ -205,7 +206,7 @@ function render() {
           <section class="simulator" aria-labelledby="simulator-title">
             <div class="simulator-copy">
               <span>READ-ONLY ACTION SIMULATION</span>
-              <h3 id="simulator-title">Preview a hypothetical borrow.</h3>
+              <h3 id="simulator-title">Preview a hypothetical borrow. ${infoTip("Recalculates liquidity, utilization and policy result without preparing, signing or submitting a transaction.")}</h3>
               <p>Estimate the immediate liquidity and utilization impact before any wallet or transaction exists.</p>
             </div>
             <form class="simulation-form">
@@ -223,7 +224,7 @@ function render() {
             <div class="simulation-foot"><small class="simulation-notice">Simulation only · No custody · No signature · No transaction</small></div>
           </section>
 
-          <div class="checks-head"><h3>Policy checks</h3><span>Same inputs → same result</span></div>
+          <div class="checks-head"><h3>Policy checks ${infoTip("Eight deterministic checks produce PASS, REVIEW or REJECT. The score is policy compliance, not a probability of safety.")}</h3><span>Same inputs → same result</span></div>
           <div class="checks">
             ${report.rules.map((item) => `<div class="check">
               <span class="signal ${item.outcome}">${item.outcome === "pass" ? "✓" : item.outcome === "review" ? "!" : "×"}</span>

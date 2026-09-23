@@ -136,6 +136,8 @@ See [Production deployment](docs/DEPLOYMENT.md) to activate durable memory, the 
 
 See the [hackathon submission brief](docs/HACKATHON_SUBMISSION.md) for the concise agent explanation, trust model, limitations, and three-minute demo sequence.
 
+La [guía operativa en español](docs/GUIA_OPERATIVA_ES.md) explica cada apartado de la interfaz, sus indicadores, parámetros modificables, interpretación y límites para usuarios no especializados.
+
 ## Official links
 
 - X: [@TheCofferHouse](https://x.com/TheCofferHouse)
