@@ -31,6 +31,16 @@ export const agentCatalog = Object.freeze([
   }),
   Object.freeze({
     order: 4,
+    id: "dex",
+    name: "DEX Research",
+    stage: "LIVE",
+    tone: "live",
+    role: "Discover selected Arc pools and preserve pool-specific risk evidence.",
+    output: "Pool observations, official quote evidence and bounded swap or LP research.",
+    available: true
+  }),
+  Object.freeze({
+    order: 5,
     id: "action",
     name: "Action Center",
     stage: "LIVE",
@@ -40,7 +50,7 @@ export const agentCatalog = Object.freeze([
     available: true
   }),
   Object.freeze({
-    order: 5,
+    order: 6,
     id: "guardian",
     name: "Guardian",
     stage: "LIVE",
@@ -50,7 +60,7 @@ export const agentCatalog = Object.freeze([
     available: true
   }),
   Object.freeze({
-    order: 6,
+    order: 7,
     id: "automation",
     name: "Automation",
     stage: "LIVE · SANDBOX",

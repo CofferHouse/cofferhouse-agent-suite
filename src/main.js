@@ -71,6 +71,29 @@ let guardianWatch = null;
 let guardianObservation = null;
 let automationPolicy = null;
 let automationEvaluation = null;
+let activeSuiteView = "hub";
+
+const suiteTabs = Object.freeze([
+  { id: "hub", label: "Agent Hub", mark: "⌂" },
+  { id: "scout", label: "Scout", mark: "01" },
+  { id: "opportunity", label: "Opportunities", mark: "02" },
+  { id: "strategy", label: "Strategy", mark: "03" },
+  { id: "dex", label: "DEX", mark: "04" },
+  { id: "action", label: "Action Center", mark: "05" },
+  { id: "guardian", label: "Guardian", mark: "06" },
+  { id: "automation", label: "Automation", mark: "07" }
+]);
+
+const requestedSuiteView = window.location.hash.match(/^#agents\/(.+)$/)?.[1];
+if (suiteTabs.some((tab) => tab.id === requestedSuiteView)) activeSuiteView = requestedSuiteView;
+
+function openSuiteView(view) {
+  if (!suiteTabs.some((tab) => tab.id === view)) return;
+  activeSuiteView = view;
+  window.history.replaceState(null, "", view === "hub" ? "#agents" : `#agents/${view}`);
+  render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 const runtimeTime = (value) => value ? new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
 
@@ -117,15 +140,20 @@ function render() {
   const automationReceipt = automationPolicy ? createAutomationReceipt(automationPolicy, automationEvaluation) : null;
   app.innerHTML = `
     <header class="topbar">
-      <a class="brand" href="#" aria-label="CofferHouse Scout">
+      <a class="brand suite-home" href="#agents" aria-label="CofferHouse Agent Suite">
         <img class="brand-arch" src="/brand/cofferhouse-arch-official.png" alt="">
         <strong class="brand-name" aria-hidden="true"><i>C</i><i>O</i><i>F</i><i>F</i><i>E</i><i>R</i><i>H</i><i>O</i><i>U</i><i>S</i><i>E</i></strong>
-        <span>SCOUT</span>
+        <span>AGENT SUITE</span>
       </a>
       <div class="network"><span></span> ARC MAINNET · READ ONLY</div>
     </header>
+    <nav class="suite-nav" aria-label="CofferHouse Agent Suite">
+      <div class="suite-nav-inner">
+        ${suiteTabs.map((tab) => `<button class="suite-tab ${activeSuiteView === tab.id ? "active" : ""}" data-view="${tab.id}" type="button" aria-current="${activeSuiteView === tab.id ? "page" : "false"}"><span>${tab.mark}</span>${tab.label}</button>`).join("")}
+      </div>
+    </nav>
     <main>
-      <section class="hero">
+      <section class="hero suite-view ${activeSuiteView === "hub" ? "is-active" : ""}" data-suite-view="hub">
         <div>
           <p class="eyebrow">RISK INTELLIGENCE FOR PROGRAMMABLE MARKETS</p>
           <h1>See the risk<br><em>before</em> the move.</h1>
@@ -134,10 +162,16 @@ function render() {
         <aside class="hero-note ${feedState.mode}"><b>${feedState.mode === "live" ? "LIVE ARC DATA" : feedState.mode === "loading" ? "CONNECTING" : "SAFE FALLBACK"}</b><p>${h(feedState.message)}</p></aside>
       </section>
 
-      <section class="agent-hub" id="agent-hub" aria-labelledby="agent-hub-title">
+      <section class="agent-hub suite-view ${activeSuiteView === "hub" ? "is-active" : ""}" data-suite-view="hub" id="agent-hub" aria-labelledby="agent-hub-title">
         <div class="hub-head">
           <div><p class="eyebrow">COFFERHOUSE AGENT SYSTEM</p><h2 id="agent-hub-title">Agent Hub. ${infoTip("A product map showing what is operational now, what will be built next and how every agent hands evidence to the following stage.")}</h2></div>
           <p>One controlled path from market observation to future bounded execution. Only capabilities marked LIVE are currently available.</p>
+        </div>
+        <div class="hub-overview" aria-label="Agent Suite status">
+          <div><span>ACTIVE MODULES</span><b>7</b><small>Bounded research agents</small></div>
+          <div><span>MARKETS OBSERVED</span><b>${agentScan.total}</b><small>${agentScan.counts.REVIEW} review · ${agentScan.counts.REJECT} reject</small></div>
+          <div><span>DEX WATCHLIST</span><b>${dexWatchlist.length}</b><small>${dexReports.length} pool observations</small></div>
+          <div><span>HUMAN GATE</span><b>${actionApproval ? "RECORDED" : "READY"}</b><small>No wallet authority</small></div>
         </div>
         <div class="hub-flow" aria-label="Agent development sequence">
           ${agentCatalog.map((agent) => `<article class="hub-agent ${h(agent.tone)} ${agent.available ? "available" : "locked"}">
@@ -151,7 +185,7 @@ function render() {
         <footer class="hub-boundary"><b>CURRENT BOUNDARY</b><span>Scout can observe, verify, evaluate, compare, alert, simulate and record. No agent can custody, sign or execute.</span></footer>
       </section>
 
-      <section class="agent-panel" id="scout-agent" aria-labelledby="agent-title">
+      <section class="agent-panel suite-view ${activeSuiteView === "scout" ? "is-active" : ""}" data-suite-view="scout" id="scout-agent" aria-labelledby="agent-title">
         <div class="agent-head">
           <div><p class="eyebrow">BOUNDED AGENT · NO EXECUTION</p><h2 id="agent-title">Scout every market. ${infoTip("Evaluates and ranks every loaded market with the same visible policy. It cannot sign or execute transactions.")}</h2><p>The agent applies the same public policy to every observation, ranks the results and exposes the first reason that needs attention.</p></div>
           <div class="agent-actions">
@@ -235,7 +269,7 @@ function render() {
         <footer><span>RECEIPT ${receipt.receiptId} · SHA-256 ${receipt.integrity.contentHash.slice(0, 12)}…</span><span>${receiptVerification ? (receiptVerification.valid ? "✓ RECEIPT VERIFIED" : "× RECEIPT INVALID") : `${agentScan.actionable} market${agentScan.actionable === 1 ? "" : "s"} currently clear every active check`}</span></footer>
       </section>
 
-      <section class="opportunity-agent" id="opportunity-agent" aria-labelledby="opportunity-title">
+      <section class="opportunity-agent suite-view ${activeSuiteView === "opportunity" ? "is-active" : ""}" data-suite-view="opportunity" id="opportunity-agent" aria-labelledby="opportunity-title">
         <div class="opportunity-head">
           <div><p class="eyebrow">AGENT 02 · RESEARCH PRIORITIZATION</p><h2 id="opportunity-title">Opportunity Agent. ${infoTip("Filters Scout results through your visible research limits. It prioritizes candidates but does not recommend or execute an investment.")}</h2><p>Turn Scout evidence into a transparent shortlist without hiding blockers or missing data.</p></div>
           <button class="opportunity-download" type="button">DOWNLOAD OPPORTUNITY RECEIPT</button>
@@ -268,7 +302,7 @@ function render() {
         <footer><span>${opportunityAnalysis.summary.eligible} candidate${opportunityAnalysis.summary.eligible === 1 ? "" : "s"} clear your research limits</span><span>Human review required · No recommendation · No execution</span></footer>
       </section>
 
-      <section class="strategy-agent" id="strategy-agent" aria-labelledby="strategy-title">
+      <section class="strategy-agent suite-view ${activeSuiteView === "strategy" ? "is-active" : ""}" data-suite-view="strategy" id="strategy-agent" aria-labelledby="strategy-title">
         <div class="strategy-head">
           <div><p class="eyebrow">AGENT 03 · ALLOCATION RESEARCH</p><h2 id="strategy-title">Strategy Lab. ${infoTip("Transforms only Opportunity-eligible markets into a bounded allocation proposal. It cannot recommend, authorize or execute an investment.")}</h2><p>Explore how capital, reserve and concentration limits could distribute research exposure across eligible markets.</p></div>
           <button class="strategy-download" type="button">DOWNLOAD STRATEGY RECEIPT</button>
@@ -306,7 +340,7 @@ function render() {
         <footer><span>${h(strategyProposal.status.replaceAll("_", " "))} · ${strategyReceipt.receiptId}</span><span>Research proposal only · Human decision required · No transaction</span></footer>
       </section>
 
-      <section class="dex-agent" id="dex-agent" aria-labelledby="dex-title">
+      <section class="dex-agent suite-view ${activeSuiteView === "dex" ? "is-active" : ""}" data-suite-view="dex" id="dex-agent" aria-labelledby="dex-title">
         <div class="dex-head">
           <div><p class="eyebrow">DEX POOL SCANNER · USER WATCHLIST</p><h2 id="dex-title">Find the pools people actually trade. ${infoTip("Discovers indexed Arc pools for token contracts selected by the user, then applies pool-specific screening. Selection never means endorsement.")}</h2><p>Inspect liquidity, activity, volatility, pool age and modeled trade size without confusing LP metrics with lending APY.</p></div>
           <div class="dex-actions">${dexReports.length ? `<button class="dex-download" type="button">DOWNLOAD DEX RECEIPT</button>` : ""}<button class="dex-refresh" type="button" ${dexState.mode === "loading" || !dexWatchlist.length ? "disabled" : ""}>${dexState.mode === "loading" ? "SCANNING…" : "SCAN WATCHLIST"}</button></div>
@@ -369,7 +403,7 @@ function render() {
         <footer><span>LENDING AND DEX EVIDENCE REMAIN SEPARATE</span><span>User selection does not override REVIEW or REJECT</span></footer>
       </section>
 
-      <section class="action-center" id="action-agent" aria-labelledby="action-title">
+      <section class="action-center suite-view ${activeSuiteView === "action" ? "is-active" : ""}" data-suite-view="action" id="action-agent" aria-labelledby="action-title">
         <div class="action-head">
           <div><p class="eyebrow">ACTION CENTER · HUMAN GATE</p><h2 id="action-title">Understand the action before authorization. ${infoTip("Converts one modeled Strategy position into an auditable intent and checks what evidence is present or still missing. It does not create an executable transaction.")}</h2><p>Research becomes an explicit intent here. Wallet connection, token approval, calldata, signature and transaction submission remain unavailable.</p></div>
           ${actionReceipt ? `<button class="action-download" type="button">DOWNLOAD ACTION RECEIPT</button>` : ""}
@@ -392,7 +426,7 @@ function render() {
         <footer><span>${actionReceipt ? h(actionReceipt.receiptId) : "NO ACTION RECEIPT YET"}</span><span>Prepared: NO · Signed: NO · Submitted: NO</span></footer>
       </section>
 
-      <section class="guardian-agent" id="guardian-agent" aria-labelledby="guardian-title">
+      <section class="guardian-agent suite-view ${activeSuiteView === "guardian" ? "is-active" : ""}" data-suite-view="guardian" id="guardian-agent" aria-labelledby="guardian-title">
         <div class="guardian-head"><div><p class="eyebrow">GUARDIAN · RESEARCH MONITOR</p><h2 id="guardian-title">Watch the approved intent, not imaginary funds. ${infoTip("Guardian records a baseline for the Action Center intent and compares later evidence. Until execution exists, it never calls this a funded position.")}</h2><p>Detect deteriorating liquidity, utilization, price movement, modeled impact or policy status and route any response back through human review.</p></div><div class="guardian-actions">${guardianReceipt ? `<button class="guardian-download" type="button">DOWNLOAD RECEIPT</button>` : ""}${actionApproval && !guardianWatch ? `<button class="guardian-start" type="button" ${currentGuardianEvidence ? "" : "disabled"}>START WATCH</button>` : guardianWatch ? `<button class="guardian-check" type="button">CHECK FRESH EVIDENCE</button>` : ""}</div></div>
         ${!actionApproval ? `<div class="guardian-empty"><b>WAITING FOR AN APPROVED INTENT</b><p>Create and approve an Action Center preview once. Guardian cannot invent a target or monitor an unapproved proposal.</p></div>` : !guardianWatch ? `<div class="guardian-ready"><b>BASELINE READY</b><span>${currentGuardianEvidence ? `Current evidence found for ${h(actionPreview.target.name)}.` : "The selected target is not present in the current data."}</span></div>` : `<div class="guardian-body">
           <div class="guardian-verdict ${guardianObservation.decision.toLowerCase()}"><div><span>CURRENT DECISION</span><b>${h(guardianObservation.decision.replaceAll("_", " "))}</b><small>${guardianObservation.requiresHumanAttention ? "Human attention required" : "Inside recorded limits"}</small></div><div><span>WATCHED INTENT</span><b>${h(guardianWatch.intent.kind.replaceAll("_", " "))}</b><small>${h(guardianWatch.target.name)} · ${formatMoney(guardianWatch.intent.amountUsd)}</small></div><div><span>BASELINE</span><b>${h(new Date(guardianWatch.createdAt).toLocaleString())}</b><small>${h(shortId(guardianWatch.target.id))}</small></div></div>
@@ -403,7 +437,7 @@ function render() {
         <footer><span>${guardianReceipt ? h(guardianReceipt.receiptId) : "NO GUARDIAN RECEIPT YET"}</span><span>Automated action: NO · Transaction: NONE</span></footer>
       </section>
 
-      <section class="automation-agent" id="automation-agent" aria-labelledby="automation-title">
+      <section class="automation-agent suite-view ${activeSuiteView === "automation" ? "is-active" : ""}" data-suite-view="automation" id="automation-agent" aria-labelledby="automation-title">
         <div class="automation-head"><div><p class="eyebrow">AUTOMATION · PERMISSION SANDBOX</p><h2 id="automation-title">Prove the limits before installing permissions. ${infoTip("Models an exact-target, exact-intent, capped and expiring permission. Nothing is installed in a wallet, smart account or contract.")}</h2><p>Test whether a hypothetical request would clear every allowlist, cap, expiry, Guardian and human-approval gate.</p></div>${automationReceipt ? `<button class="automation-download" type="button">DOWNLOAD RECEIPT</button>` : ""}</div>
         ${!guardianWatch ? `<div class="automation-empty"><b>WAITING FOR GUARDIAN</b><p>Automation cannot define permissions until an approved intent has a Guardian baseline.</p></div>` : !automationPolicy ? `<form class="automation-policy-form">
           <div><span>INHERITED TARGET</span><b>${h(guardianWatch.target.name)}</b><small>${h(shortId(guardianWatch.target.id))} · ${h(guardianWatch.intent.kind.replaceAll("_", " "))}</small></div>
@@ -421,7 +455,7 @@ function render() {
         <footer><span>${automationReceipt ? h(automationReceipt.receiptId) : "NO AUTOMATION RECEIPT YET"}</span><span>Installed: NO · Key access: NONE · Execution: NONE</span></footer>
       </section>
 
-      <section class="workspace">
+      <section class="workspace suite-view ${activeSuiteView === "scout" ? "is-active" : ""}" data-suite-view="scout">
         <nav class="market-list" aria-label="Markets">
           <div class="section-label">SELECT A MARKET</div>
           ${markets.map((item) => `<button class="market-button ${item.id === selectedId ? "active" : ""}" data-id="${h(item.id)}">
@@ -507,13 +541,15 @@ function render() {
     </main>
     <footer class="site-footer"><span>Research first. Execution later.</span><span>Experimental software · Not financial advice</span></footer>`;
 
+  document.querySelector(".suite-home")?.addEventListener("click", (event) => { event.preventDefault(); openSuiteView("hub"); });
+  document.querySelectorAll(".suite-tab").forEach((button) => button.addEventListener("click", () => openSuiteView(button.dataset.view)));
   document.querySelectorAll(".market-button").forEach((button) => button.addEventListener("click", () => {
     selectedId = button.dataset.id;
     simulationAmount = suggestedBorrowAmount(markets.find((market) => market.id === selectedId));
     simulationHasRun = false;
     render();
   }));
-  document.querySelectorAll(".hub-open-agent").forEach((button) => button.addEventListener("click", () => document.querySelector(`#${button.dataset.target}`)?.scrollIntoView({ behavior: "smooth", block: "start" })));
+  document.querySelectorAll(".hub-open-agent").forEach((button) => button.addEventListener("click", () => openSuiteView(button.dataset.target.replace("-agent", ""))));
   document.querySelector(".opportunity-preferences")?.addEventListener("submit", (event) => {
     event.preventDefault();
     opportunityPreferences = saveOpportunityPreferences(window.localStorage, Object.fromEntries(new FormData(event.currentTarget)));
@@ -528,8 +564,7 @@ function render() {
     selectedId = button.dataset.id;
     simulationAmount = suggestedBorrowAmount(markets.find((market) => market.id === selectedId));
     simulationHasRun = false;
-    render();
-    document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    openSuiteView("scout");
   }));
   document.querySelector(".strategy-preferences")?.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -545,8 +580,7 @@ function render() {
     selectedId = button.dataset.id;
     simulationAmount = suggestedBorrowAmount(markets.find((market) => market.id === selectedId));
     simulationHasRun = false;
-    render();
-    document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    openSuiteView("scout");
   }));
   document.querySelector(".dex-watch-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();

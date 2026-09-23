@@ -71,6 +71,7 @@ See [MVP scope](docs/MVP.md) and [architecture](docs/ARCHITECTURE.md).
 | Web interface | Prototype complete |
 | Bounded Scout Agent | Live |
 | Agent Hub | Live |
+| Agent Suite navigation | Live: focused Hub, Scout, Opportunity, Strategy, DEX, Action Center, Guardian and Automation workspaces |
 | Opportunity Agent | Live, read-only research prioritization |
 | Strategy Lab | Live, read-only allocation research |
 | DEX Pool Scanner | Live: user watchlist, indexed Arc screening and sealed receipts |

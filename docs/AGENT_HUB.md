@@ -9,9 +9,10 @@ Agent Hub is the product map for the CofferHouse agent system. It prevents users
 | 1 | Scout | Observe, verify, evaluate, compare, alert, simulate and record market risk. | Operational |
 | 2 | Opportunity | Rank eligible opportunities with sizing bounds and missing evidence. | Operational |
 | 3 | Strategy Lab | Build a bounded allocation research proposal from eligible opportunities. | Operational |
-| 4 | Action Center | Separate research from an action and require one informed human approval. | Operational |
-| 5 | Guardian | Monitor approved research intents and propose protective responses. | Operational |
-| 6 | Automation | Define revocable allowlists, caps, expiry and emergency pause. | Operational sandbox; real autonomous funds remain gated |
+| 4 | DEX Research | Discover selected Arc pools and build bounded swap or LP research without mixing lending and pool metrics. | Operational |
+| 5 | Action Center | Separate research from an action and require one informed human approval. | Operational |
+| 6 | Guardian | Monitor approved research intents and propose protective responses. | Operational |
+| 7 | Automation | Define revocable allowlists, caps, expiry and emergency pause. | Operational sandbox; real autonomous funds remain gated |
 
 ## Delivery boundary
 
@@ -20,6 +21,8 @@ The October 14 target is a coherent, demonstrable suite in which every agent per
 Production execution requires wallet architecture, deployed and independently reviewed contracts, permission revocation, transaction simulation, monitoring, incident response and explicit operator authorization.
 
 ## Interface rule
+
+Agent Hub is the default view and the coordinator-facing dashboard. Every operational agent has a persistent top navigation tab and its own focused workspace. Changing tabs preserves browser-session state; it does not rerun a scan, approve an intent or imply execution.
 
 - `LIVE` means the capability works in the current application.
 - `NEXT BUILD` identifies the active product task.
@@ -42,6 +45,6 @@ Every agent will eventually receive and produce a common evidence envelope conta
 - expiration;
 - integrity hash and receipt identifier.
 
-This creates one auditable path: Scout detects, Opportunity selects, Strategy allocates, Action Center requests approval, Guardian monitors, and Automation enforces permissions.
+This creates one auditable path: Scout detects, Opportunity selects, Strategy allocates, the DEX branch performs separate pool research, Action Center requests approval, Guardian monitors, and Automation enforces permissions.
 
 Strategy Lab is operational with reserve, diversification, concentration, liquidity-impact caps, exit conditions and sealed receipts. The DEX branch adds user-selected Arc token contracts, indexed pool screening, official Uniswap route evidence when configured, bounded DEX Opportunity ranking and separate swap/LP Strategy proposals without mixing lending APY with LP metrics. Action Center now creates non-executable intents with one expiring human gate, and Guardian monitors those approved intents without pretending that a funded position exists.
