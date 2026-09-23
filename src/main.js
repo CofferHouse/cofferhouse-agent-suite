@@ -3,6 +3,7 @@ import { demoMarkets } from "./markets.js";
 import { fetchMorphoArcMarkets } from "./morpho.js";
 import { evaluateMarket, policy } from "./policy.js";
 import { scanMarkets } from "./agent.js";
+import { createScoutReceipt, downloadScoutReceipt } from "./receipt.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const formatMoney = (value) => value === null || value === undefined ? "Unavailable" : money.format(value);
@@ -28,6 +29,7 @@ function valueFor(ruleItem) {
 function render() {
   const market = markets.find((item) => item.id === selectedId);
   const report = evaluateMarket(market);
+  const receipt = createScoutReceipt(agentScan, policy);
   app.innerHTML = `
     <header class="topbar">
       <a class="brand" href="#" aria-label="CofferHouse Scout">
@@ -50,7 +52,10 @@ function render() {
       <section class="agent-panel" aria-labelledby="agent-title">
         <div class="agent-head">
           <div><p class="eyebrow">BOUNDED AGENT · NO EXECUTION</p><h2 id="agent-title">Scout every market.</h2><p>The agent applies the same public policy to every observation, ranks the results and exposes the first reason that needs attention.</p></div>
-          <button class="scan-button" type="button" ${agentState === "scanning" ? "disabled" : ""}>${agentState === "scanning" ? "SCANNING…" : "RUN NEW SCAN"}</button>
+          <div class="agent-actions">
+            <button class="receipt-button" type="button">DOWNLOAD RECEIPT</button>
+            <button class="scan-button" type="button" ${agentState === "scanning" ? "disabled" : ""}>${agentState === "scanning" ? "SCANNING…" : "RUN NEW SCAN"}</button>
+          </div>
         </div>
         <div class="agent-stats">
           <div><span>MARKETS</span><b>${agentScan.total}</b></div>
@@ -65,7 +70,7 @@ function render() {
             <strong class="rank-status ${item.report.status.toLowerCase()}">${item.report.status} · ${item.report.score}</strong>
           </button>`).join("")}
         </div>
-        <footer><span>READ ONLY · DETERMINISTIC · HUMAN REVIEW GATED</span><span>${agentScan.actionable} market${agentScan.actionable === 1 ? "" : "s"} currently clear every active check</span></footer>
+        <footer><span>RECEIPT ${receipt.receiptId} · ${policy.version}</span><span>${agentScan.actionable} market${agentScan.actionable === 1 ? "" : "s"} currently clear every active check</span></footer>
       </section>
 
       <section class="workspace">
@@ -132,6 +137,7 @@ function render() {
     document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
   document.querySelector(".scan-button")?.addEventListener("click", () => refreshMarkets());
+  document.querySelector(".receipt-button")?.addEventListener("click", () => downloadScoutReceipt(receipt));
 }
 
 async function refreshMarkets() {
