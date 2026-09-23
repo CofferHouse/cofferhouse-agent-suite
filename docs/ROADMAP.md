@@ -49,6 +49,16 @@ CofferHouse uses readiness checks instead of artificial dates. The following pha
 
 ## Phase 4 — Agent Workshop
 
+- Agent Hub and shared capability catalog (implemented)
+- Opportunity Agent with browser-local research limits and verifiable receipts (implemented)
+- Strategy Lab evidence handoff and verifiable allocation proposal (implemented)
+- DEX Pool Scanner watchlist, indexed Arc discovery, pool-specific risk evidence and sealed receipts (implemented)
+- Protected official Uniswap Arc route quote adapter with server-side key and safe unconfigured state (implemented)
+- Expand quote normalization as Uniswap exposes route-specific price impact and fee fields (ongoing)
+- Separate Opportunity and Strategy modes for lending and DEX pools (implemented)
+- Action Center readable intents, single informed approval and sealed non-execution receipt (implemented)
+- Guardian baseline monitoring for approved research intents (implemented)
+- Automation permission sandbox with exact allowlists, caps, expiry, pause and revocation (implemented; real permissions remain gated)
 - Agent wallet policies
 - Audited execution modules
 - Performance and failure reporting

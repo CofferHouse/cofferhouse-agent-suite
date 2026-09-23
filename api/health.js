@@ -12,6 +12,7 @@ export default async function handler(request, response) {
     outboundAlerts: notificationConfigured(),
     boundedIntelligence: geminiConfigured(),
     humanAcknowledgment: Boolean(process.env.SCOUT_OPERATOR_TOKEN),
+    officialUniswapQuotes: Boolean(process.env.UNISWAP_API_KEY),
     onchainAnchor: Boolean(process.env.SCOUT_RECEIPT_REGISTRY_ADDRESS)
   };
   return response.status(200).json({

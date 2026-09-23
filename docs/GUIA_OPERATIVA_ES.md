@@ -4,6 +4,98 @@ Esta guía explica qué pretende comunicar cada apartado de Scout, cómo puede a
 
 Scout es una herramienta experimental de investigación. **No recomienda invertir, prestar ni pedir prestado.** Sus estados `PASS`, `REVIEW` y `REJECT` describen el resultado de una política técnica visible; no predicen rentabilidad ni garantizan seguridad.
 
+## Agent Hub
+
+El Hub muestra el sistema completo y distingue capacidades reales de planes futuros. `LIVE` significa que el agente funciona en la aplicación; `NEXT BUILD` identifica el siguiente desarrollo; `PLANNED` y `FUTURE · GATED` no contienen botones de acción falsos.
+
+- **Scout:** observa y explica riesgo.
+- **Opportunity:** compara y selecciona oportunidades justificadas.
+- **Strategy Lab:** convierte candidatos elegibles en propuestas acotadas de asignación.
+- **Action Center:** separa la investigación de una posible acción mediante una sola aprobación informada.
+- **Guardian:** vigila una intención aprobada y detecta deterioros sin fingir que existe una posición financiada.
+- **Automation Sandbox:** comprueba listas permitidas, topes, vencimiento, pausa y revocación como simulación; nunca instala permisos ni mueve fondos.
+- **Guardian:** vigilará estrategias o posiciones registradas.
+- **Automation:** administrará permisos revocables y límites de ejecución.
+
+La meta de la suite es que cada agente entregue evidencia estructurada al siguiente. La automatización real con fondos permanecerá bloqueada hasta contar con arquitectura de wallet, contratos revisados y autorización explícita.
+
+## Opportunity Agent
+
+Opportunity recibe todos los resultados de Scout y aplica límites de investigación definidos por el usuario. Su finalidad es reducir una lista de mercados a candidatos explicables; `ELIGIBLE FOR RESEARCH` no significa “recomendado para invertir”.
+
+### Parámetros modificables
+
+- **Capital to research:** capital que el usuario quiere analizar. No consulta ni reserva saldo real.
+- **Min Supply APY:** tasa observada mínima requerida para considerar el mercado.
+- **Min Liquidity:** liquidez disponible mínima.
+- **Max Utilization:** utilización máxima aceptada para continuar investigando.
+- **Max Liquidity Impact:** porcentaje máximo de la liquidez observada que puede representar el monto analizado.
+
+Las preferencias se guardan sólo en ese navegador. `RESET` recupera los valores predeterminados.
+
+### Elegibilidad
+
+Un mercado queda bloqueado cuando:
+
+- Scout lo clasifica como `REJECT`;
+- falta liquidez, utilización o Supply APY;
+- su liquidez está por debajo del mínimo;
+- su utilización supera el máximo;
+- su Supply APY está por debajo del mínimo.
+
+Un mercado `REVIEW` puede aparecer como candidato de investigación porque el agente conserva todas sus advertencias y todavía no propone ejecutar.
+
+### Tamaño máximo de investigación
+
+Se calcula como el menor valor entre el capital indicado y el porcentaje máximo permitido de la liquidez observada. Es un límite comparativo, no una recomendación de posición.
+
+### Research Score
+
+- 65% resultado de la política Scout;
+- 15% profundidad de liquidez;
+- 10% margen de utilización;
+- 10% relevancia del Supply APY observado.
+
+La puntuación ordena candidatos. No representa seguridad, probabilidad de ganancia ni rendimiento futuro, y nunca elimina un bloqueo.
+
+### Opportunity Receipt
+
+Registra política, preferencias, candidatos, bloqueos, advertencias, montos máximos y huella SHA-256. Puede verificarse con `VERIFY RECEIPT FILE`.
+
+## Strategy Lab
+
+Strategy Lab recibe exclusivamente candidatos que Opportunity marcó como elegibles para investigación. Su propósito es mostrar cómo podría distribuirse un capital hipotético bajo límites explícitos; no recomienda una cartera ni consulta, bloquea o mueve fondos reales.
+
+### Parámetros modificables
+
+- **Capital:** monto total que se desea modelar.
+- **Reserve:** porcentaje que permanece fuera de las posiciones propuestas.
+- **Max Markets:** número máximo de mercados que puede incluir la propuesta.
+- **Max per Market:** concentración máxima del capital total en un solo mercado.
+- **Min Research Score:** puntuación mínima de Opportunity para considerar un candidato.
+
+### Método de asignación
+
+El agente retira primero la reserva, selecciona los candidatos mejor clasificados y distribuye el capital desplegable según su `Research Score`. Cada asignación respeta tanto el límite de concentración como el tamaño máximo calculado por Opportunity. Si los límites impiden distribuir todo, el excedente aparece como `UNALLOCATED`; no se fuerza dentro de un mercado.
+
+### Indicadores
+
+- **Proposed Allocation:** suma de los montos hipotéticos asignados.
+- **Reserve:** capital separado intencionalmente.
+- **Observed Weighted APY:** promedio ponderado de las tasas observadas de las posiciones propuestas.
+- **Annualized at Observed Rate:** cálculo aritmético suponiendo que la tasa actual permaneciera igual durante un año.
+- **Review / Exit Conditions:** cambios que obligarían a revisar la investigación, como mayor utilización, menor liquidez, evidencia ausente o un resultado `REJECT` de Scout.
+
+El rendimiento anualizado no es una predicción ni garantía. Strategy no modela todavía fluctuación futura de tasas, pérdidas, impuestos, gas, liquidaciones ni riesgo contractual adicional.
+
+### Strategy Receipt
+
+Registra entradas, límites, asignaciones, exclusiones, condiciones de revisión y huella SHA-256. Sirve para demostrar exactamente qué propuesta produjo el agente con esa evidencia.
+
+### Próxima ampliación: pools DEX
+
+Los ocho mercados actuales proceden del adaptador de lending de Morpho; no representan toda la liquidez de Arc. La siguiente capa incorporará pools de Uniswap y contratos elegidos por el usuario con métricas propias de swaps y LP: TVL, volumen, comisiones, impacto, slippage, concentración, volatilidad y pérdida impermanente. Los activos especulativos podrán incluirse conscientemente, pero la elección del usuario no borrará las advertencias.
+
 ## Lectura rápida de los estados
 
 | Estado | Qué significa | Qué no significa |

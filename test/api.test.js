@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import healthHandler from "../api/health.js";
 import statusHandler from "../api/agent/status.js";
 import verifyHandler from "../api/receipt/verify.js";
+import dexPoolHandler from "../api/dex/pools.js";
+import dexQuoteHandler from "../api/dex/quote.js";
 import { createScoutReceipt } from "../src/receipt.js";
 import { scanMarkets } from "../src/agent.js";
 import { demoMarkets } from "../src/markets.js";
@@ -60,9 +62,28 @@ test("receipt API verifies supported files and rejects altered content", async (
 });
 
 test("public endpoints reject unsupported methods", async () => {
-  for (const handler of [healthHandler, statusHandler, verifyHandler]) {
+  for (const handler of [healthHandler, statusHandler, verifyHandler, dexPoolHandler, dexQuoteHandler]) {
     const response = responseMock();
     await handler({ method: "DELETE", headers: {} }, response);
     assert.equal(response.statusCode, 405);
   }
+});
+
+test("DEX quote endpoint fails safely without a server-side API key", async () => {
+  const previous = process.env.UNISWAP_API_KEY;
+  delete process.env.UNISWAP_API_KEY;
+  try {
+    const response = responseMock();
+    await dexQuoteHandler({ method: "POST", body: { tokenOut: "0x1111111111111111111111111111111111111111", amountUsd: 100 } }, response);
+    assert.equal(response.statusCode, 503);
+    assert.match(response.body.error, /not configured/);
+  } finally {
+    if (previous) process.env.UNISWAP_API_KEY = previous;
+  }
+});
+
+test("DEX pool endpoint requires a complete contract address", async () => {
+  const response = responseMock();
+  await dexPoolHandler({ method: "GET", query: { token: "USDC" } }, response);
+  assert.equal(response.statusCode, 400);
 });

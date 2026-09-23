@@ -28,7 +28,12 @@ Scout currently:
 - produce a downloadable Scout Receipt containing inputs, policy and results;
 - retry temporary provider failures and expose persistent failures as a degraded state;
 - run unattended through a protected scheduler with durable memory;
-- expose a six-step execution trace and non-secret readiness diagnostics.
+- expose a six-step execution trace and non-secret readiness diagnostics;
+- filter Scout results through user-defined Opportunity limits;
+- export a tamper-evident Opportunity Agent receipt.
+- transform eligible opportunities into a bounded Strategy Lab allocation proposal;
+- preserve reserve, diversification and per-market concentration limits;
+- export a tamper-evident Strategy Lab receipt.
 
 The first version will be **read-only**. It will not custody funds, promise returns or execute autonomous strategies.
 
@@ -65,6 +70,16 @@ See [MVP scope](docs/MVP.md) and [architecture](docs/ARCHITECTURE.md).
 | Explanation layer | Prototype complete |
 | Web interface | Prototype complete |
 | Bounded Scout Agent | Live |
+| Agent Hub | Live |
+| Opportunity Agent | Live, read-only research prioritization |
+| Strategy Lab | Live, read-only allocation research |
+| DEX Pool Scanner | Live: user watchlist, indexed Arc screening and sealed receipts |
+| DEX Opportunity | Live: bounded pool prioritization with preserved warnings |
+| DEX Strategy Lab | Live: separate swap/LP research proposals and sealed receipts |
+| Action Center | Live: one human gate, expiring approval and non-executable receipt |
+| Guardian | Live: approved-intent baseline monitoring and bounded responses |
+| Automation Sandbox | Live: allowlists, caps, expiry, pause and revocation simulation |
+| Official Uniswap quote adapter | Implemented; server-side API key required |
 | Verifiable market identity | Live |
 | Downloadable Scout Receipt | Live |
 | Read-only borrow simulation | Live |
@@ -135,6 +150,14 @@ The application code lives in `src/`. No contracts are required for the read-onl
 See [Production deployment](docs/DEPLOYMENT.md) to activate durable memory, the protected 15-minute agent scheduler, operator acknowledgment, and optional alerts or bounded Gemini briefings.
 
 See the [hackathon submission brief](docs/HACKATHON_SUBMISSION.md) for the concise agent explanation, trust model, limitations, and three-minute demo sequence.
+
+See [Agent Hub](docs/AGENT_HUB.md) for the multi-agent product sequence and the October 14 delivery boundary.
+
+See [Opportunity Agent](docs/OPPORTUNITY_AGENT.md) for its limits, research score, sizing bound and receipt schema.
+
+See [Strategy Lab](docs/STRATEGY_LAB.md) for allocation bounds, sizing, exclusions, observed-rate calculations and receipt schema.
+
+See [DEX Pool Scanner](docs/DEX_POOL_SCANNER.md) for contract watchlists, Arc pool evidence, speculative labels and current quote limitations.
 
 La [guía operativa en español](docs/GUIA_OPERATIVA_ES.md) explica cada apartado de la interfaz, sus indicadores, parámetros modificables, interpretación y límites para usuarios no especializados.
 

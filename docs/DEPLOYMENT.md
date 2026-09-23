@@ -19,6 +19,7 @@ Import this repository into Vercel and keep the default build command (`npm run 
 | `SCOUT_ALERT_WEBHOOK_URL` | Optional | Receives deduplicated material alerts. |
 | `GEMINI_API_KEY` | Optional | Produces bounded incident briefings; deterministic fallback remains active without it. |
 | `GEMINI_MODEL` | Optional | Overrides the documented default model. |
+| `UNISWAP_API_KEY` | Recommended for DEX research | Enables protected official read-only quotes for Arc chain ID `5042`. The key remains server-side. |
 | `SCOUT_RECEIPT_REGISTRY_ADDRESS` | Optional | Identifies a reviewed, deployed Arc receipt registry. No deployment is assumed. |
 
 Never prefix these variables with `VITE_`; that would expose them to the browser bundle.
@@ -58,6 +59,8 @@ The workflow `.github/workflows/scout-agent.yml` runs every 15 minutes and can a
 ## 5. Optional alert and intelligence services
 
 Configure `SCOUT_ALERT_WEBHOOK_URL` to deliver material incident notifications. Configure `GEMINI_API_KEY` only if a structured operator briefing is desired. Neither service can alter the deterministic policy result or execute a transaction.
+
+Configure `UNISWAP_API_KEY` to enable the `GET UNISWAP QUOTE` controls in DEX Pool Scanner. Scout sends an exact-input Arc USDC quote request with the selected slippage tolerance. It does not request approval, create a swap, sign or submit anything. Without the key, pool discovery and deterministic DEX screening continue to work and the quote control reports that official quotes are not configured.
 
 ## Operational boundary
 

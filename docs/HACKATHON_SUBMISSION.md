@@ -18,6 +18,8 @@ Onchain market listings expose data, but users still need to decide whether liqu
 - Simulates a hypothetical borrow for every loaded market without creating a transaction.
 - Runs in the browser for interactive monitoring and on the server for unattended monitoring.
 - Persists up to 100 server cycles and exposes the latest execution trace.
+- Filters Scout evidence through user-defined Opportunity limits and produces a verifiable research shortlist.
+- Turns eligible evidence into a bounded Strategy Lab proposal with reserve, concentration limits, review conditions and a verifiable receipt.
 - Independently confirms referenced contract bytecode through Arc JSON-RPC when configured.
 - Sends deduplicated material alerts and requires protected human acknowledgment.
 - Produces tamper-evident Scout and simulation receipts with SHA-256 verification.

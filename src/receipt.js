@@ -2,7 +2,15 @@ import { sealDocument, verifySealedDocument } from "./integrity.js";
 
 const supportedReceiptSchemas = new Set([
   "cofferhouse.scout.receipt.v2",
-  "cofferhouse.scout.simulation-receipt.v2"
+  "cofferhouse.scout.simulation-receipt.v2",
+  "cofferhouse.opportunity.receipt.v1",
+  "cofferhouse.strategy.receipt.v1",
+  "cofferhouse.dex.pool-receipt.v1",
+  "cofferhouse.dex.opportunity-receipt.v1",
+  "cofferhouse.dex.strategy-receipt.v1",
+  "cofferhouse.action.receipt.v1",
+  "cofferhouse.guardian.receipt.v1",
+  "cofferhouse.automation.receipt.v1"
 ]);
 
 export function verifyReceiptDocument(document) {
