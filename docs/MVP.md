@@ -30,6 +30,7 @@ The interface now requests listed Morpho markets on Arc through the public Morph
 10. The selected market shows all three profile outcomes side by side for transparent comparison.
 11. A read-only simulator previews how a hypothetical borrow changes liquidity, utilization and policy outcome.
 12. A separate simulation receipt records the selected market, proposed amount and before/after result.
+13. Consecutive scans flag material liquidity, utilization, listing and policy-result changes.
 
 ## Initial inputs
 

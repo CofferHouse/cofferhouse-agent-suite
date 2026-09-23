@@ -19,6 +19,7 @@ Scout currently:
 - compare all three policy outcomes for the selected market;
 - simulate a hypothetical borrow without preparing or sending a transaction;
 - export the hypothetical borrow as a separate deterministic simulation receipt;
+- compare consecutive live snapshots and flag material market changes;
 - explain why a market passes, fails or requires review;
 - keep the user in control of every transaction;
 - scan and rank every loaded market through a bounded agent;
@@ -64,6 +65,7 @@ See [MVP scope](docs/MVP.md) and [architecture](docs/ARCHITECTURE.md).
 | Verifiable market identity | Live |
 | Downloadable Scout Receipt | Live |
 | Read-only borrow simulation | Live |
+| Consecutive-scan change detection | Live |
 | Public deployment | Live on Vercel |
 | Security review | Not started |
 

@@ -23,6 +23,7 @@ CofferHouse uses readiness checks instead of artificial dates. The following pha
 ## Phase 2 — Scout: Monitor and Simulate
 
 - Market monitoring
+- Consecutive-scan material change detection (MVP implemented)
 - Change alerts
 - Historical observations
 - Read-only borrow simulation (MVP implemented)

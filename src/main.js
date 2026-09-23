@@ -149,7 +149,7 @@ function render() {
             </div>
             <form class="simulation-form">
               <label for="borrow-amount">USD EQUIVALENT</label>
-              <div><input id="borrow-amount" name="amount" type="number" min="1" step="1000" value="${simulationAmount}"><button type="submit">SIMULATE</button>${simulationReceipt ? `<button class="simulation-download" type="button">DOWNLOAD SIMULATION</button>` : ""}</div>
+              <div><input id="borrow-amount" name="amount" type="number" min="0.01" step="any" value="${simulationAmount}"><button type="submit">SIMULATE</button>${simulationReceipt ? `<button class="simulation-download" type="button">DOWNLOAD SIMULATION</button>` : ""}</div>
             </form>
             ${simulation.ok ? `<div class="simulation-results">
               <div><span>AVAILABLE LIQUIDITY</span><b>${formatMoney(simulation.before.liquidityUsd)}</b><i>→</i><strong>${formatMoney(simulation.after.liquidityUsd)}</strong></div>

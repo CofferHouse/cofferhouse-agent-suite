@@ -42,6 +42,10 @@ The simulator applies a hypothetical borrow to the normalized market snapshot, r
 
 Successful simulations can be exported through `cofferhouse.scout.simulation-receipt.v1`, which records the market, proposed amount, selected policy and before/after evaluation.
 
+### Snapshot monitor
+
+The in-session monitor compares consecutive live snapshots by market ID. It flags listing changes, policy-result transitions, liquidity changes of at least 5% and utilization changes of at least two percentage points. Small market noise is intentionally ignored.
+
 ## Trust boundaries
 
 - Third-party data can be incomplete, delayed or incorrect.
@@ -73,6 +77,7 @@ docs/                  # Public specifications
 - `src/agent.js` scans and ranks all normalized markets without execution permissions.
 - `src/receipt.js` creates the deterministic, downloadable Scout Receipt.
 - `src/simulator.js` projects bounded borrow impact without execution.
+- `src/monitor.js` detects material differences between consecutive live snapshots.
 - `src/main.js` renders the report and plain-language explanations.
 - `test/agent.test.js` verifies bounded ranking and explanation behavior.
 - `test/morpho.test.js` verifies API filtering, normalization and safe failure.
