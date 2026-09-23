@@ -25,7 +25,7 @@ CofferHouse uses readiness checks instead of artificial dates. The following pha
 - Market monitoring
 - Consecutive-scan material change detection (MVP implemented)
 - Change alerts
-- Historical observations
+- Historical observations (browser-local MVP implemented)
 - Read-only borrow simulation (MVP implemented)
 - User-defined limits
 

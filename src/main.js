@@ -4,8 +4,9 @@ import { fetchMorphoArcMarkets } from "./morpho.js";
 import { evaluateMarket, policyProfiles } from "./policy.js";
 import { scanMarkets } from "./agent.js";
 import { createScoutReceipt, createSimulationReceipt, downloadScoutReceipt } from "./receipt.js";
-import { simulateBorrow } from "./simulator.js";
+import { simulateBorrow, suggestedBorrowAmount } from "./simulator.js";
 import { compareMarketSnapshots } from "./monitor.js";
+import { addMonitorObservation, clearMonitorHistory, loadMonitorHistory, saveMonitorHistory } from "./history.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const formatMoney = (value) => value === null || value === undefined ? "Unavailable" : money.format(value);
@@ -24,6 +25,7 @@ let agentState = "idle";
 let simulationAmount = 100_000;
 let simulationHasRun = false;
 let monitoring = { state: "baseline", materialChanges: 0, changes: [] };
+let monitoringHistory = loadMonitorHistory(window.localStorage);
 
 function valueFor(ruleItem) {
   if (ruleItem.value === null || ruleItem.value === undefined) return "Unavailable";
@@ -85,6 +87,13 @@ function render() {
           <div><span>SNAPSHOT MONITOR</span><b>${monitoring.state === "compared" ? `${monitoring.materialChanges} MATERIAL CHANGE${monitoring.materialChanges === 1 ? "" : "S"}` : "BASELINE READY"}</b></div>
           <p>${monitoring.state === "compared" ? (monitoring.changes[0]?.message ?? "No material liquidity, utilization or policy changes detected.") : "Run a new scan to compare fresh Arc data against this snapshot."}</p>
           ${monitoring.state === "compared" && monitoring.changes.length ? `<div class="monitor-list">${monitoring.changes.slice(0, 4).map((change) => `<button type="button" data-id="morpho-${change.marketId}" class="monitor-item ${change.level}"><b>${change.market}</b><span>${change.message}</span></button>`).join("")}</div>` : ""}
+          <div class="history-head"><span>HISTORICAL OBSERVATIONS · THIS BROWSER</span>${monitoringHistory.length ? `<button class="clear-history" type="button">CLEAR</button>` : ""}</div>
+          <div class="history-list">
+            ${monitoringHistory.length ? monitoringHistory.map((entry) => `<details class="history-entry" ${entry === monitoringHistory[0] ? "open" : ""}>
+              <summary><time>${new Date(entry.scannedAt).toLocaleString()}</time><b>${entry.materialChanges} MATERIAL CHANGE${entry.materialChanges === 1 ? "" : "S"}</b></summary>
+              <div>${entry.changes.length ? entry.changes.map((change) => `<p><strong>${change.market}</strong><span>${change.message}</span></p>`).join("") : `<p><span>No material changes detected in this scan.</span></p>`}</div>
+            </details>`).join("") : `<p class="history-empty">Run another scan to create the first comparison record.</p>`}
+          </div>
         </div>
         <div class="agent-ranking">
           ${agentScan.ranked.map((item, index) => `<button class="agent-market" data-id="${item.market.id}" type="button">
@@ -184,22 +193,29 @@ function render() {
 
   document.querySelectorAll(".market-button").forEach((button) => button.addEventListener("click", () => {
     selectedId = button.dataset.id;
+    simulationAmount = suggestedBorrowAmount(markets.find((market) => market.id === selectedId));
     simulationHasRun = false;
     render();
   }));
   document.querySelectorAll(".agent-market").forEach((button) => button.addEventListener("click", () => {
     selectedId = button.dataset.id;
+    simulationAmount = suggestedBorrowAmount(markets.find((market) => market.id === selectedId));
     simulationHasRun = false;
     render();
     document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
   document.querySelectorAll(".monitor-item").forEach((button) => button.addEventListener("click", () => {
     selectedId = button.dataset.id;
+    simulationAmount = suggestedBorrowAmount(markets.find((market) => market.id === selectedId));
     simulationHasRun = false;
     render();
     document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
   document.querySelector(".scan-button")?.addEventListener("click", () => refreshMarkets());
+  document.querySelector(".clear-history")?.addEventListener("click", () => {
+    monitoringHistory = clearMonitorHistory(window.localStorage);
+    render();
+  });
   document.querySelector(".receipt-button")?.addEventListener("click", () => downloadScoutReceipt(receipt));
   document.querySelector("#policy-profile")?.addEventListener("change", (event) => {
     selectedPolicyId = event.target.value;
@@ -227,10 +243,18 @@ async function refreshMarkets() {
   try {
     const liveMarkets = await fetchMorphoArcMarkets();
     markets = liveMarkets;
-    monitoring = previousLiveMarkets
-      ? { state: "compared", ...compareMarketSnapshots(previousLiveMarkets, liveMarkets, activePolicy) }
-      : { state: "baseline", materialChanges: 0, changes: [] };
-    if (!markets.some((market) => market.id === selectedId)) selectedId = liveMarkets[0].id;
+    if (previousLiveMarkets) {
+      const comparison = compareMarketSnapshots(previousLiveMarkets, liveMarkets, activePolicy);
+      monitoring = { state: "compared", ...comparison };
+      monitoringHistory = addMonitorObservation(monitoringHistory, comparison);
+      saveMonitorHistory(window.localStorage, monitoringHistory);
+    } else {
+      monitoring = { state: "baseline", materialChanges: 0, changes: [] };
+    }
+    if (!markets.some((market) => market.id === selectedId)) {
+      selectedId = liveMarkets[0].id;
+      simulationAmount = suggestedBorrowAmount(liveMarkets[0]);
+    }
     agentScan = scanMarkets(liveMarkets, (market) => evaluateMarket(market, activePolicy));
     feedState = { mode: "live", message: `${liveMarkets.length} listed Morpho markets loaded from Arc mainnet.` };
   } catch (error) {

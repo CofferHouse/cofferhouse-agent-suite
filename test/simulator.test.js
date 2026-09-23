@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { simulateBorrow } from "../src/simulator.js";
+import { simulateBorrow, suggestedBorrowAmount } from "../src/simulator.js";
 import { policyProfiles } from "../src/policy.js";
 
 const market = {
@@ -34,4 +34,14 @@ test("fails safely when live accounting inputs are missing", () => {
   const result = simulateBorrow({ ...market, suppliedUsd: null }, 1000, policyProfiles.balanced);
   assert.equal(result.ok, false);
   assert.match(result.error, /enough live data/i);
+});
+
+test("suggests a valid amount for all eight live liquidity ranges", () => {
+  const liquidities = [63116937.94, 988809.02, 15838.89, 1.199829, 0.638916, 22000.05, 20430.0, 0.1143];
+  for (const liquidityUsd of liquidities) {
+    const amount = suggestedBorrowAmount({ liquidityUsd });
+    assert.ok(amount > 0);
+    assert.ok(amount <= liquidityUsd);
+    assert.ok(amount <= 100000);
+  }
 });

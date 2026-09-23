@@ -1,5 +1,12 @@
 import { evaluateMarket } from "./policy.js";
 
+export function suggestedBorrowAmount(market) {
+  const liquidity = Number(market?.liquidityUsd);
+  if (!Number.isFinite(liquidity) || liquidity <= 0) return 0.01;
+  const suggestion = Math.min(100_000, liquidity * 0.1);
+  return Number(Math.max(0.01, suggestion).toFixed(6));
+}
+
 export function simulateBorrow(market, amountUsd, activePolicy, evaluator = evaluateMarket) {
   const amount = Number(amountUsd);
   if (!Number.isFinite(amount) || amount <= 0) {
