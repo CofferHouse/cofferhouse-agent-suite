@@ -4,6 +4,7 @@ import { fetchMorphoArcMarkets } from "./morpho.js";
 import { evaluateMarket, policyProfiles } from "./policy.js";
 import { scanMarkets } from "./agent.js";
 import { createScoutReceipt, downloadScoutReceipt } from "./receipt.js";
+import { simulateBorrow } from "./simulator.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const formatMoney = (value) => value === null || value === undefined ? "Unavailable" : money.format(value);
@@ -19,6 +20,7 @@ let feedState = { mode: "loading", message: "Connecting to Morpho on Arc…" };
 let activePolicy = policyProfiles[selectedPolicyId];
 let agentScan = scanMarkets(markets, (market) => evaluateMarket(market, activePolicy));
 let agentState = "idle";
+let simulationAmount = 100_000;
 
 function valueFor(ruleItem) {
   if (ruleItem.value === null || ruleItem.value === undefined) return "Unavailable";
@@ -33,6 +35,7 @@ function render() {
   activePolicy = policyProfiles[selectedPolicyId];
   const report = evaluateMarket(market, activePolicy);
   const profileComparison = Object.values(policyProfiles).map((profile) => ({ profile, report: evaluateMarket(market, profile) }));
+  const simulation = simulateBorrow(market, simulationAmount, activePolicy);
   const receipt = createScoutReceipt(agentScan, activePolicy);
   app.innerHTML = `
     <header class="topbar">
@@ -130,6 +133,24 @@ function render() {
             </div>
           </section>
 
+          <section class="simulator" aria-labelledby="simulator-title">
+            <div class="simulator-copy">
+              <span>READ-ONLY ACTION SIMULATION</span>
+              <h3 id="simulator-title">Preview a hypothetical borrow.</h3>
+              <p>Estimate the immediate liquidity and utilization impact before any wallet or transaction exists.</p>
+            </div>
+            <form class="simulation-form">
+              <label for="borrow-amount">USD EQUIVALENT</label>
+              <div><input id="borrow-amount" name="amount" type="number" min="1" step="1000" value="${simulationAmount}"><button type="submit">SIMULATE</button></div>
+            </form>
+            ${simulation.ok ? `<div class="simulation-results">
+              <div><span>AVAILABLE LIQUIDITY</span><b>${formatMoney(simulation.before.liquidityUsd)}</b><i>→</i><strong>${formatMoney(simulation.after.liquidityUsd)}</strong></div>
+              <div><span>UTILIZATION</span><b>${formatPct(simulation.before.utilizationPct)}</b><i>→</i><strong>${formatPct(simulation.after.utilizationPct)}</strong></div>
+              <div><span>POLICY RESULT</span><b class="${simulation.before.report.status.toLowerCase()}">${simulation.before.report.status}</b><i>→</i><strong class="${simulation.after.report.status.toLowerCase()}">${simulation.after.report.status} · ${simulation.after.report.score}</strong></div>
+            </div>` : `<p class="simulation-error">${simulation.error}</p>`}
+            <small class="simulation-notice">Simulation only · No custody · No signature · No transaction</small>
+          </section>
+
           <div class="checks-head"><h3>Policy checks</h3><span>Same inputs → same result</span></div>
           <div class="checks">
             ${report.rules.map((item) => `<div class="check">
@@ -164,6 +185,11 @@ function render() {
     selectedPolicyId = event.target.value;
     activePolicy = policyProfiles[selectedPolicyId];
     agentScan = scanMarkets(markets, (item) => evaluateMarket(item, activePolicy));
+    render();
+  });
+  document.querySelector(".simulation-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    simulationAmount = Number(new FormData(event.currentTarget).get("amount"));
     render();
   });
 }

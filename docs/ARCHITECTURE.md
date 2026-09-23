@@ -36,6 +36,10 @@ Exports a versioned JSON record containing the active policy, market observation
 
 If useful for the hackathon, Scout may publish a compact record containing a report hash, policy version and timestamp. Raw market data should not be stored onchain unnecessarily.
 
+### Read-only action simulator
+
+The simulator applies a hypothetical borrow to the normalized market snapshot, recomputes available liquidity and utilization, and evaluates the projected market with the selected policy. It creates no calldata, wallet request, signature or transaction.
+
 ## Trust boundaries
 
 - Third-party data can be incomplete, delayed or incorrect.
@@ -66,6 +70,7 @@ docs/                  # Public specifications
 - `src/policy.js` contains the versioned deterministic policy and evaluation engine.
 - `src/agent.js` scans and ranks all normalized markets without execution permissions.
 - `src/receipt.js` creates the deterministic, downloadable Scout Receipt.
+- `src/simulator.js` projects bounded borrow impact without execution.
 - `src/main.js` renders the report and plain-language explanations.
 - `test/agent.test.js` verifies bounded ranking and explanation behavior.
 - `test/morpho.test.js` verifies API filtering, normalization and safe failure.

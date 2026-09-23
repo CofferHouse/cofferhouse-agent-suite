@@ -25,7 +25,7 @@ CofferHouse uses readiness checks instead of artificial dates. The following pha
 - Market monitoring
 - Change alerts
 - Historical observations
-- Action simulation
+- Read-only borrow simulation (MVP implemented)
 - User-defined limits
 
 ## Phase 3 — Bounded Tools

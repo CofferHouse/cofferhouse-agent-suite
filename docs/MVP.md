@@ -28,6 +28,7 @@ The interface now requests listed Morpho markets on Arc through the public Morph
 8. The user can download a deterministic Scout Receipt with the policy, observations, results and reasons.
 9. The user can compare the same markets under three visible research profiles without bypassing contract verification.
 10. The selected market shows all three profile outcomes side by side for transparent comparison.
+11. A read-only simulator previews how a hypothetical borrow changes liquidity, utilization and policy outcome.
 
 ## Initial inputs
 
