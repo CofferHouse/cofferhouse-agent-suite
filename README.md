@@ -4,7 +4,7 @@
 
 CofferHouse Scout is the first working product planned for CofferHouse: a transparent research and risk layer that helps users inspect onchain markets before any capital is routed.
 
-> **Status:** Prototype v0.1 · The deterministic policy engine and interactive demonstration interface are working locally.
+> **Status:** Prototype v0.2 · Public deployment with a live, read-only Morpho market adapter for Arc.
 
 ## What Scout is designed to do
 
@@ -47,7 +47,7 @@ See [MVP scope](docs/MVP.md) and [architecture](docs/ARCHITECTURE.md).
 |---|---|
 | Product specification | Initial scope complete |
 | Data-source selection | Arc RWA + USDC + cirBTC selected |
-| Market adapter | Demonstration adapter; live adapter next |
+| Market adapter | Live Morpho/Arc adapter with safe demo fallback |
 | Risk-policy engine | Prototype complete |
 | Explanation layer | Prototype complete |
 | Web interface | Prototype complete |
@@ -70,7 +70,9 @@ npm test
 npm run build
 ```
 
-The current three market observations are intentionally labeled as demonstration data. They exercise the complete `PASS`, `REVIEW` and `REJECT` flow without presenting simulated values as live Arc data.
+Scout first requests listed Morpho markets on Arc (chain ID `5042`) from Morpho's public GraphQL API. If that request fails or returns no markets, Scout fails safely to three observations that are visibly labeled as demonstration data.
+
+Live protocol listing does not equal CofferHouse approval. Markets remain in `REVIEW` until their contracts, oracle design and missing risk inputs are independently verified.
 
 ## Repository map
 
@@ -83,9 +85,11 @@ The current three market observations are intentionally labeled as demonstration
 ├── src/
 │   ├── main.js
 │   ├── markets.js
+│   ├── morpho.js
 │   ├── policy.js
 │   └── styles.css
 ├── test/
+│   ├── morpho.test.js
 │   └── policy.test.js
 ├── index.html
 ├── package.json

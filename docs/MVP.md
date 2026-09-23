@@ -4,7 +4,7 @@
 
 Build a small, working Arc-native prototype that compares USDC, tokenized RWA and crypto-collateral opportunities and produces an explainable risk report from transparent inputs and policies.
 
-The first interface uses clearly labeled demonstration observations. The next integration milestone replaces them with live, timestamped Arc market adapters without changing the policy engine.
+The interface now requests listed Morpho markets on Arc through the public Morpho GraphQL API. Clearly labeled demonstration observations remain only as a safe fallback when the live provider is unavailable. The deterministic policy engine does not depend on the provider.
 
 ## Primary user story
 

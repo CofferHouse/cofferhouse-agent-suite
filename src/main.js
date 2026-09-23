@@ -1,18 +1,24 @@
 import "./styles.css";
-import { markets } from "./markets.js";
+import { demoMarkets } from "./markets.js";
+import { fetchMorphoArcMarkets } from "./morpho.js";
 import { evaluateMarket, policy } from "./policy.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const formatMoney = (value) => value === null || value === undefined ? "Unavailable" : money.format(value);
+const formatPct = (value, digits = 1) => value === null || value === undefined ? "Unavailable" : `${value.toFixed(digits)}%`;
 const app = document.querySelector("#app");
+let markets = demoMarkets;
 let selectedId = markets[0].id;
+let feedState = { mode: "loading", message: "Connecting to Morpho on Arc…" };
 
 function logo() {
   return `<div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>`;
 }
 
 function valueFor(ruleItem) {
-  if (ruleItem.id === "liquidity") return money.format(ruleItem.value);
-  if (["utilization", "volatility", "completeness"].includes(ruleItem.id)) return `${ruleItem.value}%`;
+  if (ruleItem.value === null || ruleItem.value === undefined) return "Unavailable";
+  if (ruleItem.id === "liquidity") return formatMoney(ruleItem.value);
+  if (["utilization", "volatility", "completeness"].includes(ruleItem.id)) return formatPct(Number(ruleItem.value));
   if (ruleItem.id === "freshness") return `${ruleItem.value} min`;
   return String(ruleItem.value);
 }
@@ -32,7 +38,7 @@ function render() {
           <h1>See the risk<br><em>before</em> the move.</h1>
           <p class="intro">Scout compares tokenized assets and crypto markets on Arc using visible, deterministic rules. No black box. No custody. No execution.</p>
         </div>
-        <aside class="hero-note"><b>DEMO MODE</b><p>Market observations below are illustrative until the first live Arc adapter is connected.</p></aside>
+        <aside class="hero-note ${feedState.mode}"><b>${feedState.mode === "live" ? "LIVE ARC DATA" : feedState.mode === "loading" ? "CONNECTING" : "SAFE FALLBACK"}</b><p>${feedState.message}</p></aside>
       </section>
 
       <section class="workspace">
@@ -40,7 +46,7 @@ function render() {
           <div class="section-label">SELECT A MARKET</div>
           ${markets.map((item) => `<button class="market-button ${item.id === selectedId ? "active" : ""}" data-id="${item.id}">
             <span class="asset-icon">${item.symbol.slice(0, 2)}</span>
-            <span><b>${item.name}</b><small>${item.category}</small></span>
+            <span><b>${item.name}</b><small>${item.protocol} · ${item.category}</small></span>
             <span class="chevron">→</span>
           </button>`).join("")}
           <div class="policy-card"><span>POLICY</span><b>${policy.version}</b><small>8 deterministic checks</small></div>
@@ -55,9 +61,9 @@ function render() {
           <div class="summary ${report.status.toLowerCase()}"><b>${report.summary}</b><span>${market.note}</span></div>
 
           <div class="metrics">
-            <div><span>LIQUIDITY</span><b>${money.format(market.liquidityUsd)}</b></div>
-            <div><span>UTILIZATION</span><b>${market.utilizationPct}%</b></div>
-            <div><span>DISPLAYED APY</span><b>${market.apyPct}%</b></div>
+            <div><span>LIQUIDITY</span><b>${formatMoney(market.liquidityUsd)}</b></div>
+            <div><span>UTILIZATION</span><b>${formatPct(market.utilizationPct)}</b></div>
+            <div><span>SUPPLY APY</span><b>${formatPct(market.apyPct, 3)}</b></div>
             <div><span>DATA AGE</span><b>${market.ageMinutes} min</b></div>
           </div>
 
@@ -87,3 +93,16 @@ function render() {
 }
 
 render();
+
+fetchMorphoArcMarkets()
+  .then((liveMarkets) => {
+    markets = liveMarkets;
+    selectedId = liveMarkets[0].id;
+    feedState = { mode: "live", message: `${liveMarkets.length} listed Morpho markets loaded from Arc mainnet.` };
+    render();
+  })
+  .catch((error) => {
+    console.warn("Scout live adapter unavailable:", error);
+    feedState = { mode: "fallback", message: "Live data is unavailable. Showing clearly labeled demonstration observations." };
+    render();
+  });

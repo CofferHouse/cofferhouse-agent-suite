@@ -19,7 +19,7 @@ main { width: min(1180px, calc(100% - 36px)); margin: auto; }
 h1 { margin: 12px 0 22px; font: 400 clamp(52px, 7.2vw, 96px)/.91 "Archivo Black"; letter-spacing: -.07em; text-transform: uppercase; max-width: 830px; }
 h1 em { color: #1755bc; font-style: normal; text-shadow: 4px 4px 0 #ffd735; }
 .intro { max-width: 670px; font-size: 17px; line-height: 1.65; margin: 0; }
-.hero-note { border: 2px solid; padding: 20px; background: #ffd735; box-shadow: 8px 8px 0 #1755bc; transform: rotate(1deg); }.hero-note b { font: 14px "Archivo Black"; }.hero-note p { margin: 9px 0 0; font: 12px/1.55 "DM Mono"; }
+.hero-note { border: 2px solid; padding: 20px; background: #ffd735; box-shadow: 8px 8px 0 #1755bc; transform: rotate(1deg); }.hero-note.live { background: #84dab0; }.hero-note.fallback { background: #ffb09d; }.hero-note b { font: 14px "Archivo Black"; }.hero-note p { margin: 9px 0 0; font: 12px/1.55 "DM Mono"; }
 .workspace { display: grid; grid-template-columns: 290px 1fr; border: 3px solid #151515; background: #faf7ef; box-shadow: 12px 12px 0 #1755bc; margin-bottom: 70px; }
 .market-list { border-right: 2px solid; padding: 22px 16px; background: #e6ddc8; }.section-label { padding: 0 8px 14px; }
 .market-button { width: 100%; display: grid; grid-template-columns: 42px 1fr 18px; text-align: left; align-items: center; gap: 10px; padding: 13px 9px; margin: 0 0 9px; border: 2px solid transparent; background: transparent; cursor: pointer; }.market-button:hover { border-color: #151515; }.market-button.active { background: #fff; border-color: #151515; box-shadow: 4px 4px 0 #ffd735; }

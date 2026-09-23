@@ -1,0 +1,45 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { fetchMorphoArcMarkets, normalizeMorphoMarket } from "../src/morpho.js";
+
+const apiMarket = {
+  marketId: "0xmarket",
+  listed: true,
+  loanAsset: { address: "0xloan", symbol: "USDC", decimals: 6 },
+  collateralAsset: { address: "0xcollateral", symbol: "cirBTC", decimals: 8 },
+  oracle: { address: "0xoracle" },
+  state: {
+    supplyAssetsUsd: 100_000_000,
+    borrowAssetsUsd: 37_000_000,
+    liquidityAssetsUsd: 63_000_000,
+    utilization: 0.37,
+    supplyApy: 0.025,
+    borrowApy: 0.05
+  }
+};
+
+test("normalizes Morpho decimals into Scout percentages", () => {
+  const market = normalizeMorphoMarket(apiMarket, new Date("2026-09-23T00:00:00.000Z"));
+  assert.equal(market.name, "USDC / cirBTC Market");
+  assert.equal(market.utilizationPct, 37);
+  assert.equal(market.apyPct, 2.5);
+  assert.equal(market.liquidityUsd, 63_000_000);
+  assert.equal(market.dataMode, "live");
+});
+
+test("requests only listed Arc markets", async () => {
+  let request;
+  const fakeFetch = async (url, options) => {
+    request = { url, options };
+    return { ok: true, json: async () => ({ data: { markets: { items: [apiMarket] } } }) };
+  };
+  const result = await fetchMorphoArcMarkets(fakeFetch);
+  assert.equal(result.length, 1);
+  assert.match(request.options.body, /5042/);
+  assert.match(request.options.body, /listed: true/);
+});
+
+test("fails safely when the API returns no Arc markets", async () => {
+  const fakeFetch = async () => ({ ok: true, json: async () => ({ data: { markets: { items: [] } } }) });
+  await assert.rejects(() => fetchMorphoArcMarkets(fakeFetch), /No listed Morpho markets/);
+});

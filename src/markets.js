@@ -1,4 +1,4 @@
-export const markets = [
+export const demoMarkets = [
   {
     id: "usdc-base",
     symbol: "USDC",
@@ -18,7 +18,8 @@ export const markets = [
     sourceUrl: "https://explorer.arc.io",
     address: "Pending live adapter",
     observedAt: "Demo snapshot",
-    note: "Stablecoin liquidity baseline for policy calibration."
+    note: "Stablecoin liquidity baseline for policy calibration.",
+    dataMode: "demo"
   },
   {
     id: "rwa-fund",
@@ -39,7 +40,8 @@ export const markets = [
     sourceUrl: "https://explorer.arc.io",
     address: "Pending live adapter",
     observedAt: "Demo snapshot",
-    note: "Representative RWA case; issuer and transfer restrictions require human review."
+    note: "Representative RWA case; issuer and transfer restrictions require human review.",
+    dataMode: "demo"
   },
   {
     id: "cirbtc-growth",
@@ -60,6 +62,9 @@ export const markets = [
     sourceUrl: "https://explorer.arc.io",
     address: "Pending live adapter",
     observedAt: "Demo snapshot",
-    note: "High utilization and volatile collateral trigger protective limits."
+    note: "High utilization and volatile collateral trigger protective limits.",
+    dataMode: "demo"
   }
 ];
+
+export const markets = demoMarkets;

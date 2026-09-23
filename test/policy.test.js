@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { markets } from "../src/markets.js";
+import { demoMarkets as markets } from "../src/markets.js";
 import { evaluateMarket } from "../src/policy.js";
 
 test("USDC baseline passes every policy", () => {

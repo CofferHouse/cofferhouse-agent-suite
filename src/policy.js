@@ -19,13 +19,17 @@ export function evaluateMarket(market, activePolicy = policy) {
     ? rule("network", "Supported network", market.network, "pass", "Market is deployed on the supported network.")
     : rule("network", "Supported network", market.network, "reject", "Only Arc markets are supported."));
 
-  const liquidityOutcome = market.liquidityUsd < activePolicy.rejectLiquidityUsd
+  const liquidityOutcome = market.liquidityUsd === null || market.liquidityUsd === undefined
+    ? "review"
+    : market.liquidityUsd < activePolicy.rejectLiquidityUsd
     ? "reject"
     : market.liquidityUsd < activePolicy.minLiquidityUsd ? "review" : "pass";
   rules.push(rule("liquidity", "Available liquidity", market.liquidityUsd, liquidityOutcome,
     liquidityOutcome === "pass" ? "Liquidity clears the policy minimum." : "Liquidity is below the preferred safety buffer."));
 
-  const utilizationOutcome = market.utilizationPct >= activePolicy.rejectUtilizationPct
+  const utilizationOutcome = market.utilizationPct === null || market.utilizationPct === undefined
+    ? "review"
+    : market.utilizationPct >= activePolicy.rejectUtilizationPct
     ? "reject"
     : market.utilizationPct > activePolicy.maxUtilizationPct ? "review" : "pass";
   rules.push(rule("utilization", "Market utilization", market.utilizationPct, utilizationOutcome,
@@ -33,7 +37,7 @@ export function evaluateMarket(market, activePolicy = policy) {
 
   rules.push(rule("contract", "Contract status", market.contractStatus,
     market.contractStatus === "allowlisted" ? "pass" : market.contractStatus === "blocked" ? "reject" : "review",
-    market.contractStatus === "allowlisted" ? "Contract is on the local policy allowlist." : "Contract needs explicit human verification."));
+    market.contractStatus === "allowlisted" ? "Contract is on the local policy allowlist." : market.contractStatus === "listed" ? "Protocol-listed market; CofferHouse verification is still pending." : "Contract needs explicit human verification."));
 
   rules.push(rule("freshness", "Data freshness", market.ageMinutes,
     market.ageMinutes <= activePolicy.maxDataAgeMinutes ? "pass" : "review",
@@ -44,8 +48,8 @@ export function evaluateMarket(market, activePolicy = policy) {
     market.oracleCount >= activePolicy.minOracleCount ? "Multiple price sources reduce single-source dependence." : "A second independent price source is required."));
 
   rules.push(rule("volatility", "Collateral volatility", market.collateralVolatilityPct,
-    market.collateralVolatilityPct <= activePolicy.maxVolatilityPct ? "pass" : "review",
-    market.collateralVolatilityPct <= activePolicy.maxVolatilityPct ? "Volatility remains inside the configured bound." : "Volatility requires tighter collateral and liquidation limits."));
+    market.collateralVolatilityPct === null || market.collateralVolatilityPct === undefined ? "review" : market.collateralVolatilityPct <= activePolicy.maxVolatilityPct ? "pass" : "review",
+    market.collateralVolatilityPct === null || market.collateralVolatilityPct === undefined ? "No verified volatility feed is connected; human review is required." : market.collateralVolatilityPct <= activePolicy.maxVolatilityPct ? "Volatility remains inside the configured bound." : "Volatility requires tighter collateral and liquidation limits."));
 
   rules.push(rule("completeness", "Required data present", market.completenessPct,
     market.completenessPct >= activePolicy.minCompletenessPct ? "pass" : "reject",

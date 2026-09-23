@@ -53,12 +53,14 @@ docs/                  # Public specifications
 
 ## Prototype implementation
 
-- `src/markets.js` contains normalized demonstration observations.
+- `src/morpho.js` queries and normalizes listed Morpho markets on Arc chain ID `5042`.
+- `src/markets.js` contains normalized demonstration observations used only as a safe fallback.
 - `src/policy.js` contains the versioned deterministic policy and evaluation engine.
 - `src/main.js` renders the report and plain-language explanations.
+- `test/morpho.test.js` verifies API filtering, normalization and safe failure.
 - `test/policy.test.js` verifies PASS, REVIEW, REJECT and reproducibility.
 
-The demonstration adapter is deliberately isolated from the policy engine so a live Aave, Morpho or direct-RPC adapter can replace it without changing scoring behavior.
+The live adapter is deliberately isolated from the policy engine. Provider outages fall back to visibly labeled demonstration observations, and missing live risk inputs are routed to `REVIEW` instead of being invented or silently treated as safe.
 
 ## Open technical decisions
 
