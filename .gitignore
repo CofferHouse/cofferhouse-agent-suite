@@ -1,19 +1,25 @@
+# Environment and secrets
 .env
 .env.local
 .env.*.local
 
+# Dependencies and builds
 node_modules/
 .next/
 dist/
 build/
 coverage/
 
+# Tooling
 .cache/
 .turbo/
 
+# Editors and operating systems
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
 
+# Logs
 *.log
+
