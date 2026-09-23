@@ -36,6 +36,41 @@ export function createScoutReceipt(scan, policy) {
   };
 }
 
+export function createSimulationReceipt(market, simulation, policy) {
+  if (!simulation?.ok) throw new Error("A valid simulation is required to create a receipt.");
+
+  const result = {
+    marketId: market.marketId,
+    market: market.name,
+    network: market.network,
+    proposedBorrowUsd: simulation.amountUsd,
+    before: {
+      liquidityUsd: simulation.before.liquidityUsd,
+      utilizationPct: simulation.before.utilizationPct,
+      status: simulation.before.report.status,
+      score: simulation.before.report.score
+    },
+    after: {
+      liquidityUsd: simulation.after.liquidityUsd,
+      utilizationPct: simulation.after.utilizationPct,
+      status: simulation.after.report.status,
+      score: simulation.after.report.score,
+      warnings: simulation.after.report.warnings.map(({ id, label, outcome, detail }) => ({ id, label, outcome, detail }))
+    },
+    observedAt: market.observedAt
+  };
+  const fingerprintInput = JSON.stringify({ policy, result });
+
+  return {
+    schema: "cofferhouse.scout.simulation-receipt.v1",
+    receiptId: `simulation-${stableHash(fingerprintInput)}`,
+    generatedAt: market.observedAt,
+    policy,
+    result,
+    notice: "Read-only simulation. No transaction was prepared, signed or submitted. Not financial advice."
+  };
+}
+
 export function downloadScoutReceipt(receipt, documentRef = document) {
   const blob = new Blob([`${JSON.stringify(receipt, null, 2)}\n`], { type: "application/json" });
   const url = URL.createObjectURL(blob);

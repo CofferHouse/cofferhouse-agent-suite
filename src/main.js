@@ -3,7 +3,7 @@ import { demoMarkets } from "./markets.js";
 import { fetchMorphoArcMarkets } from "./morpho.js";
 import { evaluateMarket, policyProfiles } from "./policy.js";
 import { scanMarkets } from "./agent.js";
-import { createScoutReceipt, downloadScoutReceipt } from "./receipt.js";
+import { createScoutReceipt, createSimulationReceipt, downloadScoutReceipt } from "./receipt.js";
 import { simulateBorrow } from "./simulator.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -36,6 +36,7 @@ function render() {
   const report = evaluateMarket(market, activePolicy);
   const profileComparison = Object.values(policyProfiles).map((profile) => ({ profile, report: evaluateMarket(market, profile) }));
   const simulation = simulateBorrow(market, simulationAmount, activePolicy);
+  const simulationReceipt = simulation.ok ? createSimulationReceipt(market, simulation, activePolicy) : null;
   const receipt = createScoutReceipt(agentScan, activePolicy);
   app.innerHTML = `
     <header class="topbar">
@@ -148,7 +149,7 @@ function render() {
               <div><span>UTILIZATION</span><b>${formatPct(simulation.before.utilizationPct)}</b><i>→</i><strong>${formatPct(simulation.after.utilizationPct)}</strong></div>
               <div><span>POLICY RESULT</span><b class="${simulation.before.report.status.toLowerCase()}">${simulation.before.report.status}</b><i>→</i><strong class="${simulation.after.report.status.toLowerCase()}">${simulation.after.report.status} · ${simulation.after.report.score}</strong></div>
             </div>` : `<p class="simulation-error">${simulation.error}</p>`}
-            <small class="simulation-notice">Simulation only · No custody · No signature · No transaction</small>
+            <div class="simulation-foot"><small class="simulation-notice">Simulation only · No custody · No signature · No transaction</small>${simulationReceipt ? `<button class="simulation-download" type="button">DOWNLOAD SIMULATION</button>` : ""}</div>
           </section>
 
           <div class="checks-head"><h3>Policy checks</h3><span>Same inputs → same result</span></div>
@@ -192,6 +193,7 @@ function render() {
     simulationAmount = Number(new FormData(event.currentTarget).get("amount"));
     render();
   });
+  document.querySelector(".simulation-download")?.addEventListener("click", () => downloadScoutReceipt(simulationReceipt));
 }
 
 async function refreshMarkets() {

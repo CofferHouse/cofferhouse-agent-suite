@@ -40,6 +40,8 @@ If useful for the hackathon, Scout may publish a compact record containing a rep
 
 The simulator applies a hypothetical borrow to the normalized market snapshot, recomputes available liquidity and utilization, and evaluates the projected market with the selected policy. It creates no calldata, wallet request, signature or transaction.
 
+Successful simulations can be exported through `cofferhouse.scout.simulation-receipt.v1`, which records the market, proposed amount, selected policy and before/after evaluation.
+
 ## Trust boundaries
 
 - Third-party data can be incomplete, delayed or incorrect.
