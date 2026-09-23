@@ -7,6 +7,9 @@ import { scanMarkets } from "./agent.js";
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const formatMoney = (value) => value === null || value === undefined ? "Unavailable" : money.format(value);
 const formatPct = (value, digits = 1) => value === null || value === undefined ? "Unavailable" : `${value.toFixed(digits)}%`;
+const shortId = (value) => value && value.startsWith("0x") && value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value || "Unavailable";
+const explorerAddress = (address) => address ? `https://arc.etherscan.io/address/${address}` : null;
+const identityValue = (label, value, url = null) => `<div><span>${label}</span>${url ? `<a href="${url}" target="_blank" rel="noreferrer" title="${value}">${shortId(value)} ↗</a>` : `<b title="${value || ""}">${shortId(value)}</b>`}</div>`;
 const app = document.querySelector("#app");
 let markets = demoMarkets;
 let selectedId = markets[0].id;
@@ -58,7 +61,7 @@ function render() {
         <div class="agent-ranking">
           ${agentScan.ranked.map((item, index) => `<button class="agent-market" data-id="${item.market.id}" type="button">
             <span class="rank-number">${String(index + 1).padStart(2, "0")}</span>
-            <span><b>${item.market.name}</b><small>${item.reason}</small></span>
+            <span><b>${item.market.name}</b><small class="market-id">ID ${shortId(item.market.marketId)}</small><small>${item.reason}</small></span>
             <strong class="rank-status ${item.report.status.toLowerCase()}">${item.report.status} · ${item.report.score}</strong>
           </button>`).join("")}
         </div>
@@ -70,7 +73,7 @@ function render() {
           <div class="section-label">SELECT A MARKET</div>
           ${markets.map((item) => `<button class="market-button ${item.id === selectedId ? "active" : ""}" data-id="${item.id}">
             <span class="asset-icon">${item.symbol.slice(0, 2)}</span>
-            <span><b>${item.name}</b><small>${item.protocol} · ${item.category}</small></span>
+            <span><b>${item.name}</b><small>${item.protocol} · ${item.category}</small><small class="market-id">ID ${shortId(item.marketId)}</small></span>
             <span class="chevron">→</span>
           </button>`).join("")}
           <div class="policy-card"><span>POLICY</span><b>${policy.version}</b><small>8 deterministic checks</small></div>
@@ -89,6 +92,15 @@ function render() {
             <div><span>UTILIZATION</span><b>${formatPct(market.utilizationPct)}</b></div>
             <div><span>SUPPLY APY</span><b>${formatPct(market.apyPct, 3)}</b></div>
             <div><span>DATA AGE</span><b>${market.ageMinutes} min</b></div>
+          </div>
+
+          <div class="identity" aria-label="Market identity">
+            ${identityValue("MARKET ID", market.marketId)}
+            ${identityValue("LOAN ASSET", market.loanAssetAddress, explorerAddress(market.loanAssetAddress))}
+            ${identityValue("COLLATERAL", market.collateralAssetAddress, explorerAddress(market.collateralAssetAddress))}
+            ${identityValue("ORACLE", market.oracleAddress, explorerAddress(market.oracleAddress))}
+            ${identityValue("LLTV", formatPct(market.lltvPct, 1))}
+            ${identityValue("BORROW APY", formatPct(market.borrowApyPct, 3))}
           </div>
 
           <div class="checks-head"><h3>Policy checks</h3><span>Same inputs → same result</span></div>

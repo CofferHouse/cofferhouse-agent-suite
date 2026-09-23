@@ -5,6 +5,7 @@ import { fetchMorphoArcMarkets, normalizeMorphoMarket } from "../src/morpho.js";
 const apiMarket = {
   marketId: "0xmarket",
   listed: true,
+  lltv: 0.86,
   loanAsset: { address: "0xloan", symbol: "USDC", decimals: 6 },
   collateralAsset: { address: "0xcollateral", symbol: "cirBTC", decimals: 8 },
   oracle: { address: "0xoracle" },
@@ -24,6 +25,11 @@ test("normalizes Morpho decimals into Scout percentages", () => {
   assert.equal(market.utilizationPct, 37);
   assert.equal(market.apyPct, 2.5);
   assert.equal(market.liquidityUsd, 63_000_000);
+  assert.equal(market.lltvPct, 86);
+  assert.equal(market.borrowApyPct, 5);
+  assert.equal(market.loanAssetAddress, "0xloan");
+  assert.equal(market.collateralAssetAddress, "0xcollateral");
+  assert.equal(market.oracleAddress, "0xoracle");
   assert.equal(market.dataMode, "live");
 });
 
