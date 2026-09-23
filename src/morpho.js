@@ -31,6 +31,11 @@ export const MORPHO_ARC_QUERY = `
 
 const finite = (value) => Number.isFinite(Number(value)) ? Number(value) : null;
 const percentage = (value) => finite(value) === null ? null : finite(value) * 100;
+const wadPercentage = (value) => {
+  const numeric = finite(value);
+  if (numeric === null) return null;
+  return numeric > 1 ? numeric / 1e16 : numeric * 100;
+};
 
 export function normalizeMorphoMarket(item, fetchedAt = new Date()) {
   if (!item?.marketId || !item?.loanAsset?.symbol || !item?.collateralAsset?.symbol) {
@@ -52,7 +57,7 @@ export function normalizeMorphoMarket(item, fetchedAt = new Date()) {
     network: "Arc",
     chainId: ARC_CHAIN_ID,
     marketId: item.marketId,
-    lltvPct: percentage(item.lltv),
+    lltvPct: wadPercentage(item.lltv),
     loanAssetAddress: item.loanAsset.address ?? null,
     loanAssetDecimals: finite(item.loanAsset.decimals),
     collateralAssetAddress: item.collateralAsset.address ?? null,

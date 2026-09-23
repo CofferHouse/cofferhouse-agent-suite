@@ -5,7 +5,7 @@ import { fetchMorphoArcMarkets, normalizeMorphoMarket } from "../src/morpho.js";
 const apiMarket = {
   marketId: "0xmarket",
   listed: true,
-  lltv: 0.86,
+  lltv: "860000000000000000",
   loanAsset: { address: "0xloan", symbol: "USDC", decimals: 6 },
   collateralAsset: { address: "0xcollateral", symbol: "cirBTC", decimals: 8 },
   oracle: { address: "0xoracle" },

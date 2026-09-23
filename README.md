@@ -16,6 +16,7 @@ Scout currently:
 - normalize liquidity, utilization, yield and contract data;
 - apply explicit, configurable risk policies;
 - switch between Capital Preservation, Balanced and Yield Discovery profiles;
+- compare all three policy outcomes for the selected market;
 - explain why a market passes, fails or requires review;
 - keep the user in control of every transaction;
 - scan and rank every loaded market through a bounded agent;

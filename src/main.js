@@ -32,6 +32,7 @@ function render() {
   const market = markets.find((item) => item.id === selectedId);
   activePolicy = policyProfiles[selectedPolicyId];
   const report = evaluateMarket(market, activePolicy);
+  const profileComparison = Object.values(policyProfiles).map((profile) => ({ profile, report: evaluateMarket(market, profile) }));
   const receipt = createScoutReceipt(agentScan, activePolicy);
   app.innerHTML = `
     <header class="topbar">
@@ -117,6 +118,17 @@ function render() {
             ${identityValue("LLTV", formatPct(market.lltvPct, 1))}
             ${identityValue("BORROW APY", formatPct(market.borrowApyPct, 3))}
           </div>
+
+          <section class="profile-comparison" aria-labelledby="comparison-title">
+            <div class="comparison-head"><h3 id="comparison-title">Policy comparison</h3><span>Same market · three visible bounds</span></div>
+            <div class="comparison-grid">
+              ${profileComparison.map(({ profile, report: profileReport }) => `<div class="comparison-card ${profile.id === selectedPolicyId ? "active" : ""}">
+                <span>${profile.name}</span>
+                <b class="${profileReport.status.toLowerCase()}">${profileReport.status} · ${profileReport.score}</b>
+                <small>${profileReport.warnings[0]?.detail ?? "Every active check passed."}</small>
+              </div>`).join("")}
+            </div>
+          </section>
 
           <div class="checks-head"><h3>Policy checks</h3><span>Same inputs → same result</span></div>
           <div class="checks">
