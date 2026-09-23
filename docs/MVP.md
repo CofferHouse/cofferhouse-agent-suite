@@ -33,6 +33,11 @@ The interface now requests listed Morpho markets on Arc through the public Morph
 13. Consecutive scans flag material liquidity, utilization, listing and policy-result changes.
 14. The latest ten scan comparisons remain available as browser-local historical observations.
 15. Every loaded market receives a valid suggested simulation amount based on its available liquidity.
+16. A session agent can observe, evaluate, decide and record repeatedly while the page remains open.
+17. A protected server agent can run unattended, persist up to 100 cycles and expose its last execution trace.
+18. When configured, Arc RPC independently confirms deployed bytecode for loan asset, collateral and oracle addresses.
+19. Temporary source failures are retried and persistent failures remain visible as a degraded agent state.
+20. Downloaded Scout and simulation receipts can be re-imported and checked for SHA-256 tampering.
 
 ## Initial inputs
 
@@ -91,3 +96,5 @@ The MVP is complete when:
 - the repository contains reproducible setup instructions;
 - any onchain component is verified and linked;
 - a short demo clearly shows the complete flow.
+
+Server scheduling, durable storage, outbound alerts, Gemini briefings and operator acknowledgment are considered deployment-complete only after their server-side credentials are configured and a live cycle is observed. Source code alone is not presented as proof that those external services are active.

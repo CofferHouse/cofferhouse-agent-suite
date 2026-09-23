@@ -1,11 +1,16 @@
-const stableHash = (value) => {
-  let hash = 2166136261;
-  for (const character of value) {
-    hash ^= character.charCodeAt(0);
-    hash = Math.imul(hash, 16777619);
+import { sealDocument, verifySealedDocument } from "./integrity.js";
+
+const supportedReceiptSchemas = new Set([
+  "cofferhouse.scout.receipt.v2",
+  "cofferhouse.scout.simulation-receipt.v2"
+]);
+
+export function verifyReceiptDocument(document) {
+  if (!supportedReceiptSchemas.has(document?.schema)) {
+    return { valid: false, reason: "Unsupported or missing CofferHouse receipt schema." };
   }
-  return (hash >>> 0).toString(16).padStart(8, "0");
-};
+  return { ...verifySealedDocument(document), schema: document.schema, receiptId: document.receiptId };
+}
 
 export function createScoutReceipt(scan, policy) {
   const results = scan.ranked.map(({ market, report, reason }) => ({
@@ -23,17 +28,14 @@ export function createScoutReceipt(scan, policy) {
     oracleAddress: market.oracleAddress ?? null,
     observedAt: market.observedAt
   }));
-  const fingerprintInput = JSON.stringify({ policy, results });
-
-  return {
-    schema: "cofferhouse.scout.receipt.v1",
-    receiptId: `scout-${stableHash(fingerprintInput)}`,
+  return sealDocument({
+    schema: "cofferhouse.scout.receipt.v2",
     generatedAt: scan.observedAt,
     policy,
     summary: { total: scan.total, ...scan.counts, actionable: scan.actionable },
     results,
     notice: "Read-only research output. Human review required. Not financial advice."
-  };
+  }, "scout");
 }
 
 export function createSimulationReceipt(market, simulation, policy) {
@@ -59,16 +61,13 @@ export function createSimulationReceipt(market, simulation, policy) {
     },
     observedAt: market.observedAt
   };
-  const fingerprintInput = JSON.stringify({ policy, result });
-
-  return {
-    schema: "cofferhouse.scout.simulation-receipt.v1",
-    receiptId: `simulation-${stableHash(fingerprintInput)}`,
+  return sealDocument({
+    schema: "cofferhouse.scout.simulation-receipt.v2",
     generatedAt: market.observedAt,
     policy,
     result,
     notice: "Read-only simulation. No transaction was prepared, signed or submitted. Not financial advice."
-  };
+  }, "simulation");
 }
 
 export function downloadScoutReceipt(receipt, documentRef = document) {

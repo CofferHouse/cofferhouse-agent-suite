@@ -1,6 +1,17 @@
 const MORPHO_GRAPHQL_URL = "https://api.morpho.org/graphql";
 const ARC_CHAIN_ID = 5042;
 
+export class MarketDataSourceError extends Error {
+  constructor(message, { code, retryable, status = null } = {}) {
+    super(message);
+    this.name = "MarketDataSourceError";
+    this.provider = "Morpho API";
+    this.code = code ?? "unknown";
+    this.retryable = retryable ?? false;
+    this.status = status;
+  }
+}
+
 export const MORPHO_ARC_QUERY = `
   query ScoutArcMarkets {
     markets(
@@ -83,20 +94,37 @@ export function normalizeMorphoMarket(item, fetchedAt = new Date()) {
   };
 }
 
-export async function fetchMorphoArcMarkets(fetchImpl = fetch) {
-  const response = await fetchImpl(MORPHO_GRAPHQL_URL, {
-    method: "POST",
-    headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify({ query: MORPHO_ARC_QUERY })
-  });
-
-  if (!response.ok) throw new Error(`Morpho API returned HTTP ${response.status}.`);
-  const payload = await response.json();
-  if (payload.errors?.length) throw new Error(payload.errors[0].message || "Morpho GraphQL query failed.");
-
-  const items = payload.data?.markets?.items;
-  if (!Array.isArray(items) || items.length === 0) throw new Error("No listed Morpho markets were returned for Arc.");
-
-  const fetchedAt = new Date();
-  return items.map((item) => normalizeMorphoMarket(item, fetchedAt));
+export async function fetchMorphoArcMarkets(fetchImpl = fetch, { timeoutMs = 12_000 } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetchImpl(MORPHO_GRAPHQL_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify({ query: MORPHO_ARC_QUERY }),
+      signal: controller.signal
+    });
+    if (!response.ok) throw new MarketDataSourceError(`Morpho API returned HTTP ${response.status}.`, { code: "http_error", retryable: response.status >= 500 || response.status === 429, status: response.status });
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new MarketDataSourceError("Morpho API returned invalid JSON.", { code: "invalid_response", retryable: true });
+    }
+    if (payload.errors?.length) throw new MarketDataSourceError(payload.errors[0].message || "Morpho GraphQL query failed.", { code: "graphql_error", retryable: true });
+    const items = payload.data?.markets?.items;
+    if (!Array.isArray(items) || items.length === 0) throw new MarketDataSourceError("No listed Morpho markets were returned for Arc.", { code: "empty_result", retryable: true });
+    const fetchedAt = new Date();
+    try {
+      return items.map((item) => normalizeMorphoMarket(item, fetchedAt));
+    } catch (error) {
+      throw new MarketDataSourceError(error.message, { code: "normalization_error", retryable: false });
+    }
+  } catch (error) {
+    if (error instanceof MarketDataSourceError) throw error;
+    if (error?.name === "AbortError") throw new MarketDataSourceError("Morpho API request timed out.", { code: "timeout", retryable: true });
+    throw new MarketDataSourceError("Morpho API request failed.", { code: "network_error", retryable: true });
+  } finally {
+    clearTimeout(timer);
+  }
 }

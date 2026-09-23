@@ -72,7 +72,13 @@ export function evaluateMarket(market, activePolicy = policy) {
 
   rules.push(rule("contract", "Contract status", market.contractStatus,
     market.contractStatus === "allowlisted" ? "pass" : market.contractStatus === "blocked" ? "reject" : "review",
-    market.contractStatus === "allowlisted" ? "Contract is on the local policy allowlist." : market.contractStatus === "listed" ? "Protocol-listed market; CofferHouse verification is still pending." : "Contract needs explicit human verification."));
+    market.contractStatus === "allowlisted"
+      ? "Contract is on the local policy allowlist."
+      : market.contractStatus === "listed" && market.rpcVerification?.status === "verified"
+        ? "Arc RPC confirms deployed bytecode; CofferHouse approval is still pending."
+        : market.contractStatus === "listed"
+          ? "Protocol-listed market; CofferHouse verification is still pending."
+          : "Contract needs explicit human verification."));
 
   rules.push(rule("freshness", "Data freshness", market.ageMinutes,
     market.ageMinutes <= activePolicy.maxDataAgeMinutes ? "pass" : "review",

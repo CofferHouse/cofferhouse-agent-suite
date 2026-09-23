@@ -2,6 +2,8 @@
 
 **Risk-aware market intelligence and bounded agents built on Arc.**
 
+Scout includes both a session-scoped monitor and a protected server runtime with an explicit, inspectable lifecycle: observe, independently verify contract deployment, evaluate versioned policy, compare durable history, decide whether changes require attention, and record the result. It has no custody, signing, or transaction authority.
+
 CofferHouse Scout is the first working product planned for CofferHouse: a transparent research and risk layer that helps users inspect onchain markets before any capital is routed.
 
 > **Status:** Public hackathon prototype · Live, read-only Morpho market intelligence on Arc mainnet.
@@ -23,9 +25,10 @@ Scout currently:
 - explain why a market passes, fails or requires review;
 - keep the user in control of every transaction;
 - scan and rank every loaded market through a bounded agent;
-- produce a downloadable Scout Receipt containing inputs, policy and results.
-
-Action simulation remains planned for the next development phase.
+- produce a downloadable Scout Receipt containing inputs, policy and results;
+- retry temporary provider failures and expose persistent failures as a degraded state;
+- run unattended through a protected scheduler with durable memory;
+- expose a six-step execution trace and non-secret readiness diagnostics.
 
 The first version will be **read-only**. It will not custody funds, promise returns or execute autonomous strategies.
 
@@ -66,8 +69,10 @@ See [MVP scope](docs/MVP.md) and [architecture](docs/ARCHITECTURE.md).
 | Downloadable Scout Receipt | Live |
 | Read-only borrow simulation | Live |
 | Consecutive-scan change detection | Live |
+| Durable server agent | Implementation complete; deployment secrets required |
+| 15-minute unattended scheduler | GitHub Actions workflow included |
 | Public deployment | Live on Vercel |
-| Security review | Not started |
+| Application hardening | Internal pass complete; independent review pending |
 
 ## Run the prototype
 
@@ -78,11 +83,10 @@ npm install
 npm run dev
 ```
 
-Then open the local URL printed by Vite. To verify the policy engine and create a production build:
+Then open the local URL printed by Vite. To run the complete automated test and production-build gate:
 
 ```bash
-npm test
-npm run build
+npm run check
 ```
 
 Scout first requests listed Morpho markets on Arc (chain ID `5042`) from Morpho's public GraphQL API. If that request fails or returns no markets, Scout fails safely to three observations that are visibly labeled as demonstration data.
@@ -95,21 +99,26 @@ Live protocol listing does not equal CofferHouse approval. Markets remain in `RE
 .
 ├── docs/
 │   ├── ARCHITECTURE.md
+│   ├── DEPLOYMENT.md
+│   ├── HACKATHON_SUBMISSION.md
 │   ├── MVP.md
+│   ├── RELEASE_CHECKLIST.md
 │   └── ROADMAP.md
+├── api/
+│   ├── agent/              # protected run, status and acknowledgment
+│   ├── receipt/            # independent receipt verification
+│   └── health.js           # non-secret deployment readiness
+├── contracts/              # optional, undeployed receipt registry source
 ├── src/
 │   ├── main.js
-│   ├── agent.js
-│   ├── markets.js
-│   ├── morpho.js
-│   ├── policy.js
-│   ├── receipt.js
+│   ├── agent*.js           # scan, lifecycle, alerts and server cycle
+│   ├── arc-rpc.js          # independent bytecode verification
+│   ├── morpho.js           # live Arc market adapter
+│   ├── policy.js           # deterministic policy profiles
+│   ├── receipt.js          # sealed Scout and simulation receipts
 │   └── styles.css
-├── test/
-│   ├── agent.test.js
-│   ├── morpho.test.js
-│   ├── policy.test.js
-│   └── receipt.test.js
+├── test/                   # complete Node test suite
+├── .github/workflows/      # protected 15-minute scheduler
 ├── index.html
 ├── package.json
 ├── package-lock.json
@@ -123,12 +132,16 @@ Live protocol listing does not equal CofferHouse approval. Markets remain in `RE
 
 The application code lives in `src/`. No contracts are required for the read-only prototype.
 
+See [Production deployment](docs/DEPLOYMENT.md) to activate durable memory, the protected 15-minute agent scheduler, operator acknowledgment, and optional alerts or bounded Gemini briefings.
+
+See the [hackathon submission brief](docs/HACKATHON_SUBMISSION.md) for the concise agent explanation, trust model, limitations, and three-minute demo sequence.
+
 ## Official links
 
 - X: [@TheCofferHouse](https://x.com/TheCofferHouse)
 - Scout: [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/)
 - CofferHouse website: coming soon
-- Public documentation: coming soon
+- Public documentation: included in this repository
 - Contracts: not deployed
 
 ## Important notice

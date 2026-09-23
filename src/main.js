@@ -3,18 +3,20 @@ import { demoMarkets } from "./markets.js";
 import { fetchMorphoArcMarkets } from "./morpho.js";
 import { evaluateMarket, policyProfiles } from "./policy.js";
 import { scanMarkets } from "./agent.js";
-import { createScoutReceipt, createSimulationReceipt, downloadScoutReceipt } from "./receipt.js";
+import { createScoutReceipt, createSimulationReceipt, downloadScoutReceipt, verifyReceiptDocument } from "./receipt.js";
 import { simulateBorrow, suggestedBorrowAmount } from "./simulator.js";
 import { compareMarketSnapshots } from "./monitor.js";
 import { addMonitorObservation, clearMonitorHistory, loadMonitorHistory, saveMonitorHistory } from "./history.js";
 import { loadAlertLimits, saveAlertLimits } from "./alert-limits.js";
+import { advanceAgentState, agentDecision, createAgentRuntimeState } from "./agent-runtime.js";
+import { escapeHtml as h, safeExternalUrl } from "./html.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const formatMoney = (value) => value === null || value === undefined ? "Unavailable" : money.format(value);
 const formatPct = (value, digits = 1) => value === null || value === undefined ? "Unavailable" : `${value.toFixed(digits)}%`;
 const shortId = (value) => value && value.startsWith("0x") && value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value || "Unavailable";
 const explorerAddress = (address) => address ? `https://arc.etherscan.io/address/${address}` : null;
-const identityValue = (label, value, url = null) => `<div><span>${label}</span>${url ? `<a href="${url}" target="_blank" rel="noreferrer" title="${value}">${shortId(value)} ↗</a>` : `<b title="${value || ""}">${shortId(value)}</b>`}</div>`;
+const identityValue = (label, value, url = null) => `<div><span>${h(label)}</span>${url ? `<a href="${h(safeExternalUrl(url))}" target="_blank" rel="noreferrer" title="${h(value)}">${h(shortId(value))} ↗</a>` : `<b title="${h(value || "")}">${h(shortId(value))}</b>`}</div>`;
 const app = document.querySelector("#app");
 let markets = demoMarkets;
 let selectedId = markets[0].id;
@@ -28,6 +30,13 @@ let simulationHasRun = false;
 let monitoring = { state: "baseline", materialChanges: 0, changes: [] };
 let monitoringHistory = loadMonitorHistory(window.localStorage);
 let alertLimits = loadAlertLimits(window.localStorage);
+let runtimeState = createAgentRuntimeState();
+let runtimeIntervalMinutes = 5;
+let runtimeTimer = null;
+let serverRuntime = { mode: "checking", configured: false, capabilities: {}, status: null, history: [], acknowledgment: null };
+let receiptVerification = null;
+
+const runtimeTime = (value) => value ? new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
 
 function valueFor(ruleItem) {
   if (ruleItem.value === null || ruleItem.value === undefined) return "Unavailable";
@@ -61,7 +70,7 @@ function render() {
           <h1>See the risk<br><em>before</em> the move.</h1>
           <p class="intro">Scout compares tokenized assets and crypto markets on Arc using visible, deterministic rules. No black box. No custody. No execution.</p>
         </div>
-        <aside class="hero-note ${feedState.mode}"><b>${feedState.mode === "live" ? "LIVE ARC DATA" : feedState.mode === "loading" ? "CONNECTING" : "SAFE FALLBACK"}</b><p>${feedState.message}</p></aside>
+        <aside class="hero-note ${feedState.mode}"><b>${feedState.mode === "live" ? "LIVE ARC DATA" : feedState.mode === "loading" ? "CONNECTING" : "SAFE FALLBACK"}</b><p>${h(feedState.message)}</p></aside>
       </section>
 
       <section class="agent-panel" aria-labelledby="agent-title">
@@ -69,9 +78,16 @@ function render() {
           <div><p class="eyebrow">BOUNDED AGENT · NO EXECUTION</p><h2 id="agent-title">Scout every market.</h2><p>The agent applies the same public policy to every observation, ranks the results and exposes the first reason that needs attention.</p></div>
           <div class="agent-actions">
             <button class="receipt-button" type="button">DOWNLOAD RECEIPT</button>
+            <button class="verify-receipt-button" type="button">VERIFY RECEIPT FILE</button>
+            <input class="receipt-file-input" type="file" accept="application/json,.json" hidden>
             <button class="scan-button" type="button" ${agentState === "scanning" ? "disabled" : ""}>${agentState === "scanning" ? "SCANNING…" : "RUN NEW SCAN"}</button>
           </div>
         </div>
+        ${receiptVerification ? `<div class="receipt-verification ${receiptVerification.valid ? "valid" : "invalid"}" role="status">
+          <div><span>RECEIPT FILE VERIFICATION</span><b>${receiptVerification.valid ? "AUTHENTIC CONTENT" : "VERIFICATION FAILED"}</b></div>
+          <p>${h(receiptVerification.reason)}${receiptVerification.fileName ? ` File: ${h(receiptVerification.fileName)}.` : ""}</p>
+          ${receiptVerification.computedHash ? `<code>SHA-256 ${h(receiptVerification.computedHash)}</code>` : ""}
+        </div>` : ""}
         <div class="policy-selector">
           <label for="policy-profile"><span>ACTIVE POLICY PROFILE</span><b>${activePolicy.name}</b><small>${activePolicy.description}</small></label>
           <select id="policy-profile" aria-label="Risk policy profile">
@@ -85,10 +101,37 @@ function render() {
           <div class="review"><span>REVIEW</span><b>${agentScan.counts.REVIEW}</b></div>
           <div class="reject"><span>REJECT</span><b>${agentScan.counts.REJECT}</b></div>
         </div>
+        <div class="agent-runtime ${runtimeState.enabled ? "armed" : ""}">
+          <div class="runtime-title"><span>AGENT MODE · SESSION RUNTIME</span><b>${runtimeState.enabled ? "AUTONOMOUS MONITORING ON" : "AUTONOMOUS MONITORING OFF"}</b><small>Observe → evaluate → decide → record. No execution authority.</small></div>
+          <div class="runtime-status"><span>CURRENT PHASE</span><b>${h(runtimeState.phase)}</b><small>${h(runtimeState.lastDecision)}</small></div>
+          <div class="runtime-metric"><span>CYCLES</span><b>${runtimeState.cycles}</b><small>Last ${runtimeTime(runtimeState.lastRunAt)}</small></div>
+          <div class="runtime-metric"><span>NEXT RUN</span><b>${runtimeTime(runtimeState.nextRunAt)}</b><small>While this page remains open</small></div>
+          <label class="runtime-frequency">FREQUENCY<select id="runtime-frequency"><option value="1" ${runtimeIntervalMinutes === 1 ? "selected" : ""}>Every 1 min</option><option value="5" ${runtimeIntervalMinutes === 5 ? "selected" : ""}>Every 5 min</option><option value="15" ${runtimeIntervalMinutes === 15 ? "selected" : ""}>Every 15 min</option></select></label>
+          <button class="runtime-toggle" type="button">${runtimeState.enabled ? "STOP AGENT" : "START AGENT"}</button>
+        </div>
+        <div class="server-runtime ${serverRuntime.configured && serverRuntime.status && !serverRuntime.status.error ? "online" : serverRuntime.status?.error ? "degraded" : "setup"}">
+          <div><span>SERVER AGENT · 24/7 CORE</span><b>${serverRuntime.mode === "checking" ? "CHECKING RUNTIME…" : serverRuntime.configured ? (serverRuntime.status?.error ? "AGENT DEGRADED · SOURCE FAILURE" : serverRuntime.status ? "DURABLE AGENT ONLINE" : "READY FOR FIRST SCHEDULED RUN") : "DEPLOYMENT SETUP REQUIRED"}</b></div>
+          <div><span>LAST SERVER RUN</span><b>${runtimeTime(serverRuntime.status?.ranAt)}</b></div>
+          <div><span>${serverRuntime.status?.error ? "LAST SOURCE DIAGNOSTIC" : "LAST DECISION"}</span><b>${h(serverRuntime.status?.error ? `${serverRuntime.status.source?.provider ?? "DATA SOURCE"} · ${serverRuntime.status.source?.code ?? "ERROR"}` : serverRuntime.status?.decision?.action ?? "—")}</b><small>${h(serverRuntime.status?.error ?? serverRuntime.status?.decision?.reason ?? "Connect the protected durable store to activate unattended history.")}</small></div>
+          <div><span>DURABLE HISTORY</span><b>${serverRuntime.history?.length ?? 0} CYCLES</b><small>Stored independently of this browser</small></div>
+          ${serverRuntime.status?.verification ? `<div class="rpc-verification ${h(serverRuntime.status.verification.status)}"><span>INDEPENDENT ARC RPC CHECK</span><b>${h(serverRuntime.status.verification.status.toUpperCase())}</b><small>${serverRuntime.status.verification.status === "verified" ? `${h(serverRuntime.status.verification.marketsVerified)} / ${h(serverRuntime.status.verification.marketCount)} markets · ${h(serverRuntime.status.verification.contractsChecked)} unique contracts contain bytecode` : h(serverRuntime.status.verification.error ?? "Some market contracts could not be independently confirmed.")}</small></div>` : ""}
+          ${serverRuntime.status?.trace?.length ? `<div class="execution-trace"><span>LAST AGENT EXECUTION TRACE</span><ol>${serverRuntime.status.trace.map((step) => `<li class="${h(step.status.toLowerCase())}"><b>${h(step.phase)}</b><small>${h(step.status)} · ${h(step.detail)}</small></li>`).join("")}</ol></div>` : ""}
+          <div class="runtime-capabilities"><span>DEPLOYMENT CAPABILITIES</span><div>${[
+            ["MEMORY", serverRuntime.capabilities?.durableMemory],
+            ["SCHEDULER", serverRuntime.capabilities?.protectedScheduler],
+            ["ALERTS", serverRuntime.capabilities?.outboundAlerts],
+            ["GEMINI", serverRuntime.capabilities?.boundedIntelligence],
+            ["HUMAN ACK", serverRuntime.capabilities?.humanAcknowledgment],
+            ["ARC RPC", serverRuntime.capabilities?.arcRpcVerification],
+            ["ARC ANCHOR", serverRuntime.capabilities?.onchainAnchor]
+          ].map(([label, enabled]) => `<b class="${enabled ? "ready" : "optional"}">${label} · ${enabled ? "READY" : "OFF"}</b>`).join("")}</div></div>
+          ${serverRuntime.status?.intelligence ? `<div class="server-analysis"><span>BOUNDED INTELLIGENCE · ${serverRuntime.status.intelligence.source === "gemini" ? "GEMINI" : "DETERMINISTIC"}</span><b>${h(serverRuntime.status.intelligence.priority)} · ${h(serverRuntime.status.intelligence.recommendedAction)}</b><small>${h(serverRuntime.status.intelligence.summary)}</small></div>` : ""}
+          ${serverRuntime.status?.alert ? `<div class="operator-review"><span>HUMAN OVERSIGHT</span><b>${serverRuntime.acknowledgment?.fingerprint === serverRuntime.status.alert.fingerprint ? `ACKNOWLEDGED BY ${h(serverRuntime.acknowledgment.operator)}` : "OPERATOR ACKNOWLEDGMENT REQUIRED"}</b><small>${serverRuntime.acknowledgment?.fingerprint === serverRuntime.status.alert.fingerprint ? `${runtimeTime(serverRuntime.acknowledgment.acknowledgedAt)} · ${h(serverRuntime.acknowledgment.note || "No note")}` : "A protected operator token is required. The agent cannot acknowledge itself."}</small>${serverRuntime.acknowledgment?.fingerprint === serverRuntime.status.alert.fingerprint ? "" : `<button class="acknowledge-alert" type="button" data-fingerprint="${h(serverRuntime.status.alert.fingerprint)}">ACKNOWLEDGE ALERT</button>`}</div>` : ""}
+        </div>
         <div class="monitoring">
           <div><span>SNAPSHOT MONITOR</span><b>${monitoring.state === "compared" ? `${monitoring.materialChanges} MATERIAL CHANGE${monitoring.materialChanges === 1 ? "" : "S"}` : "BASELINE READY"}</b></div>
-          <p>${monitoring.state === "compared" ? (monitoring.changes[0]?.message ?? "No material liquidity, utilization or policy changes detected.") : "Run a new scan to compare fresh Arc data against this snapshot."}</p>
-          ${monitoring.state === "compared" && monitoring.changes.length ? `<div class="monitor-list">${monitoring.changes.slice(0, 4).map((change) => `<button type="button" data-id="morpho-${change.marketId}" class="monitor-item ${change.level}"><b>${change.market}</b><span>${change.message}</span></button>`).join("")}</div>` : ""}
+          <p>${h(monitoring.state === "compared" ? (monitoring.changes[0]?.message ?? "No material liquidity, utilization or policy changes detected.") : "Run a new scan to compare fresh Arc data against this snapshot.")}</p>
+          ${monitoring.state === "compared" && monitoring.changes.length ? `<div class="monitor-list">${monitoring.changes.slice(0, 4).map((change) => `<button type="button" data-id="morpho-${h(change.marketId)}" class="monitor-item ${change.level}"><b>${h(change.market)}</b><span>${h(change.message)}</span></button>`).join("")}</div>` : ""}
           <form class="alert-limits">
             <span>CHANGE ALERT LIMITS</span>
             <label>LIQUIDITY CHANGE %<input name="liquidity" type="number" min="0.1" step="0.1" value="${alertLimits.liquidityChangePct}"></label>
@@ -98,27 +141,27 @@ function render() {
           <div class="history-head"><span>HISTORICAL OBSERVATIONS · THIS BROWSER</span>${monitoringHistory.length ? `<button class="clear-history" type="button">CLEAR</button>` : ""}</div>
           <div class="history-list">
             ${monitoringHistory.length ? monitoringHistory.map((entry) => `<details class="history-entry" ${entry === monitoringHistory[0] ? "open" : ""}>
-              <summary><time>${new Date(entry.scannedAt).toLocaleString()}</time><b>${entry.materialChanges} MATERIAL CHANGE${entry.materialChanges === 1 ? "" : "S"}</b></summary>
-              <div>${entry.changes.length ? entry.changes.map((change) => `<p><strong>${change.market}</strong><span>${change.message}</span></p>`).join("") : `<p><span>No material changes detected in this scan.</span></p>`}</div>
+              <summary><time>${h(new Date(entry.scannedAt).toLocaleString())}</time><b>${entry.materialChanges} MATERIAL CHANGE${entry.materialChanges === 1 ? "" : "S"}</b></summary>
+              <div>${entry.changes.length ? entry.changes.map((change) => `<p><strong>${h(change.market)}</strong><span>${h(change.message)}</span></p>`).join("") : `<p><span>No material changes detected in this scan.</span></p>`}</div>
             </details>`).join("") : `<p class="history-empty">Run another scan to create the first comparison record.</p>`}
           </div>
         </div>
         <div class="agent-ranking">
-          ${agentScan.ranked.map((item, index) => `<button class="agent-market" data-id="${item.market.id}" type="button">
+          ${agentScan.ranked.map((item, index) => `<button class="agent-market" data-id="${h(item.market.id)}" type="button">
             <span class="rank-number">${String(index + 1).padStart(2, "0")}</span>
-            <span><b>${item.market.name}</b><small class="market-id">ID ${shortId(item.market.marketId)}</small><small>${item.reason}</small></span>
+            <span><b>${h(item.market.name)}</b><small class="market-id">ID ${h(shortId(item.market.marketId))}</small><small>${h(item.reason)}</small></span>
             <strong class="rank-status ${item.report.status.toLowerCase()}">${item.report.status} · ${item.report.score}</strong>
           </button>`).join("")}
         </div>
-        <footer><span>RECEIPT ${receipt.receiptId} · ${activePolicy.version}</span><span>${agentScan.actionable} market${agentScan.actionable === 1 ? "" : "s"} currently clear every active check</span></footer>
+        <footer><span>RECEIPT ${receipt.receiptId} · SHA-256 ${receipt.integrity.contentHash.slice(0, 12)}…</span><span>${receiptVerification ? (receiptVerification.valid ? "✓ RECEIPT VERIFIED" : "× RECEIPT INVALID") : `${agentScan.actionable} market${agentScan.actionable === 1 ? "" : "s"} currently clear every active check`}</span></footer>
       </section>
 
       <section class="workspace">
         <nav class="market-list" aria-label="Markets">
           <div class="section-label">SELECT A MARKET</div>
-          ${markets.map((item) => `<button class="market-button ${item.id === selectedId ? "active" : ""}" data-id="${item.id}">
-            <span class="asset-icon">${item.symbol.slice(0, 2)}</span>
-            <span><b>${item.name}</b><small>${item.protocol} · ${item.category}</small><small class="market-id">ID ${shortId(item.marketId)}</small></span>
+          ${markets.map((item) => `<button class="market-button ${item.id === selectedId ? "active" : ""}" data-id="${h(item.id)}">
+            <span class="asset-icon">${h(item.symbol.slice(0, 2))}</span>
+            <span><b>${h(item.name)}</b><small>${h(item.protocol)} · ${h(item.category)}</small><small class="market-id">ID ${h(shortId(item.marketId))}</small></span>
             <span class="chevron">→</span>
           </button>`).join("")}
           <div class="policy-card"><span>POLICY</span><b>${activePolicy.version}</b><small>8 deterministic checks</small></div>
@@ -126,11 +169,11 @@ function render() {
 
         <article class="report">
           <div class="report-head">
-            <div><span class="category">${market.category}</span><h2>${market.name}</h2><p>${market.protocol} · ${market.network}</p></div>
+            <div><span class="category">${h(market.category)}</span><h2>${h(market.name)}</h2><p>${h(market.protocol)} · ${h(market.network)}</p></div>
             <div class="verdict ${report.status.toLowerCase()}"><span>${report.status}</span><b>${report.score}</b><small>/ 100</small></div>
           </div>
 
-          <div class="summary ${report.status.toLowerCase()}"><b>${report.summary}</b><span>${market.note}</span></div>
+          <div class="summary ${report.status.toLowerCase()}"><b>${h(report.summary)}</b><span>${h(market.note)}</span></div>
 
           <div class="metrics">
             <div><span>LIQUIDITY</span><b>${formatMoney(market.liquidityUsd)}</b></div>
@@ -154,7 +197,7 @@ function render() {
               ${profileComparison.map(({ profile, report: profileReport }) => `<div class="comparison-card ${profile.id === selectedPolicyId ? "active" : ""}">
                 <span>${profile.name}</span>
                 <b class="${profileReport.status.toLowerCase()}">${profileReport.status} · ${profileReport.score}</b>
-                <small>${profileReport.warnings[0]?.detail ?? "Every active check passed."}</small>
+                <small>${h(profileReport.warnings[0]?.detail ?? "Every active check passed.")}</small>
               </div>`).join("")}
             </div>
           </section>
@@ -184,15 +227,15 @@ function render() {
           <div class="checks">
             ${report.rules.map((item) => `<div class="check">
               <span class="signal ${item.outcome}">${item.outcome === "pass" ? "✓" : item.outcome === "review" ? "!" : "×"}</span>
-              <div><b>${item.label}</b><small>${item.detail}</small></div>
-              <strong>${valueFor(item)}</strong>
+              <div><b>${h(item.label)}</b><small>${h(item.detail)}</small></div>
+              <strong>${h(valueFor(item))}</strong>
             </div>`).join("")}
           </div>
 
           <footer class="source-row">
-            <div><span>SOURCE</span><b>${market.source}</b></div>
-            <div><span>OBSERVED</span><b>${market.observedAt}</b></div>
-            <a href="${market.sourceUrl}" target="_blank" rel="noreferrer">Open Arc explorer ↗</a>
+            <div><span>SOURCE</span><b>${h(market.source)}</b></div>
+            <div><span>OBSERVED</span><b>${h(market.observedAt)}</b></div>
+            <a href="${h(safeExternalUrl(market.sourceUrl))}" target="_blank" rel="noreferrer">Open Arc explorer ↗</a>
           </footer>
         </article>
       </section>
@@ -220,6 +263,22 @@ function render() {
     document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
   document.querySelector(".scan-button")?.addEventListener("click", () => refreshMarkets());
+  document.querySelector("#runtime-frequency")?.addEventListener("change", (event) => {
+    runtimeIntervalMinutes = Number(event.target.value);
+    if (runtimeState.enabled) scheduleAgentCycle();
+    render();
+  });
+  document.querySelector(".runtime-toggle")?.addEventListener("click", () => {
+    runtimeState = advanceAgentState(runtimeState, runtimeState.enabled ? "STOP" : "START");
+    if (runtimeState.enabled) {
+      scheduleAgentCycle();
+      refreshMarkets({ agentCycle: true });
+    } else {
+      clearInterval(runtimeTimer);
+      runtimeTimer = null;
+    }
+    render();
+  });
   document.querySelector(".clear-history")?.addEventListener("click", () => {
     monitoringHistory = clearMonitorHistory(window.localStorage);
     render();
@@ -235,8 +294,21 @@ function render() {
     render();
   });
   document.querySelector(".receipt-button")?.addEventListener("click", () => downloadScoutReceipt(receipt));
+  document.querySelector(".verify-receipt-button")?.addEventListener("click", () => document.querySelector(".receipt-file-input")?.click());
+  document.querySelector(".receipt-file-input")?.addEventListener("change", async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const importedReceipt = JSON.parse(await file.text());
+      receiptVerification = { ...verifyReceiptDocument(importedReceipt), fileName: file.name };
+    } catch {
+      receiptVerification = { valid: false, reason: "The selected file is not valid JSON.", fileName: file.name };
+    }
+    render();
+  });
   document.querySelector("#policy-profile")?.addEventListener("change", (event) => {
     selectedPolicyId = event.target.value;
+    receiptVerification = null;
     activePolicy = policyProfiles[selectedPolicyId];
     agentScan = scanMarkets(markets, (item) => evaluateMarket(item, activePolicy));
     monitoring = { state: "baseline", materialChanges: 0, changes: [] };
@@ -250,16 +322,41 @@ function render() {
     render();
   });
   document.querySelector(".simulation-download")?.addEventListener("click", () => downloadScoutReceipt(simulationReceipt));
+  document.querySelector(".acknowledge-alert")?.addEventListener("click", async (event) => {
+    const operator = window.prompt("Operator name");
+    if (!operator) return;
+    const token = window.prompt("Protected operator token (not stored)");
+    if (!token) return;
+    const note = window.prompt("Review note (optional)") ?? "";
+    const response = await fetch("/api/agent/acknowledge", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ fingerprint: event.currentTarget.dataset.fingerprint, operator, note })
+    });
+    const result = await response.json();
+    if (!response.ok) window.alert(result.error ?? "Acknowledgment failed.");
+    await loadServerRuntimeStatus();
+  });
 }
 
-async function refreshMarkets() {
+function scheduleAgentCycle() {
+  clearInterval(runtimeTimer);
+  const delay = runtimeIntervalMinutes * 60_000;
+  runtimeState = { ...runtimeState, nextRunAt: new Date(Date.now() + delay).toISOString() };
+  runtimeTimer = setInterval(() => refreshMarkets({ agentCycle: true }), delay);
+}
+
+async function refreshMarkets({ agentCycle = false } = {}) {
+  receiptVerification = null;
   const previousLiveMarkets = markets.every((market) => market.dataMode === "live") ? markets : null;
+  if (agentCycle) runtimeState = advanceAgentState(runtimeState, "OBSERVE");
   agentState = "scanning";
   feedState = { mode: "loading", message: "Scout Agent is requesting a fresh Arc market snapshot…" };
   render();
 
   try {
     const liveMarkets = await fetchMorphoArcMarkets();
+    if (agentCycle) runtimeState = advanceAgentState(runtimeState, "EVALUATE");
     markets = liveMarkets;
     if (previousLiveMarkets) {
       const comparison = compareMarketSnapshots(previousLiveMarkets, liveMarkets, activePolicy, evaluateMarket, alertLimits);
@@ -274,6 +371,14 @@ async function refreshMarkets() {
       simulationAmount = suggestedBorrowAmount(liveMarkets[0]);
     }
     agentScan = scanMarkets(liveMarkets, (market) => evaluateMarket(market, activePolicy));
+    if (agentCycle) {
+      const decision = agentDecision(monitoring.state === "compared" ? monitoring : { changes: [] }, agentScan);
+      runtimeState = advanceAgentState(runtimeState, "DECIDE", { decision });
+      runtimeState = advanceAgentState(runtimeState, "RECORDED", {
+        decision,
+        nextRunAt: runtimeState.enabled ? new Date(Date.now() + runtimeIntervalMinutes * 60_000).toISOString() : null
+      });
+    }
     feedState = { mode: "live", message: `${liveMarkets.length} listed Morpho markets loaded from Arc mainnet.` };
   } catch (error) {
     console.warn("Scout live adapter unavailable:", error);
@@ -282,11 +387,25 @@ async function refreshMarkets() {
     selectedId = markets[0].id;
     agentScan = scanMarkets(markets, (market) => evaluateMarket(market, activePolicy));
     feedState = { mode: "fallback", message: "Live data is unavailable. Showing clearly labeled demonstration observations." };
+    if (agentCycle) runtimeState = advanceAgentState(runtimeState, "FAIL", { error: error.message });
   } finally {
     agentState = "idle";
     render();
   }
 }
 
+async function loadServerRuntimeStatus() {
+  try {
+    const response = await fetch("/api/agent/status", { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error(`Status request failed (${response.status}).`);
+    const payload = await response.json();
+    serverRuntime = { mode: "ready", configured: payload.configured === true, capabilities: payload.capabilities ?? {}, status: payload.status, history: payload.history ?? [], acknowledgment: payload.acknowledgment ?? null };
+  } catch {
+    serverRuntime = { mode: "unavailable", configured: false, capabilities: {}, status: null, history: [], acknowledgment: null };
+  }
+  render();
+}
+
 render();
 refreshMarkets();
+loadServerRuntimeStatus();

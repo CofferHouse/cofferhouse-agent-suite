@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fetchMorphoArcMarkets, normalizeMorphoMarket } from "../src/morpho.js";
+import { fetchMorphoArcMarkets, MarketDataSourceError, normalizeMorphoMarket } from "../src/morpho.js";
 
 const apiMarket = {
   marketId: "0xmarket",
@@ -48,4 +48,27 @@ test("requests only listed Arc markets", async () => {
 test("fails safely when the API returns no Arc markets", async () => {
   const fakeFetch = async () => ({ ok: true, json: async () => ({ data: { markets: { items: [] } } }) });
   await assert.rejects(() => fetchMorphoArcMarkets(fakeFetch), /No listed Morpho markets/);
+});
+
+test("classifies provider HTTP failures for agent diagnostics", async () => {
+  const fakeFetch = async () => ({ ok: false, status: 503 });
+  await assert.rejects(() => fetchMorphoArcMarkets(fakeFetch), (error) => {
+    assert.ok(error instanceof MarketDataSourceError);
+    assert.equal(error.provider, "Morpho API");
+    assert.equal(error.code, "http_error");
+    assert.equal(error.retryable, true);
+    assert.equal(error.status, 503);
+    return true;
+  });
+});
+
+test("classifies a provider timeout as retryable", async () => {
+  const fakeFetch = async (_url, { signal }) => new Promise((_resolve, reject) => {
+    signal.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" })));
+  });
+  await assert.rejects(() => fetchMorphoArcMarkets(fakeFetch, { timeoutMs: 5 }), (error) => {
+    assert.equal(error.code, "timeout");
+    assert.equal(error.retryable, true);
+    return true;
+  });
 });

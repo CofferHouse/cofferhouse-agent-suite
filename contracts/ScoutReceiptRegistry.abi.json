@@ -1,0 +1,34 @@
+[
+  {
+    "type": "function",
+    "name": "anchorReceipt",
+    "stateMutability": "nonpayable",
+    "inputs": [{ "name": "contentHash", "type": "bytes32" }, { "name": "policyHash", "type": "bytes32" }],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "isAnchored",
+    "stateMutability": "view",
+    "inputs": [{ "name": "contentHash", "type": "bytes32" }],
+    "outputs": [{ "name": "", "type": "bool" }]
+  },
+  {
+    "type": "function",
+    "name": "anchors",
+    "stateMutability": "view",
+    "inputs": [{ "name": "contentHash", "type": "bytes32" }],
+    "outputs": [{ "name": "publisher", "type": "address" }, { "name": "anchoredAt", "type": "uint64" }, { "name": "policyHash", "type": "bytes32" }]
+  },
+  {
+    "type": "event",
+    "name": "ReceiptAnchored",
+    "anonymous": false,
+    "inputs": [
+      { "name": "contentHash", "type": "bytes32", "indexed": true },
+      { "name": "policyHash", "type": "bytes32", "indexed": true },
+      { "name": "publisher", "type": "address", "indexed": true },
+      { "name": "anchoredAt", "type": "uint64", "indexed": false }
+    ]
+  }
+]

@@ -28,6 +28,16 @@ CofferHouse uses readiness checks instead of artificial dates. The following pha
 - Historical observations (browser-local MVP implemented)
 - Read-only borrow simulation (MVP implemented)
 - User-defined monitoring limits (MVP implemented)
+- Session-scoped autonomous agent loop (implemented)
+- Server-scheduled runtime and durable shared memory (implementation complete; deployment credentials required)
+- Outbound alert delivery with deterministic deduplication (implementation complete; webhook required)
+- Bounded Gemini incident analysis with deterministic fallback (implementation complete; API key optional)
+- SHA-256 tamper-evident Scout and simulation receipts (implemented)
+- Optional Arc mainnet receipt-hash anchoring
+- Protected operator acknowledgment with durable audit history (implemented)
+- Explicit six-step server execution trace (implemented)
+- Retryable provider recovery and public readiness endpoint (implemented)
+- Independent Arc RPC contract-code verification (implemented; RPC credential required)
 
 ## Phase 3 — Bounded Tools
 
