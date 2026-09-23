@@ -22,6 +22,7 @@ let activePolicy = policyProfiles[selectedPolicyId];
 let agentScan = scanMarkets(markets, (market) => evaluateMarket(market, activePolicy));
 let agentState = "idle";
 let simulationAmount = 100_000;
+let simulationHasRun = false;
 let monitoring = { state: "baseline", materialChanges: 0, changes: [] };
 
 function valueFor(ruleItem) {
@@ -37,8 +38,8 @@ function render() {
   activePolicy = policyProfiles[selectedPolicyId];
   const report = evaluateMarket(market, activePolicy);
   const profileComparison = Object.values(policyProfiles).map((profile) => ({ profile, report: evaluateMarket(market, profile) }));
-  const simulation = simulateBorrow(market, simulationAmount, activePolicy);
-  const simulationReceipt = simulation.ok ? createSimulationReceipt(market, simulation, activePolicy) : null;
+  const simulation = simulationHasRun ? simulateBorrow(market, simulationAmount, activePolicy) : null;
+  const simulationReceipt = simulation?.ok ? createSimulationReceipt(market, simulation, activePolicy) : null;
   const receipt = createScoutReceipt(agentScan, activePolicy);
   app.innerHTML = `
     <header class="topbar">
@@ -149,11 +150,14 @@ function render() {
             </div>
             <form class="simulation-form">
               <label for="borrow-amount">USD EQUIVALENT</label>
-              <div><input id="borrow-amount" name="amount" type="number" min="0.01" step="any" value="${simulationAmount}"><button type="submit">SIMULATE</button>${simulationReceipt ? `<button class="simulation-download" type="button">DOWNLOAD SIMULATION</button>` : ""}</div>
+              <div><input id="borrow-amount" name="amount" type="number" min="0.01" step="any" value="${simulationAmount}"><button type="submit">${simulationHasRun ? "SIMULATED ✓" : "SIMULATE"}</button>${simulationReceipt ? `<button class="simulation-download" type="button">DOWNLOAD SIMULATION</button>` : ""}</div>
             </form>
-            ${simulation.ok ? `<div class="simulation-results">
+            ${!simulationHasRun ? `<p class="simulation-pending">Enter an amount and press SIMULATE to generate a projected market state.</p>` : simulation.ok ? `<div class="simulation-outcome ${simulation.before.report.status === simulation.after.report.status ? "unchanged" : "changed"}">
+              <b>SIMULATION RESULT · ${formatMoney(simulation.amountUsd)}</b>
+              <span>A ${formatMoney(simulation.amountUsd)} hypothetical borrow reduces available liquidity by ${formatMoney(simulation.amountUsd)} and changes utilization by ${(simulation.after.utilizationPct - simulation.before.utilizationPct).toFixed(4)} percentage points. Policy result ${simulation.before.report.status === simulation.after.report.status ? `remains ${simulation.after.report.status}` : `changes from ${simulation.before.report.status} to ${simulation.after.report.status}`}.</span>
+            </div><div class="simulation-results">
               <div><span>AVAILABLE LIQUIDITY</span><b>${formatMoney(simulation.before.liquidityUsd)}</b><i>→</i><strong>${formatMoney(simulation.after.liquidityUsd)}</strong></div>
-              <div><span>UTILIZATION</span><b>${formatPct(simulation.before.utilizationPct)}</b><i>→</i><strong>${formatPct(simulation.after.utilizationPct)}</strong></div>
+              <div><span>UTILIZATION</span><b>${formatPct(simulation.before.utilizationPct, 3)}</b><i>→</i><strong>${formatPct(simulation.after.utilizationPct, 3)}</strong></div>
               <div><span>POLICY RESULT</span><b class="${simulation.before.report.status.toLowerCase()}">${simulation.before.report.status}</b><i>→</i><strong class="${simulation.after.report.status.toLowerCase()}">${simulation.after.report.status} · ${simulation.after.report.score}</strong></div>
             </div>` : `<p class="simulation-error">${simulation.error}</p>`}
             <div class="simulation-foot"><small class="simulation-notice">Simulation only · No custody · No signature · No transaction</small></div>
@@ -180,15 +184,18 @@ function render() {
 
   document.querySelectorAll(".market-button").forEach((button) => button.addEventListener("click", () => {
     selectedId = button.dataset.id;
+    simulationHasRun = false;
     render();
   }));
   document.querySelectorAll(".agent-market").forEach((button) => button.addEventListener("click", () => {
     selectedId = button.dataset.id;
+    simulationHasRun = false;
     render();
     document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
   document.querySelectorAll(".monitor-item").forEach((button) => button.addEventListener("click", () => {
     selectedId = button.dataset.id;
+    simulationHasRun = false;
     render();
     document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
@@ -199,11 +206,13 @@ function render() {
     activePolicy = policyProfiles[selectedPolicyId];
     agentScan = scanMarkets(markets, (item) => evaluateMarket(item, activePolicy));
     monitoring = { state: "baseline", materialChanges: 0, changes: [] };
+    simulationHasRun = false;
     render();
   });
   document.querySelector(".simulation-form")?.addEventListener("submit", (event) => {
     event.preventDefault();
     simulationAmount = Number(new FormData(event.currentTarget).get("amount"));
+    simulationHasRun = true;
     render();
   });
   document.querySelector(".simulation-download")?.addEventListener("click", () => downloadScoutReceipt(simulationReceipt));
