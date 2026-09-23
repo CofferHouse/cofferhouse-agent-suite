@@ -1,13 +1,12 @@
 Upload the contents of this folder to the root of:
 https://github.com/CofferHouse/cofferhouse-scout
 
-Keep the folders exactly as provided and allow GitHub to replace the existing files.
+Keep the src folder and allow GitHub to replace the existing files.
 
 Files included:
+- index.html
 - src/main.js
 - src/styles.css
-- src/policy.js
-- public/brand/cofferhouse-arch-official.png
 
 Suggested commit message:
-fix: apply official CofferHouse branding
+fix: reuse official CofferHouse header wordmark
