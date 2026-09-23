@@ -1,0 +1,112 @@
+# CofferHouse Scout
+
+**Risk-aware market intelligence and bounded agents built on Arc.**
+
+CofferHouse Scout is the first working product planned for CofferHouse: a transparent research and risk layer that helps users inspect onchain markets before any capital is routed.
+
+> **Status:** Prototype v0.1 · The deterministic policy engine and interactive demonstration interface are working locally.
+
+## What Scout is designed to do
+
+Scout will:
+
+- discover supported markets on Arc;
+- normalize liquidity, utilization, yield and contract data;
+- apply explicit, configurable risk policies;
+- explain why a market passes, fails or requires review;
+- simulate a proposed action before execution;
+- keep the user in control of every transaction;
+- produce a traceable record of inputs, policies and results.
+
+The first version will be **read-only**. It will not custody funds, promise returns or execute autonomous strategies.
+
+## Why Arc
+
+Arc provides stablecoin-native infrastructure for programmable money, USDC-based transaction fees, deterministic settlement and agent-oriented tooling. Scout is intended to explore how bounded agents can make onchain financial decisions easier to inspect and safer to authorize.
+
+## MVP
+
+The hackathon MVP has one clear job:
+
+> Read a supported Arc market, evaluate it against a visible policy, and return an explainable risk report.
+
+See [MVP scope](docs/MVP.md) and [architecture](docs/ARCHITECTURE.md).
+
+## Principles
+
+1. **Community first** — development decisions and limitations are communicated publicly.
+2. **Explain before acting** — every score must show its inputs and reasoning.
+3. **Bounded by default** — agents operate only inside explicit user-defined limits.
+4. **Simulation first** — no transaction should be proposed without a preview.
+5. **No artificial launch dates** — features become live only after testing and review.
+6. **Security before automation** — execution and custody come after the research layer is proven.
+
+## Current status
+
+| Component | Status |
+|---|---|
+| Product specification | Initial scope complete |
+| Data-source selection | Arc RWA + USDC + cirBTC selected |
+| Market adapter | Demonstration adapter; live adapter next |
+| Risk-policy engine | Prototype complete |
+| Explanation layer | Prototype complete |
+| Web interface | Prototype complete |
+| Arc deployment | Not deployed |
+| Security review | Not started |
+
+## Run the prototype
+
+Requirements: Node.js 20 or newer.
+
+```bash
+npm install
+npm run dev
+```
+
+Then open the local URL printed by Vite. To verify the policy engine and create a production build:
+
+```bash
+npm test
+npm run build
+```
+
+The current three market observations are intentionally labeled as demonstration data. They exercise the complete `PASS`, `REVIEW` and `REJECT` flow without presenting simulated values as live Arc data.
+
+## Repository map
+
+```text
+.
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── MVP.md
+│   └── ROADMAP.md
+├── src/
+│   ├── main.js
+│   ├── markets.js
+│   ├── policy.js
+│   └── styles.css
+├── test/
+│   └── policy.test.js
+├── index.html
+├── package.json
+├── package-lock.json
+├── .env.example
+├── .gitignore
+├── CODE_OF_CONDUCT.md
+├── CONTRIBUTING.md
+├── SECURITY.md
+└── README.md
+```
+
+The application code lives in `src/`. No contracts are required for the read-only prototype.
+
+## Official links
+
+- X: [@TheCofferHouse](https://x.com/TheCofferHouse)
+- Website: coming soon
+- Public documentation: coming soon
+- Contracts: not deployed
+
+## Important notice
+
+CofferHouse Scout is experimental software under active development. It is not financial advice, does not guarantee the accuracy of third-party data and does not guarantee any return. Do not use unfinished software with funds you cannot afford to lose.
