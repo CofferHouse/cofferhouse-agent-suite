@@ -17,6 +17,8 @@ CofferHouse uses readiness checks instead of artificial dates. The following pha
 - Transparent policy engine
 - Explainable risk report
 - Public MVP deployment
+- Bounded all-market scan and ranking
+- Downloadable deterministic Scout Receipts
 
 ## Phase 2 — Scout: Monitor and Simulate
 
@@ -59,4 +61,3 @@ CofferHouse uses readiness checks instead of artificial dates. The following pha
 ## Separate ecosystem milestones
 
 Membership collection, ascension, `$COFFERS`, rewards and distribution rules will be documented separately. None of them are required for the Scout MVP.
-

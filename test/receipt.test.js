@@ -14,6 +14,6 @@ test("creates a complete, deterministic Scout receipt", () => {
   assert.equal(first.receiptId, second.receiptId);
   assert.equal(first.summary.total, 3);
   assert.equal(first.results.length, 3);
-  assert.equal(first.policy.version, "scout-live-0.2");
+  assert.equal(first.policy.version, "scout-balanced-0.3");
   assert.ok(first.results.every((result) => result.status && result.reason));
 });

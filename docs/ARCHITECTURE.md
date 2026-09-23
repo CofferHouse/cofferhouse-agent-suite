@@ -1,6 +1,6 @@
-# Proposed Architecture
+# Scout Architecture
 
-This document describes the intended MVP architecture. It is a proposal, not a deployed system.
+This document describes the deployed read-only MVP architecture and clearly separates implemented components from future work.
 
 ## Components
 
@@ -24,7 +24,15 @@ Converts the score breakdown and triggered policies into clear language. An AI-g
 
 Displays the market, score, inputs, sources, warnings and explorer links. Wallet connection is optional for the read-only MVP.
 
-### 6. Optional onchain record
+### 6. Bounded Scout Agent
+
+Runs the same versioned policy across every loaded market, ranks the results and exposes the first reason requiring attention. It cannot custody funds, sign transactions or override the deterministic policy result.
+
+### 7. Scout Receipt
+
+Exports a versioned JSON record containing the active policy, market observations, results, reasons and a deterministic receipt identifier. The receipt is an audit artifact, not an onchain attestation or cryptographic signature.
+
+### 8. Optional onchain record
 
 If useful for the hackathon, Scout may publish a compact record containing a report hash, policy version and timestamp. Raw market data should not be stored onchain unnecessarily.
 
@@ -56,18 +64,20 @@ docs/                  # Public specifications
 - `src/morpho.js` queries and normalizes listed Morpho markets on Arc chain ID `5042`.
 - `src/markets.js` contains normalized demonstration observations used only as a safe fallback.
 - `src/policy.js` contains the versioned deterministic policy and evaluation engine.
+- `src/agent.js` scans and ranks all normalized markets without execution permissions.
+- `src/receipt.js` creates the deterministic, downloadable Scout Receipt.
 - `src/main.js` renders the report and plain-language explanations.
+- `test/agent.test.js` verifies bounded ranking and explanation behavior.
 - `test/morpho.test.js` verifies API filtering, normalization and safe failure.
 - `test/policy.test.js` verifies PASS, REVIEW, REJECT and reproducibility.
+- `test/receipt.test.js` verifies receipt completeness and determinism.
 
 The live adapter is deliberately isolated from the policy engine. Provider outages fall back to visibly labeled demonstration observations, and missing live risk inputs are routed to `REVIEW` instead of being invented or silently treated as safe.
 
 ## Open technical decisions
 
-- first live supported Arc market and protocol;
-- direct RPC versus indexed data source;
+- direct RPC verification in addition to the indexed Morpho source;
 - whether the MVP needs a wallet connection;
 - whether a report hash should be written to Arc mainnet;
-- policy thresholds and their evidence;
-- deployment provider;
+- evidence and calibration for production policy thresholds;
 - final application stack.

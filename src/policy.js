@@ -1,14 +1,49 @@
-export const policy = {
-  version: "scout-live-0.2",
-  minLiquidityUsd: 5_000_000,
-  rejectLiquidityUsd: 1_000_000,
-  maxUtilizationPct: 80,
-  rejectUtilizationPct: 90,
-  maxDataAgeMinutes: 15,
-  minOracleCount: 2,
-  maxVolatilityPct: 55,
-  minCompletenessPct: 90
+export const policyProfiles = {
+  preservation: {
+    id: "preservation",
+    name: "Capital Preservation",
+    description: "Tighter liquidity, utilization and data-quality limits.",
+    version: "scout-preservation-0.3",
+    minLiquidityUsd: 10_000_000,
+    rejectLiquidityUsd: 2_000_000,
+    maxUtilizationPct: 70,
+    rejectUtilizationPct: 85,
+    maxDataAgeMinutes: 10,
+    minOracleCount: 2,
+    maxVolatilityPct: 35,
+    minCompletenessPct: 95
+  },
+  balanced: {
+    id: "balanced",
+    name: "Balanced",
+    description: "Default policy for general Arc market research.",
+    version: "scout-balanced-0.3",
+    minLiquidityUsd: 5_000_000,
+    rejectLiquidityUsd: 1_000_000,
+    maxUtilizationPct: 80,
+    rejectUtilizationPct: 90,
+    maxDataAgeMinutes: 15,
+    minOracleCount: 2,
+    maxVolatilityPct: 55,
+    minCompletenessPct: 90
+  },
+  yield: {
+    id: "yield",
+    name: "Yield Discovery",
+    description: "Wider research bounds without bypassing human review.",
+    version: "scout-yield-0.3",
+    minLiquidityUsd: 2_000_000,
+    rejectLiquidityUsd: 500_000,
+    maxUtilizationPct: 85,
+    rejectUtilizationPct: 95,
+    maxDataAgeMinutes: 30,
+    minOracleCount: 1,
+    maxVolatilityPct: 75,
+    minCompletenessPct: 85
+  }
 };
+
+export const policy = policyProfiles.balanced;
 
 const rule = (id, label, value, outcome, detail) => ({ id, label, value, outcome, detail });
 

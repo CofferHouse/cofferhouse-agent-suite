@@ -4,19 +4,24 @@
 
 CofferHouse Scout is the first working product planned for CofferHouse: a transparent research and risk layer that helps users inspect onchain markets before any capital is routed.
 
-> **Status:** Prototype v0.2 · Public deployment with a live, read-only Morpho market adapter for Arc.
+> **Status:** Public hackathon prototype · Live, read-only Morpho market intelligence on Arc mainnet.
+
+**Live demo:** [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/)
 
 ## What Scout is designed to do
 
-Scout will:
+Scout currently:
 
 - discover supported markets on Arc;
 - normalize liquidity, utilization, yield and contract data;
 - apply explicit, configurable risk policies;
+- switch between Capital Preservation, Balanced and Yield Discovery profiles;
 - explain why a market passes, fails or requires review;
-- simulate a proposed action before execution;
 - keep the user in control of every transaction;
-- produce a traceable record of inputs, policies and results.
+- scan and rank every loaded market through a bounded agent;
+- produce a downloadable Scout Receipt containing inputs, policy and results.
+
+Action simulation remains planned for the next development phase.
 
 The first version will be **read-only**. It will not custody funds, promise returns or execute autonomous strategies.
 
@@ -45,13 +50,17 @@ See [MVP scope](docs/MVP.md) and [architecture](docs/ARCHITECTURE.md).
 
 | Component | Status |
 |---|---|
-| Product specification | Initial scope complete |
+| Product specification | MVP scope complete |
 | Data-source selection | Arc RWA + USDC + cirBTC selected |
 | Market adapter | Live Morpho/Arc adapter with safe demo fallback |
 | Risk-policy engine | Prototype complete |
+| Transparent policy profiles | Live |
 | Explanation layer | Prototype complete |
 | Web interface | Prototype complete |
-| Arc deployment | Not deployed |
+| Bounded Scout Agent | Live |
+| Verifiable market identity | Live |
+| Downloadable Scout Receipt | Live |
+| Public deployment | Live on Vercel |
 | Security review | Not started |
 
 ## Run the prototype
@@ -84,13 +93,17 @@ Live protocol listing does not equal CofferHouse approval. Markets remain in `RE
 │   └── ROADMAP.md
 ├── src/
 │   ├── main.js
+│   ├── agent.js
 │   ├── markets.js
 │   ├── morpho.js
 │   ├── policy.js
+│   ├── receipt.js
 │   └── styles.css
 ├── test/
+│   ├── agent.test.js
 │   ├── morpho.test.js
-│   └── policy.test.js
+│   ├── policy.test.js
+│   └── receipt.test.js
 ├── index.html
 ├── package.json
 ├── package-lock.json
@@ -107,7 +120,8 @@ The application code lives in `src/`. No contracts are required for the read-onl
 ## Official links
 
 - X: [@TheCofferHouse](https://x.com/TheCofferHouse)
-- Website: coming soon
+- Scout: [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/)
+- CofferHouse website: coming soon
 - Public documentation: coming soon
 - Contracts: not deployed
 

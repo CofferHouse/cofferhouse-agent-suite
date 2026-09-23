@@ -1,7 +1,7 @@
 import "./styles.css";
 import { demoMarkets } from "./markets.js";
 import { fetchMorphoArcMarkets } from "./morpho.js";
-import { evaluateMarket, policy } from "./policy.js";
+import { evaluateMarket, policyProfiles } from "./policy.js";
 import { scanMarkets } from "./agent.js";
 import { createScoutReceipt, downloadScoutReceipt } from "./receipt.js";
 
@@ -14,8 +14,10 @@ const identityValue = (label, value, url = null) => `<div><span>${label}</span>$
 const app = document.querySelector("#app");
 let markets = demoMarkets;
 let selectedId = markets[0].id;
+let selectedPolicyId = "balanced";
 let feedState = { mode: "loading", message: "Connecting to Morpho on Arc…" };
-let agentScan = scanMarkets(markets);
+let activePolicy = policyProfiles[selectedPolicyId];
+let agentScan = scanMarkets(markets, (market) => evaluateMarket(market, activePolicy));
 let agentState = "idle";
 
 function valueFor(ruleItem) {
@@ -28,8 +30,9 @@ function valueFor(ruleItem) {
 
 function render() {
   const market = markets.find((item) => item.id === selectedId);
-  const report = evaluateMarket(market);
-  const receipt = createScoutReceipt(agentScan, policy);
+  activePolicy = policyProfiles[selectedPolicyId];
+  const report = evaluateMarket(market, activePolicy);
+  const receipt = createScoutReceipt(agentScan, activePolicy);
   app.innerHTML = `
     <header class="topbar">
       <a class="brand" href="#" aria-label="CofferHouse Scout">
@@ -57,6 +60,13 @@ function render() {
             <button class="scan-button" type="button" ${agentState === "scanning" ? "disabled" : ""}>${agentState === "scanning" ? "SCANNING…" : "RUN NEW SCAN"}</button>
           </div>
         </div>
+        <div class="policy-selector">
+          <label for="policy-profile"><span>ACTIVE POLICY PROFILE</span><b>${activePolicy.name}</b><small>${activePolicy.description}</small></label>
+          <select id="policy-profile" aria-label="Risk policy profile">
+            ${Object.values(policyProfiles).map((profile) => `<option value="${profile.id}" ${profile.id === selectedPolicyId ? "selected" : ""}>${profile.name}</option>`).join("")}
+          </select>
+          <code>${activePolicy.version}</code>
+        </div>
         <div class="agent-stats">
           <div><span>MARKETS</span><b>${agentScan.total}</b></div>
           <div class="pass"><span>PASS</span><b>${agentScan.counts.PASS}</b></div>
@@ -70,7 +80,7 @@ function render() {
             <strong class="rank-status ${item.report.status.toLowerCase()}">${item.report.status} · ${item.report.score}</strong>
           </button>`).join("")}
         </div>
-        <footer><span>RECEIPT ${receipt.receiptId} · ${policy.version}</span><span>${agentScan.actionable} market${agentScan.actionable === 1 ? "" : "s"} currently clear every active check</span></footer>
+        <footer><span>RECEIPT ${receipt.receiptId} · ${activePolicy.version}</span><span>${agentScan.actionable} market${agentScan.actionable === 1 ? "" : "s"} currently clear every active check</span></footer>
       </section>
 
       <section class="workspace">
@@ -81,7 +91,7 @@ function render() {
             <span><b>${item.name}</b><small>${item.protocol} · ${item.category}</small><small class="market-id">ID ${shortId(item.marketId)}</small></span>
             <span class="chevron">→</span>
           </button>`).join("")}
-          <div class="policy-card"><span>POLICY</span><b>${policy.version}</b><small>8 deterministic checks</small></div>
+          <div class="policy-card"><span>POLICY</span><b>${activePolicy.version}</b><small>8 deterministic checks</small></div>
         </nav>
 
         <article class="report">
@@ -138,6 +148,12 @@ function render() {
   }));
   document.querySelector(".scan-button")?.addEventListener("click", () => refreshMarkets());
   document.querySelector(".receipt-button")?.addEventListener("click", () => downloadScoutReceipt(receipt));
+  document.querySelector("#policy-profile")?.addEventListener("change", (event) => {
+    selectedPolicyId = event.target.value;
+    activePolicy = policyProfiles[selectedPolicyId];
+    agentScan = scanMarkets(markets, (item) => evaluateMarket(item, activePolicy));
+    render();
+  });
 }
 
 async function refreshMarkets() {
@@ -149,13 +165,13 @@ async function refreshMarkets() {
     const liveMarkets = await fetchMorphoArcMarkets();
     markets = liveMarkets;
     if (!markets.some((market) => market.id === selectedId)) selectedId = liveMarkets[0].id;
-    agentScan = scanMarkets(liveMarkets);
+    agentScan = scanMarkets(liveMarkets, (market) => evaluateMarket(market, activePolicy));
     feedState = { mode: "live", message: `${liveMarkets.length} listed Morpho markets loaded from Arc mainnet.` };
   } catch (error) {
     console.warn("Scout live adapter unavailable:", error);
     markets = demoMarkets;
     selectedId = markets[0].id;
-    agentScan = scanMarkets(markets);
+    agentScan = scanMarkets(markets, (market) => evaluateMarket(market, activePolicy));
     feedState = { mode: "fallback", message: "Live data is unavailable. Showing clearly labeled demonstration observations." };
   } finally {
     agentState = "idle";

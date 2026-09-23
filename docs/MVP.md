@@ -24,6 +24,9 @@ The interface now requests listed Morpho markets on Arc through the public Morph
    - missing-data warnings;
    - a plain-language explanation.
 6. The user can view the relevant contract and explorer links.
+7. The bounded Scout Agent evaluates and ranks every loaded market.
+8. The user can download a deterministic Scout Receipt with the policy, observations, results and reasons.
+9. The user can compare the same markets under three visible research profiles without bypassing contract verification.
 
 ## Initial inputs
 
@@ -41,7 +44,7 @@ Subject to data availability, the first report should include:
 
 ## Initial policy examples
 
-Prototype policy `scout-demo-0.1` applies:
+Scout exposes three versioned research profiles: `scout-preservation-0.3`, `scout-balanced-0.3` and `scout-yield-0.3`. The Balanced profile applies:
 
 - preferred liquidity of at least $5 million and rejection below $1 million;
 - preferred utilization of 80% or less and rejection at 90% or more;
@@ -77,6 +80,8 @@ The MVP is complete when:
 - every result shows its sources and timestamp;
 - missing information fails safely;
 - the interface is publicly accessible;
+- repeated market pairs are distinguishable by market ID and contract identity;
+- the full scan can be exported as a versioned JSON receipt;
 - the repository contains reproducible setup instructions;
 - any onchain component is verified and linked;
 - a short demo clearly shows the complete flow.
