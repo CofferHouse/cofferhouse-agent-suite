@@ -5,6 +5,7 @@ import { evaluateMarket, policyProfiles } from "./policy.js";
 import { scanMarkets } from "./agent.js";
 import { createScoutReceipt, createSimulationReceipt, downloadScoutReceipt } from "./receipt.js";
 import { simulateBorrow } from "./simulator.js";
+import { compareMarketSnapshots } from "./monitor.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const formatMoney = (value) => value === null || value === undefined ? "Unavailable" : money.format(value);
@@ -21,6 +22,7 @@ let activePolicy = policyProfiles[selectedPolicyId];
 let agentScan = scanMarkets(markets, (market) => evaluateMarket(market, activePolicy));
 let agentState = "idle";
 let simulationAmount = 100_000;
+let monitoring = { state: "baseline", materialChanges: 0, changes: [] };
 
 function valueFor(ruleItem) {
   if (ruleItem.value === null || ruleItem.value === undefined) return "Unavailable";
@@ -77,6 +79,11 @@ function render() {
           <div class="pass"><span>PASS</span><b>${agentScan.counts.PASS}</b></div>
           <div class="review"><span>REVIEW</span><b>${agentScan.counts.REVIEW}</b></div>
           <div class="reject"><span>REJECT</span><b>${agentScan.counts.REJECT}</b></div>
+        </div>
+        <div class="monitoring">
+          <div><span>SNAPSHOT MONITOR</span><b>${monitoring.state === "compared" ? `${monitoring.materialChanges} MATERIAL CHANGE${monitoring.materialChanges === 1 ? "" : "S"}` : "BASELINE READY"}</b></div>
+          <p>${monitoring.state === "compared" ? (monitoring.changes[0]?.message ?? "No material liquidity, utilization or policy changes detected.") : "Run a new scan to compare fresh Arc data against this snapshot."}</p>
+          ${monitoring.state === "compared" && monitoring.changes.length ? `<div class="monitor-list">${monitoring.changes.slice(0, 4).map((change) => `<button type="button" data-id="morpho-${change.marketId}" class="monitor-item ${change.level}"><b>${change.market}</b><span>${change.message}</span></button>`).join("")}</div>` : ""}
         </div>
         <div class="agent-ranking">
           ${agentScan.ranked.map((item, index) => `<button class="agent-market" data-id="${item.market.id}" type="button">
@@ -142,14 +149,14 @@ function render() {
             </div>
             <form class="simulation-form">
               <label for="borrow-amount">USD EQUIVALENT</label>
-              <div><input id="borrow-amount" name="amount" type="number" min="1" step="1000" value="${simulationAmount}"><button type="submit">SIMULATE</button></div>
+              <div><input id="borrow-amount" name="amount" type="number" min="1" step="1000" value="${simulationAmount}"><button type="submit">SIMULATE</button>${simulationReceipt ? `<button class="simulation-download" type="button">DOWNLOAD SIMULATION</button>` : ""}</div>
             </form>
             ${simulation.ok ? `<div class="simulation-results">
               <div><span>AVAILABLE LIQUIDITY</span><b>${formatMoney(simulation.before.liquidityUsd)}</b><i>→</i><strong>${formatMoney(simulation.after.liquidityUsd)}</strong></div>
               <div><span>UTILIZATION</span><b>${formatPct(simulation.before.utilizationPct)}</b><i>→</i><strong>${formatPct(simulation.after.utilizationPct)}</strong></div>
               <div><span>POLICY RESULT</span><b class="${simulation.before.report.status.toLowerCase()}">${simulation.before.report.status}</b><i>→</i><strong class="${simulation.after.report.status.toLowerCase()}">${simulation.after.report.status} · ${simulation.after.report.score}</strong></div>
             </div>` : `<p class="simulation-error">${simulation.error}</p>`}
-            <div class="simulation-foot"><small class="simulation-notice">Simulation only · No custody · No signature · No transaction</small>${simulationReceipt ? `<button class="simulation-download" type="button">DOWNLOAD SIMULATION</button>` : ""}</div>
+            <div class="simulation-foot"><small class="simulation-notice">Simulation only · No custody · No signature · No transaction</small></div>
           </section>
 
           <div class="checks-head"><h3>Policy checks</h3><span>Same inputs → same result</span></div>
@@ -180,12 +187,18 @@ function render() {
     render();
     document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
+  document.querySelectorAll(".monitor-item").forEach((button) => button.addEventListener("click", () => {
+    selectedId = button.dataset.id;
+    render();
+    document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
   document.querySelector(".scan-button")?.addEventListener("click", () => refreshMarkets());
   document.querySelector(".receipt-button")?.addEventListener("click", () => downloadScoutReceipt(receipt));
   document.querySelector("#policy-profile")?.addEventListener("change", (event) => {
     selectedPolicyId = event.target.value;
     activePolicy = policyProfiles[selectedPolicyId];
     agentScan = scanMarkets(markets, (item) => evaluateMarket(item, activePolicy));
+    monitoring = { state: "baseline", materialChanges: 0, changes: [] };
     render();
   });
   document.querySelector(".simulation-form")?.addEventListener("submit", (event) => {
@@ -197,6 +210,7 @@ function render() {
 }
 
 async function refreshMarkets() {
+  const previousLiveMarkets = markets.every((market) => market.dataMode === "live") ? markets : null;
   agentState = "scanning";
   feedState = { mode: "loading", message: "Scout Agent is requesting a fresh Arc market snapshot…" };
   render();
@@ -204,12 +218,16 @@ async function refreshMarkets() {
   try {
     const liveMarkets = await fetchMorphoArcMarkets();
     markets = liveMarkets;
+    monitoring = previousLiveMarkets
+      ? { state: "compared", ...compareMarketSnapshots(previousLiveMarkets, liveMarkets, activePolicy) }
+      : { state: "baseline", materialChanges: 0, changes: [] };
     if (!markets.some((market) => market.id === selectedId)) selectedId = liveMarkets[0].id;
     agentScan = scanMarkets(liveMarkets, (market) => evaluateMarket(market, activePolicy));
     feedState = { mode: "live", message: `${liveMarkets.length} listed Morpho markets loaded from Arc mainnet.` };
   } catch (error) {
     console.warn("Scout live adapter unavailable:", error);
     markets = demoMarkets;
+    monitoring = { state: "baseline", materialChanges: 0, changes: [] };
     selectedId = markets[0].id;
     agentScan = scanMarkets(markets, (market) => evaluateMarket(market, activePolicy));
     feedState = { mode: "fallback", message: "Live data is unavailable. Showing clearly labeled demonstration observations." };
