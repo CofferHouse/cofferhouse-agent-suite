@@ -2,6 +2,7 @@ import "./styles.css";
 import { demoMarkets } from "./markets.js";
 import { fetchMorphoArcMarkets } from "./morpho.js";
 import { evaluateMarket, policy } from "./policy.js";
+import { scanMarkets } from "./agent.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const formatMoney = (value) => value === null || value === undefined ? "Unavailable" : money.format(value);
@@ -10,6 +11,8 @@ const app = document.querySelector("#app");
 let markets = demoMarkets;
 let selectedId = markets[0].id;
 let feedState = { mode: "loading", message: "Connecting to Morpho on Arc…" };
+let agentScan = scanMarkets(markets);
+let agentState = "idle";
 
 function valueFor(ruleItem) {
   if (ruleItem.value === null || ruleItem.value === undefined) return "Unavailable";
@@ -39,6 +42,27 @@ function render() {
           <p class="intro">Scout compares tokenized assets and crypto markets on Arc using visible, deterministic rules. No black box. No custody. No execution.</p>
         </div>
         <aside class="hero-note ${feedState.mode}"><b>${feedState.mode === "live" ? "LIVE ARC DATA" : feedState.mode === "loading" ? "CONNECTING" : "SAFE FALLBACK"}</b><p>${feedState.message}</p></aside>
+      </section>
+
+      <section class="agent-panel" aria-labelledby="agent-title">
+        <div class="agent-head">
+          <div><p class="eyebrow">BOUNDED AGENT · NO EXECUTION</p><h2 id="agent-title">Scout every market.</h2><p>The agent applies the same public policy to every observation, ranks the results and exposes the first reason that needs attention.</p></div>
+          <button class="scan-button" type="button" ${agentState === "scanning" ? "disabled" : ""}>${agentState === "scanning" ? "SCANNING…" : "RUN NEW SCAN"}</button>
+        </div>
+        <div class="agent-stats">
+          <div><span>MARKETS</span><b>${agentScan.total}</b></div>
+          <div class="pass"><span>PASS</span><b>${agentScan.counts.PASS}</b></div>
+          <div class="review"><span>REVIEW</span><b>${agentScan.counts.REVIEW}</b></div>
+          <div class="reject"><span>REJECT</span><b>${agentScan.counts.REJECT}</b></div>
+        </div>
+        <div class="agent-ranking">
+          ${agentScan.ranked.map((item, index) => `<button class="agent-market" data-id="${item.market.id}" type="button">
+            <span class="rank-number">${String(index + 1).padStart(2, "0")}</span>
+            <span><b>${item.market.name}</b><small>${item.reason}</small></span>
+            <strong class="rank-status ${item.report.status.toLowerCase()}">${item.report.status} · ${item.report.score}</strong>
+          </button>`).join("")}
+        </div>
+        <footer><span>READ ONLY · DETERMINISTIC · HUMAN REVIEW GATED</span><span>${agentScan.actionable} market${agentScan.actionable === 1 ? "" : "s"} currently clear every active check</span></footer>
       </section>
 
       <section class="workspace">
@@ -90,19 +114,36 @@ function render() {
     selectedId = button.dataset.id;
     render();
   }));
+  document.querySelectorAll(".agent-market").forEach((button) => button.addEventListener("click", () => {
+    selectedId = button.dataset.id;
+    render();
+    document.querySelector(".workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+  document.querySelector(".scan-button")?.addEventListener("click", () => refreshMarkets());
+}
+
+async function refreshMarkets() {
+  agentState = "scanning";
+  feedState = { mode: "loading", message: "Scout Agent is requesting a fresh Arc market snapshot…" };
+  render();
+
+  try {
+    const liveMarkets = await fetchMorphoArcMarkets();
+    markets = liveMarkets;
+    if (!markets.some((market) => market.id === selectedId)) selectedId = liveMarkets[0].id;
+    agentScan = scanMarkets(liveMarkets);
+    feedState = { mode: "live", message: `${liveMarkets.length} listed Morpho markets loaded from Arc mainnet.` };
+  } catch (error) {
+    console.warn("Scout live adapter unavailable:", error);
+    markets = demoMarkets;
+    selectedId = markets[0].id;
+    agentScan = scanMarkets(markets);
+    feedState = { mode: "fallback", message: "Live data is unavailable. Showing clearly labeled demonstration observations." };
+  } finally {
+    agentState = "idle";
+    render();
+  }
 }
 
 render();
-
-fetchMorphoArcMarkets()
-  .then((liveMarkets) => {
-    markets = liveMarkets;
-    selectedId = liveMarkets[0].id;
-    feedState = { mode: "live", message: `${liveMarkets.length} listed Morpho markets loaded from Arc mainnet.` };
-    render();
-  })
-  .catch((error) => {
-    console.warn("Scout live adapter unavailable:", error);
-    feedState = { mode: "fallback", message: "Live data is unavailable. Showing clearly labeled demonstration observations." };
-    render();
-  });
+refreshMarkets();
