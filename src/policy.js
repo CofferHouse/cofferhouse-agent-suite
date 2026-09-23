@@ -1,5 +1,5 @@
 export const policy = {
-  version: "scout-demo-0.1",
+  version: "scout-live-0.2",
   minLiquidityUsd: 5_000_000,
   rejectLiquidityUsd: 1_000_000,
   maxUtilizationPct: 80,

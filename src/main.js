@@ -11,8 +11,13 @@ let markets = demoMarkets;
 let selectedId = markets[0].id;
 let feedState = { mode: "loading", message: "Connecting to Morpho on Arc…" };
 
-function logo() {
-  return `<div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>`;
+function wordmark() {
+  const letters = [
+    ["C", "orange"], ["O", "yellow"], ["F", "teal"], ["F", "orange"], ["E", "yellow"], ["R", "teal"],
+    ["H", "orange"], ["O", "yellow"], ["U", "teal"], ["S", "orange"], ["E", "yellow"]
+  ];
+
+  return letters.map(([letter, color]) => `<i class="${color}">${letter}</i>`).join("");
 }
 
 function valueFor(ruleItem) {
@@ -28,8 +33,12 @@ function render() {
   const report = evaluateMarket(market);
   app.innerHTML = `
     <header class="topbar">
-      <a class="brand" href="#">${logo()}<strong><i>Coffer</i>House</strong><span>SCOUT</span></a>
-      <div class="network"><span></span> ARC · READ ONLY</div>
+      <a class="brand" href="#" aria-label="CofferHouse Scout">
+        <img class="brand-mark" src="/brand/cofferhouse-arch-official.png" alt="CofferHouse emblem">
+        <strong aria-hidden="true">${wordmark()}</strong>
+        <span>SCOUT</span>
+      </a>
+      <div class="network"><span></span> ARC MAINNET · READ ONLY</div>
     </header>
     <main>
       <section class="hero">
