@@ -84,6 +84,16 @@ const suiteTabs = Object.freeze([
   { id: "automation", label: "Automation", mark: "07" }
 ]);
 
+const agentDoodles = Object.freeze({
+  scout: "⌕",
+  opportunity: "✦",
+  strategy: "▦",
+  dex: "⇄",
+  action: "✓",
+  guardian: "◇",
+  automation: "⚙"
+});
+
 const requestedSuiteView = window.location.hash.match(/^#agents\/(.+)$/)?.[1];
 if (suiteTabs.some((tab) => tab.id === requestedSuiteView)) activeSuiteView = requestedSuiteView;
 
@@ -145,6 +155,7 @@ function render() {
         <strong class="brand-name" aria-hidden="true"><i>C</i><i>O</i><i>F</i><i>F</i><i>E</i><i>R</i><i>H</i><i>O</i><i>U</i><i>S</i><i>E</i></strong>
         <span>AGENT SUITE</span>
       </a>
+      <div class="topbar-room"><span>ROOM 02</span><b>THE AGENT ROOM</b></div>
       <div class="network"><span></span> ARC MAINNET · READ ONLY</div>
     </header>
     <nav class="suite-nav" aria-label="CofferHouse Agent Suite">
@@ -155,17 +166,21 @@ function render() {
     <main>
       <section class="hero suite-view ${activeSuiteView === "hub" ? "is-active" : ""}" data-suite-view="hub">
         <div>
-          <p class="eyebrow">RISK INTELLIGENCE FOR PROGRAMMABLE MARKETS</p>
-          <h1>See the risk<br><em>before</em> the move.</h1>
-          <p class="intro">Scout compares tokenized assets and crypto markets on Arc using visible, deterministic rules. No black box. No custody. No execution.</p>
+          <p class="eyebrow">WELCOME TO THE AGENT ROOM</p>
+          <h1>Meet the House<br><em>agents.</em></h1>
+          <p class="intro">Seven small jobs, one careful path. They watch Arc markets, compare evidence and prepare decisions—while you keep the final say.</p>
         </div>
-        <aside class="hero-note ${feedState.mode}"><b>${feedState.mode === "live" ? "LIVE ARC DATA" : feedState.mode === "loading" ? "CONNECTING" : "SAFE FALLBACK"}</b><p>${h(feedState.message)}</p></aside>
+        <aside class="hero-note house-host ${feedState.mode}">
+          <img src="/brand/cofferhouse-arch-official.png" alt="" aria-hidden="true">
+          <div><span>THE HOUSE HOST</span><b>I KEEP THE AGENTS TOGETHER.</b><p>Start here. I will show what is watching, what needs attention and what still needs your approval.</p></div>
+          <footer><i></i>${feedState.mode === "live" ? "LIVE ARC DATA" : feedState.mode === "loading" ? "CONNECTING TO ARC" : "SAFE DEMO DATA"}</footer>
+        </aside>
       </section>
 
       <section class="agent-hub suite-view ${activeSuiteView === "hub" ? "is-active" : ""}" data-suite-view="hub" id="agent-hub" aria-labelledby="agent-hub-title">
         <div class="hub-head">
-          <div><p class="eyebrow">COFFERHOUSE AGENT SYSTEM</p><h2 id="agent-hub-title">Agent Hub. ${infoTip("A product map showing what is operational now, what will be built next and how every agent hands evidence to the following stage.")}</h2></div>
-          <p>One controlled path from market observation to future bounded execution. Only capabilities marked LIVE are currently available.</p>
+          <div><p class="eyebrow">THE HOUSE CONTROL DESK</p><h2 id="agent-hub-title">Every helper has one job. ${infoTip("The Hub shows what each agent does and how evidence moves through the suite without granting any agent custody or signing power.")}</h2></div>
+          <p>Open any agent from the cards or the tabs above. Their work stays connected, but their responsibilities never blur together.</p>
         </div>
         <div class="hub-overview" aria-label="Agent Suite status">
           <div><span>ACTIVE MODULES</span><b>7</b><small>Bounded research agents</small></div>
@@ -174,8 +189,9 @@ function render() {
           <div><span>HUMAN GATE</span><b>${actionApproval ? "RECORDED" : "READY"}</b><small>No wallet authority</small></div>
         </div>
         <div class="hub-flow" aria-label="Agent development sequence">
-          ${agentCatalog.map((agent) => `<article class="hub-agent ${h(agent.tone)} ${agent.available ? "available" : "locked"}">
-            <div class="hub-agent-top"><span class="hub-order">${String(agent.order).padStart(2, "0")}</span><span class="hub-stage">${h(agent.stage)}</span></div>
+          ${agentCatalog.map((agent) => `<article class="hub-agent hub-${h(agent.id)} ${h(agent.tone)} ${agent.available ? "available" : "locked"}">
+            <div class="agent-doodle" aria-hidden="true">${agentDoodles[agent.id] ?? "·"}</div>
+            <div class="hub-agent-top"><span class="hub-order">JOB ${String(agent.order).padStart(2, "0")}</span><span class="hub-stage">${h(agent.stage)}</span></div>
             <h3>${h(agent.name)}</h3>
             <p>${h(agent.role)}</p>
             <div class="hub-output"><span>OUTPUT</span><small>${h(agent.output)}</small></div>

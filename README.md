@@ -72,6 +72,7 @@ See [MVP scope](docs/MVP.md) and [architecture](docs/ARCHITECTURE.md).
 | Bounded Scout Agent | Live |
 | Agent Hub | Live |
 | Agent Suite navigation | Live: focused Hub, Scout, Opportunity, Strategy, DEX, Action Center, Guardian and Automation workspaces |
+| CofferHouse identity | Live: The Agent Room, official House Host, hand-drawn navigation and distinct agent marks |
 | Opportunity Agent | Live, read-only research prioritization |
 | Strategy Lab | Live, read-only allocation research |
 | DEX Pool Scanner | Live: user watchlist, indexed Arc screening and sealed receipts |
