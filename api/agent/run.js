@@ -1,23 +1,32 @@
 import { getJson, pushJson, setJson, durableStoreConfigured } from "../_redis.js";
-import { fetchMorphoArcMarkets } from "../../src/morpho.js";
-import { policyProfiles } from "../../src/policy.js";
-import { runAgentCycle } from "../../src/agent-cycle.js";
-import { createAgentAlert } from "../../src/agent-alert.js";
+import { fetchMorphoArcMarkets, verifyArcMarketContracts } from "../../packages/arc-data/index.js";
+import { policyProfiles } from "../../packages/policies/index.js";
+import { createAgentAlert, createGuardianAlert, runAgentCycle } from "../../packages/agent-core/index.js";
+import { compareArcCctpObservations, evaluateDurableGuardianPortfolio, fetchArcCctpObservation, runResearchSession } from "../../packages/agent-modules/index.js";
 import { deliverAlert, notificationConfigured } from "../_notify.js";
 import { analyzeAgentCycle } from "../_gemini.js";
-import { sealDocument } from "../../src/integrity.js";
-import { verifyArcMarketContracts } from "../../src/arc-rpc.js";
-import { withRetry } from "../../src/retry.js";
+import { createInteropReceipt, createResearchSessionReceipt, sealDocument } from "../../packages/evidence/index.js";
+import { withRetry } from "../../packages/shared/index.js";
 
 const SNAPSHOT_KEY = "cofferhouse:scout:latest-snapshot";
 const STATUS_KEY = "cofferhouse:scout:agent-status";
 const HISTORY_KEY = "cofferhouse:scout:agent-history";
 const LAST_ALERT_KEY = "cofferhouse:scout:last-alert";
+const RESEARCH_SESSION_KEY = "cofferhouse:agent-hub:latest-session";
+const RESEARCH_HISTORY_KEY = "cofferhouse:agent-hub:session-history";
+const GUARDIAN_WATCH_KEY = "cofferhouse:guardian:active-watch";
+const GUARDIAN_LATEST_KEY = "cofferhouse:guardian:latest-receipt";
+const GUARDIAN_HISTORY_KEY = "cofferhouse:guardian:receipt-history";
+const GUARDIAN_ALERT_KEY = "cofferhouse:guardian:last-alert";
+const INTEROP_LATEST_KEY = "cofferhouse:interop:latest-receipt";
+const INTEROP_HISTORY_KEY = "cofferhouse:interop:receipt-history";
 
 function authorized(request) {
   const secret = process.env.CRON_SECRET;
   return Boolean(secret) && request.headers.authorization === `Bearer ${secret}`;
 }
+
+const asList = (value) => Array.isArray(value) ? value : value ? [value] : [];
 
 export default async function handler(request, response) {
   if (request.method !== "GET") return response.status(405).json({ ok: false, error: "Method not allowed" });
@@ -25,7 +34,8 @@ export default async function handler(request, response) {
   if (!durableStoreConfigured()) return response.status(503).json({ ok: false, error: "Durable store is not configured." });
 
   try {
-    const previousMarkets = await getJson(SNAPSHOT_KEY);
+    const [previousMarkets, guardianRegistrationState, previousInteropReceipt] = await Promise.all([getJson(SNAPSHOT_KEY), getJson(GUARDIAN_WATCH_KEY), getJson(INTEROP_LATEST_KEY)]);
+    const guardianRegistrations = asList(guardianRegistrationState).filter((item) => item?.schema === "cofferhouse.guardian.registration.v1" && item.watch?.source === "LENDING").slice(0, 20);
     let currentMarkets = await withRetry(() => fetchMorphoArcMarkets(), { attempts: 3, delayMs: 500 });
     let verification = { configured: Boolean(process.env.ARC_RPC_URL), status: "not-configured", source: "Arc JSON-RPC · eth_getCode" };
     if (process.env.ARC_RPC_URL) {
@@ -38,12 +48,30 @@ export default async function handler(request, response) {
         verification = { configured: true, status: "unavailable", source: "Arc JSON-RPC · eth_getCode", error: "Arc RPC verification request failed; deterministic Morpho evaluation continued without an independent contract check." };
       }
     }
+    let interop = { configured: Boolean(process.env.ARC_RPC_URL), status: "NOT_CONFIGURED", receipt: null, error: null };
+    if (process.env.ARC_RPC_URL) {
+      try {
+        const rawObservation = await fetchArcCctpObservation(process.env.ARC_RPC_URL, { blocks: 500 });
+        const comparison = compareArcCctpObservations(previousInteropReceipt?.observation, rawObservation);
+        const observation = { ...rawObservation, comparison };
+        interop = { configured: true, status: comparison.status, receipt: createInteropReceipt(observation), error: null };
+      } catch {
+        interop = { configured: true, status: "UNAVAILABLE", receipt: null, error: "CCTP observation failed safely; no crosschain activity claim was produced." };
+      }
+    }
     const cycle = runAgentCycle({
       currentMarkets,
       previousMarkets,
       policy: policyProfiles.balanced,
       limits: { liquidityChangePct: 5, utilizationChangePts: 2 }
     });
+    const researchSession = runResearchSession({
+      markets: currentMarkets,
+      policy: policyProfiles.balanced,
+      now: () => cycle.ranAt
+    });
+    const researchSessionReceipt = createResearchSessionReceipt(researchSession);
+    const guardianReceipts = evaluateDurableGuardianPortfolio({ registrations: guardianRegistrations, markets: currentMarkets, policy: policyProfiles.balanced, now: () => new Date(cycle.ranAt) });
     const intelligence = await analyzeAgentCycle(cycle);
     const alert = createAgentAlert(cycle);
     let notification = { configured: notificationConfigured(), delivered: false, reason: alert ? "duplicate-or-pending" : "no-material-alert" };
@@ -57,6 +85,20 @@ export default async function handler(request, response) {
         notification = { configured: notificationConfigured(), delivered: false, reason: "duplicate", fingerprint: alert.fingerprint };
       }
     }
+    const guardianAlerts = guardianReceipts.map(createGuardianAlert).filter(Boolean);
+    const priorGuardianAlerts = asList(await getJson(GUARDIAN_ALERT_KEY));
+    const deliveredGuardianAlerts = [...priorGuardianAlerts];
+    const guardianNotifications = [];
+    for (const guardianAlert of guardianAlerts) {
+      if (!priorGuardianAlerts.some((item) => item.fingerprint === guardianAlert.fingerprint)) {
+        const delivery = await deliverAlert(guardianAlert);
+        guardianNotifications.push({ configured: notificationConfigured(), ...delivery, fingerprint: guardianAlert.fingerprint });
+        if (delivery.delivered) deliveredGuardianAlerts.unshift(guardianAlert);
+      } else {
+        guardianNotifications.push({ configured: notificationConfigured(), delivered: false, reason: "duplicate", fingerprint: guardianAlert.fingerprint });
+      }
+    }
+    if (deliveredGuardianAlerts.length !== priorGuardianAlerts.length) await setJson(GUARDIAN_ALERT_KEY, deliveredGuardianAlerts.slice(0, 100));
     const { markets: _privateMarkets, ...cycleWithoutMarkets } = cycle;
     const verificationTrace = {
       phase: "VERIFY",
@@ -69,14 +111,26 @@ export default async function handler(request, response) {
     const trace = [
       cycle.trace[0],
       verificationTrace,
+      { phase: "INTEROP", status: interop.status, detail: interop.receipt ? `${interop.receipt.observation.counts.total} CCTP V2 events observed; ${interop.receipt.observation.comparison.newEvents} are new versus the prior window.` : interop.error ?? "Arc RPC is not configured for crosschain observation.", at: cycle.ranAt },
       ...cycle.trace.slice(1),
       { phase: "RECORD", status: "READY", detail: "Sealed cycle prepared for durable storage.", at: cycle.ranAt }
     ];
-    const publicCycle = sealDocument({ ...cycleWithoutMarkets, trace, verification, intelligence, alert, notification }, "cycle");
+    const guardian = guardianReceipts.length ? { active: true, watchCount: guardianReceipts.length, decisions: guardianReceipts.map((receipt) => ({ receiptId: receipt.receiptId, target: receipt.watch.target, decision: receipt.observation.decision, requiresHumanAttention: receipt.observation.requiresHumanAttention })), alerts: guardianAlerts, notifications: guardianNotifications } : { active: false, watchCount: 0, decisions: [], alerts: [], notifications: [] };
+    const publicCycle = sealDocument({ ...cycleWithoutMarkets, trace, verification, interop: { configured: interop.configured, status: interop.status, receiptId: interop.receipt?.receiptId ?? null, counts: interop.receipt?.observation.counts ?? null, error: interop.error }, intelligence, alert, notification, guardian }, "cycle");
     await setJson(SNAPSHOT_KEY, currentMarkets);
     await setJson(STATUS_KEY, publicCycle);
     await pushJson(HISTORY_KEY, publicCycle, 100);
-    return response.status(200).json({ ok: true, cycle: publicCycle });
+    await setJson(RESEARCH_SESSION_KEY, researchSessionReceipt);
+    await pushJson(RESEARCH_HISTORY_KEY, researchSessionReceipt, 25);
+    if (guardianReceipts.length) {
+      await setJson(GUARDIAN_LATEST_KEY, guardianReceipts);
+      for (const guardianReceipt of guardianReceipts) await pushJson(GUARDIAN_HISTORY_KEY, guardianReceipt, 50);
+    }
+    if (interop.receipt) {
+      await setJson(INTEROP_LATEST_KEY, interop.receipt);
+      await pushJson(INTEROP_HISTORY_KEY, interop.receipt, 50);
+    }
+    return response.status(200).json({ ok: true, cycle: publicCycle, researchSession: researchSessionReceipt, guardians: guardianReceipts, interop: interop.receipt });
   } catch (error) {
     const failure = {
       schema: "cofferhouse.scout.agent-error.v1",

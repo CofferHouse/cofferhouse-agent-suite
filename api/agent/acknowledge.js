@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { createAcknowledgment } from "../../src/acknowledgment.js";
+import { createAcknowledgment } from "../../packages/agent-core/index.js";
 import { durableStoreConfigured, getJson, pushJson, setJson } from "../_redis.js";
 
 const STATUS_KEY = "cofferhouse:scout:agent-status";
@@ -23,7 +23,8 @@ export default async function handler(request, response) {
   try {
     const status = await getJson(STATUS_KEY);
     const body = typeof request.body === "string" ? JSON.parse(request.body) : request.body ?? {};
-    if (!status?.alert?.fingerprint || status.alert.fingerprint !== body.fingerprint) {
+    const activeAlerts = [status?.alert, ...(status?.guardian?.alerts ?? []), status?.guardian?.alert].filter(Boolean);
+    if (!activeAlerts.some((alert) => alert.fingerprint === body.fingerprint)) {
       return response.status(409).json({ ok: false, error: "Alert is no longer the active incident." });
     }
     const acknowledgment = createAcknowledgment(body);

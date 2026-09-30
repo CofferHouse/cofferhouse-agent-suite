@@ -1,11 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeOpportunities } from "../src/opportunity.js";
-import { demoMarkets } from "../src/markets.js";
-import { policyProfiles } from "../src/policy.js";
-import { buildStrategy, normalizeStrategyPreferences, saveStrategyPreferences, loadStrategyPreferences } from "../src/strategy.js";
-import { createStrategyReceipt } from "../src/strategy-receipt.js";
-import { verifySealedDocument } from "../src/integrity.js";
+import { analyzeOpportunities, buildStrategy, loadStrategyPreferences, normalizeStrategyPreferences, saveStrategyPreferences } from "../packages/agent-modules/index.js";
+import { demoMarkets } from "../packages/arc-data/index.js";
+import { policyProfiles } from "../packages/policies/index.js";
+import { createStrategyReceipt, verifySealedDocument } from "../packages/evidence/index.js";
 
 const opportunities = analyzeOpportunities(demoMarkets, policyProfiles.balanced, { minLiquidityUsd: 0, maxUtilizationPct: 100 });
 

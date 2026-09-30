@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { canonicalJson, sealDocument, sha256Hex, verifySealedDocument } from "../src/integrity.js";
+import { canonicalJson, sealDocument, sha256Hex, verifySealedDocument } from "../packages/evidence/index.js";
 
 test("SHA-256 matches published standard vectors", () => {
   assert.equal(sha256Hex(""), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");

@@ -1,8 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createGuardianWatch, evaluateGuardian } from "../src/guardian.js";
-import { createGuardianReceipt } from "../src/guardian-receipt.js";
-import { verifyReceiptDocument } from "../src/receipt.js";
+import { createGuardianWatch, evaluateGuardian } from "../packages/agent-modules/index.js";
+import { createGuardianReceipt, verifyReceiptDocument } from "../packages/evidence/index.js";
 
 const preview = { schema: "cofferhouse.action.preview.v1", source: "LENDING", sourceReceiptId: "strategy-1234567890abcdef", target: { id: "0x1111111111111111111111111111111111111111", name: "USDC market" }, intent: { kind: "SUPPLY_RESEARCH", amountUsd: 1000 } };
 const approval = { schema: "cofferhouse.action.approval.v1", operator: "Ana", approvedAt: "2026-09-23T12:00:00Z", expiresAt: "2099-09-23T12:15:00Z" };

@@ -1,8 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createActionApproval, createActionPreview } from "../src/action-center.js";
-import { createActionReceipt } from "../src/action-receipt.js";
-import { verifyReceiptDocument } from "../src/receipt.js";
+import { createActionApproval, createActionPreview } from "../packages/agent-modules/index.js";
+import { createActionReceipt, verifyReceiptDocument } from "../packages/evidence/index.js";
 
 const lendingPosition = { marketId: "0x1111111111111111111111111111111111111111", marketName: "USDC / RWA", amountUsd: 1_000, scoutStatus: "REVIEW" };
 

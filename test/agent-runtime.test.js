@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { advanceAgentState, agentDecision, createAgentRuntimeState } from "../src/agent-runtime.js";
+import { advanceAgentState, agentDecision, createAgentRuntimeState } from "../packages/agent-core/index.js";
 
 const now = () => new Date("2026-09-23T12:00:00.000Z");
 

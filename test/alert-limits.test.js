@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { defaultAlertLimits, loadAlertLimits, normalizeAlertLimits, saveAlertLimits } from "../src/alert-limits.js";
+import { defaultAlertLimits, loadAlertLimits, normalizeAlertLimits, saveAlertLimits } from "../packages/policies/index.js";
 
 function memoryStorage() {
   const data = new Map();

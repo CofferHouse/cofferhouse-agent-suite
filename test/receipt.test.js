@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { scanMarkets } from "../src/agent.js";
-import { demoMarkets } from "../src/markets.js";
-import { policy } from "../src/policy.js";
-import { createScoutReceipt, createSimulationReceipt, verifyReceiptDocument } from "../src/receipt.js";
-import { simulateBorrow } from "../src/simulator.js";
-import { verifySealedDocument } from "../src/integrity.js";
+import { scanMarkets } from "../packages/agent-core/index.js";
+import { demoMarkets } from "../packages/arc-data/index.js";
+import { policy } from "../packages/policies/index.js";
+import { createScoutReceipt, createSimulationReceipt, verifyReceiptDocument } from "../packages/evidence/index.js";
+import { simulateBorrow } from "../packages/agent-modules/index.js";
+import { verifySealedDocument } from "../packages/evidence/index.js";
 
 test("creates a complete, deterministic Scout receipt", () => {
   const scan = scanMarkets(demoMarkets);

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createIncidentPrompt, deterministicIncidentAnalysis, validateIncidentAnalysis } from "../src/agent-intelligence.js";
+import { createIncidentPrompt, deterministicIncidentAnalysis, validateIncidentAnalysis } from "../packages/agent-core/index.js";
 
 const cycle = {
   policy: { version: "scout-balanced-0.3" }, observation: { counts: { REJECT: 1 } },

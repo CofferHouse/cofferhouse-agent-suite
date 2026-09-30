@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { compareMarketSnapshots } from "../src/monitor.js";
-import { policyProfiles } from "../src/policy.js";
+import { compareMarketSnapshots } from "../packages/agent-core/index.js";
+import { policyProfiles } from "../packages/policies/index.js";
 
 const market = {
   marketId: "0xmarket",

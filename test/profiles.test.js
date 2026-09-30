@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateMarket, policyProfiles } from "../src/policy.js";
-import { demoMarkets } from "../src/markets.js";
+import { evaluateMarket, policyProfiles } from "../packages/policies/index.js";
+import { demoMarkets } from "../packages/arc-data/index.js";
 
 test("publishes three versioned policy profiles", () => {
   assert.deepEqual(Object.keys(policyProfiles), ["preservation", "balanced", "yield"]);

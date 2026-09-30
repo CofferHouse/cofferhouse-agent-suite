@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { demoMarkets as markets } from "../src/markets.js";
-import { evaluateMarket } from "../src/policy.js";
+import { demoMarkets as markets } from "../packages/arc-data/index.js";
+import { evaluateMarket } from "../packages/policies/index.js";
 
 test("USDC baseline passes every policy", () => {
   const report = evaluateMarket(markets[0]);

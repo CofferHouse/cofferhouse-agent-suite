@@ -1,8 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createPermissionPolicy, evaluatePermissionRequest, pausePermissionPolicy, revokePermissionPolicy } from "../src/automation.js";
-import { createAutomationReceipt } from "../src/automation-receipt.js";
-import { verifyReceiptDocument } from "../src/receipt.js";
+import { createPermissionPolicy, evaluatePermissionRequest, pausePermissionPolicy, revokePermissionPolicy } from "../packages/agent-modules/index.js";
+import { createAutomationReceipt, verifyReceiptDocument } from "../packages/evidence/index.js";
 
 const watch = { schema: "cofferhouse.guardian.watch.v1", target: { id: "0x1111111111111111111111111111111111111111", name: "USDC market" }, intent: { kind: "SUPPLY_RESEARCH", amountUsd: 1000 }, sourceReceiptId: "strategy-1234567890abcdef" };
 const clock = () => new Date("2026-09-23T12:00:00Z");

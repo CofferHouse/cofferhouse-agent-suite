@@ -20,6 +20,7 @@ Agent Suite is presented as **The Agent Room**, a functional room inside CofferH
 | Action Center | `✓` | Record the human gate |
 | Guardian | `◇` | Protect the approved research intent |
 | Automation | `⚙` | Test narrow revocable permissions |
+| Interop Observer | `↔` | Observe crosschain USDC evidence |
 
 The marks are lightweight interface symbols, not standalone brand logos. The official CofferHouse logo must not be redrawn.
 

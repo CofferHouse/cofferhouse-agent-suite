@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fetchMorphoArcMarkets, MarketDataSourceError, normalizeMorphoMarket } from "../src/morpho.js";
+import { fetchMorphoArcMarkets, MarketDataSourceError, normalizeMorphoMarket } from "../packages/arc-data/index.js";
 
 const apiMarket = {
   marketId: "0xmarket",

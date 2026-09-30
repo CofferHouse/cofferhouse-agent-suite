@@ -27,6 +27,11 @@ export async function setJson(key, value) {
   await command(["SET", key, JSON.stringify(value)]);
 }
 
+export async function deleteJson(...keys) {
+  if (!keys.length) return;
+  await command(["DEL", ...keys]);
+}
+
 export async function pushJson(key, value, limit = 50) {
   await command(["LPUSH", key, JSON.stringify(value)]);
   await command(["LTRIM", key, "0", String(limit - 1)]);

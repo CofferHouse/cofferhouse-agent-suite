@@ -1,0 +1,25 @@
+:root {
+  --ink: #151515;
+  --paper: #faf7ef;
+  --paper-deep: #eee6d4;
+  --blue: #1755bc;
+  --yellow: #ffd735;
+  --green: #84dab0;
+  --orange: #ef682f;
+  --red: #ff765c;
+  --room-blue: #1f55bd;
+  --room-blue-dark: #123d91;
+  --room-blue-light: #dfeaff;
+  --cream: #f8f2e3;
+}
+
+@media (pointer: fine) {
+  html, body, body * {
+    cursor: url('/brand/rocket-cursor.png') 12 12, auto !important;
+  }
+  input, textarea, select { cursor: text !important; }
+}
+
+@media (pointer: coarse) {
+  html, body, body * { cursor: auto !important; }
+}

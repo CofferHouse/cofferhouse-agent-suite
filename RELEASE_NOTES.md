@@ -1,4 +1,4 @@
-# CofferHouse Scout — near-final candidate
+# CofferHouse Agent Suite — connected release candidate
 
 Release candidate prepared for complete visual and deployment testing.
 
@@ -18,6 +18,9 @@ Release candidate prepared for complete visual and deployment testing.
 - Typed provider diagnostics, automatic retries, degraded-state display, and `/api/health` readiness.
 - Optional undeployed receipt-hash registry source and ABI.
 - Deployment guide, architecture, release checklist, and hackathon demonstration brief.
+- Arc CCTP V2 Interop Observer with de-duplicated event windows, durable history and sealed receipts.
+- Bidirectional House ↔ Agent Suite navigation using the official CofferHouse visual language.
+- Ready-to-publish X launch copy, three-minute demo script and hackathon asset checklist.
 
 ## Automated status
 

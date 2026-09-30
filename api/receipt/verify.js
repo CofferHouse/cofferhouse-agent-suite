@@ -1,4 +1,4 @@
-import { verifyReceiptDocument } from "../../src/receipt.js";
+import { verifyReceiptDocument } from "../../packages/evidence/index.js";
 
 export default async function handler(request, response) {
   if (request.method !== "POST") return response.status(405).json({ ok: false, error: "Method not allowed" });

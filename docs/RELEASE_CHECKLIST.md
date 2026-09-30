@@ -9,6 +9,8 @@
 - [x] Frontend provider, model, and operator strings are escaped before rendering.
 - [x] External links allow HTTPS only.
 - [x] Server credentials are never included in the frontend environment.
+- [x] Operator workspace state is sealed, relationship-validated, non-executable, and covered by automated tests.
+- [x] Human approval freshness is recalculated after reload and cannot be extended by persistence.
 
 ## Deployment gates
 
@@ -32,6 +34,16 @@
 - [ ] Modify a downloaded JSON field and confirm verification fails.
 - [ ] Start and stop the session agent and confirm phase, cycle count, and next-run time change.
 - [ ] Trigger a fresh scan and confirm the monitor creates a comparison record.
+- [ ] Build an Action Center → Guardian → Automation chain, reload, and confirm the verified workspace returns.
+- [ ] Alter the stored workspace in browser tools and confirm the application rejects it.
+- [ ] Confirm an expired human approval is labeled `EXPIRED` and blocks a new Guardian watch or simulated permission policy.
+- [ ] Use `CLEAR WORKSPACE` and confirm only the operator chain is removed.
+- [ ] Register a lending Guardian watch with the operator token and confirm the next protected cycle stores a fresh sealed Guardian receipt.
+- [ ] Confirm durable Guardian attention produces one deduplicated alert and never attempts an automated action.
+- [ ] Stop the durable Guardian watch and confirm its historical receipts remain visible through status.
+- [ ] Create simultaneous Scout and Guardian incidents, acknowledge each from Agent Hub, and confirm their operator records remain independent after reload.
+- [ ] Register at least two lending Market IDs, run one protected cycle, and confirm each receives an independent Guardian decision.
+- [ ] Remove one durable watch and confirm the other target remains active.
 
 ## Submission gates
 

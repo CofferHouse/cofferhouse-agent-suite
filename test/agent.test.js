@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { scanMarkets } from "../src/agent.js";
-import { demoMarkets } from "../src/markets.js";
+import { scanMarkets } from "../packages/agent-core/index.js";
+import { demoMarkets } from "../packages/arc-data/index.js";
 
 test("Scout Agent ranks pass before review and reject", () => {
   const scan = scanMarkets(demoMarkets);

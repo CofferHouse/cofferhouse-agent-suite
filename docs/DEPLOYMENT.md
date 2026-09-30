@@ -14,8 +14,8 @@ Import this repository into Vercel and keep the default build command (`npm run 
 | `CRON_SECRET` | Yes | Authorizes `/api/agent/run` scheduled calls. Use a long random value. |
 | `UPSTASH_REDIS_REST_URL` | Yes | Durable snapshot, status, history, alert, and acknowledgment storage. |
 | `UPSTASH_REDIS_REST_TOKEN` | Yes | Server-only Upstash credential. |
-| `SCOUT_OPERATOR_TOKEN` | Yes | Authorizes human incident acknowledgment. |
-| `ARC_RPC_URL` | Recommended | Independently confirms loan asset, collateral, and oracle bytecode through `eth_getCode`. |
+| `SCOUT_OPERATOR_TOKEN` | Yes | Authorizes human incident acknowledgment and durable Guardian watch registration/removal. |
+| `ARC_RPC_URL` | Recommended | Confirms market bytecode and powers the bounded, read-only CCTP V2 Interop Observer. |
 | `SCOUT_ALERT_WEBHOOK_URL` | Optional | Receives deduplicated material alerts. |
 | `GEMINI_API_KEY` | Optional | Produces bounded incident briefings; deterministic fallback remains active without it. |
 | `GEMINI_MODEL` | Optional | Overrides the documented default model. |
@@ -24,12 +24,18 @@ Import this repository into Vercel and keep the default build command (`npm run 
 
 Never prefix these variables with `VITE_`; that would expose them to the browser bundle.
 
+The RPC URL remains server-only. `/api/interop/observe` returns decoded event evidence from a capped block window, never the configured URL.
+
 The included Vercel cron is a daily safety cycle. Vercel Hobby does not provide the desired 15-minute cadence, so the repository also includes a protected GitHub Actions scheduler.
 
 ## 2. Create the durable store
 
 Create an Upstash Redis database, copy its REST URL and REST token into Vercel, and redeploy. Scout stores:
 
+- the latest coordinated Agent Hub research-session receipt;
+- up to 25 durable Agent Hub sessions, independently of any open browser;
+- up to 20 active lending Guardian registrations, their latest sealed observations and up to 50 recent historical receipts;
+- the latest sealed CCTP V2 Interop observation and up to 50 historical Interop receipts;
 - the latest normalized market snapshot;
 - the latest sealed cycle status;
 - up to 100 historical cycles;
@@ -55,6 +61,12 @@ The workflow `.github/workflows/scout-agent.yml` runs every 15 minutes and can a
 4. Confirm that **SERVER AGENT · 24/7 CORE** shows `DURABLE AGENT ONLINE`.
 5. Confirm a recent **LAST SERVER RUN**, a decision, an execution trace, and at least one durable history cycle.
 6. Run the workflow again after market data changes and confirm that the history count increases.
+7. Create and approve a lending intent, start Guardian, register its sealed watch with the operator token, run another protected cycle, and confirm a durable Guardian decision appears.
+8. Open Interop Observer and confirm the latest protected observation can be restored from durable memory. Zero events is a valid bounded-window result.
+
+Detailed `/api/agent/status` responses require `Authorization: Bearer <SCOUT_OPERATOR_TOKEN>`. Anonymous requests receive only aggregate counts, the last run time and a coarse health/decision summary; durable receipts, traces, incidents and capability flags are never returned publicly.
+
+The public health response and Scout deployment panel expose only boolean capability states and operational freshness. They never return URLs, tokens, webhook addresses or API-key values. Readiness progresses through `SETUP REQUIRED`, `READY FOR FIRST RUN`, `OPERATIONAL`, or `DEGRADED STALE` when the last cycle is more than three expected intervals old (with a 45-minute minimum).
 
 ## 5. Optional alert and intelligence services
 

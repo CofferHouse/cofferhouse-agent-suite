@@ -1,9 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateDexPool, loadDexWatchlist, normalizeDexPair, normalizeDexWatchlist, saveDexWatchlist } from "../src/dex-pools.js";
-import { normalizeDexScreenerResponse } from "../src/dex-provider.js";
-import { createDexReceipt } from "../src/dex-receipt.js";
-import { verifySealedDocument } from "../src/integrity.js";
+import { evaluateDexPool, loadDexWatchlist, normalizeDexPair, normalizeDexScreenerResponse, normalizeDexWatchlist, saveDexWatchlist } from "../packages/agent-modules/index.js";
+import { createDexReceipt, verifySealedDocument } from "../packages/evidence/index.js";
 
 const address = "0x1111111111111111111111111111111111111111";
 const pairAddress = "0x2222222222222222222222222222222222222222";

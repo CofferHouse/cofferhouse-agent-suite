@@ -1,4 +1,4 @@
-import { createIncidentPrompt, deterministicIncidentAnalysis, validateIncidentAnalysis } from "../src/agent-intelligence.js";
+import { createIncidentPrompt, deterministicIncidentAnalysis, validateIncidentAnalysis } from "../packages/agent-core/index.js";
 
 export function geminiConfigured() {
   return Boolean(process.env.GEMINI_API_KEY);

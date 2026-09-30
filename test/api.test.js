@@ -1,14 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import healthHandler from "../api/health.js";
-import statusHandler from "../api/agent/status.js";
+import statusHandler, { isDetailedStatusAuthorized } from "../api/agent/status.js";
 import verifyHandler from "../api/receipt/verify.js";
 import dexPoolHandler from "../api/dex/pools.js";
 import dexQuoteHandler from "../api/dex/quote.js";
-import { createScoutReceipt } from "../src/receipt.js";
-import { scanMarkets } from "../src/agent.js";
-import { demoMarkets } from "../src/markets.js";
-import { policy } from "../src/policy.js";
+import guardianWatchHandler from "../api/guardian/watch.js";
+import interopObserveHandler from "../api/interop/observe.js";
+import { createScoutReceipt } from "../packages/evidence/index.js";
+import { scanMarkets } from "../packages/agent-core/index.js";
+import { demoMarkets } from "../packages/arc-data/index.js";
+import { policy } from "../packages/policies/index.js";
 
 function responseMock() {
   return {
@@ -38,14 +40,26 @@ test("status endpoint reports unconfigured durable storage safely", async () => 
   delete process.env.UPSTASH_REDIS_REST_TOKEN;
   try {
     const response = responseMock();
-    await statusHandler({ method: "GET" }, response);
+    await statusHandler({ method: "GET", headers: {} }, response);
     assert.equal(response.body.configured, false);
+    assert.equal(response.body.access, "public_summary");
+    assert.equal(response.body.capabilities, undefined);
     assert.equal(response.body.status, null);
     assert.deepEqual(response.body.history, []);
+    assert.equal(response.body.researchSession, null);
+    assert.deepEqual(response.body.researchSessions, []);
+    assert.equal(response.body.interop, null);
+    assert.deepEqual(response.body.interopHistory, []);
   } finally {
     if (previousUrl) process.env.UPSTASH_REDIS_REST_URL = previousUrl;
     if (previousToken) process.env.UPSTASH_REDIS_REST_TOKEN = previousToken;
   }
+});
+
+test("durable status detail requires the exact operator bearer token", () => {
+  assert.equal(isDetailedStatusAuthorized({ headers: {} }, "operator-secret"), false);
+  assert.equal(isDetailedStatusAuthorized({ headers: { authorization: "Bearer wrong" } }, "operator-secret"), false);
+  assert.equal(isDetailedStatusAuthorized({ headers: { authorization: "Bearer operator-secret" } }, "operator-secret"), true);
 });
 
 test("receipt API verifies supported files and rejects altered content", async () => {
@@ -62,11 +76,34 @@ test("receipt API verifies supported files and rejects altered content", async (
 });
 
 test("public endpoints reject unsupported methods", async () => {
-  for (const handler of [healthHandler, statusHandler, verifyHandler, dexPoolHandler, dexQuoteHandler]) {
+  for (const handler of [healthHandler, statusHandler, verifyHandler, dexPoolHandler, dexQuoteHandler, interopObserveHandler]) {
     const response = responseMock();
     await handler({ method: "DELETE", headers: {} }, response);
     assert.equal(response.statusCode, 405);
   }
+  const guardianResponse = responseMock();
+  await guardianWatchHandler({ method: "PATCH", headers: {} }, guardianResponse);
+  assert.equal(guardianResponse.statusCode, 405);
+});
+
+test("Interop observation fails visibly when Arc RPC is not configured", async () => {
+  const previous = process.env.ARC_RPC_URL;
+  delete process.env.ARC_RPC_URL;
+  try {
+    const response = responseMock();
+    await interopObserveHandler({ method: "GET", query: {} }, response);
+    assert.equal(response.statusCode, 503);
+    assert.equal(response.body.configured, false);
+    assert.match(response.body.error, /not configured/i);
+  } finally {
+    if (previous) process.env.ARC_RPC_URL = previous;
+  }
+});
+
+test("durable Guardian registration is protected", async () => {
+  const response = responseMock();
+  await guardianWatchHandler({ method: "POST", headers: {}, body: {} }, response);
+  assert.equal(response.statusCode, 401);
 });
 
 test("DEX quote endpoint fails safely without a server-side API key", async () => {

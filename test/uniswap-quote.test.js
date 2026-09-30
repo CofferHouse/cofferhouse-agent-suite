@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ARC_USDC, normalizeUniswapQuote, requestUniswapQuote } from "../src/uniswap-quote.js";
+import { ARC_USDC, normalizeUniswapQuote, requestUniswapQuote } from "../packages/agent-modules/index.js";
 
 const token = "0x1111111111111111111111111111111111111111";
 const response = { requestId: "req-1", routing: "CLASSIC", isTokenApprovalApplicable: true, tokenIn: ARC_USDC, tokenOut: token, outputDecimals: 18, slippageTolerance: 0.5, quote: { input: { amount: "100000000", token: ARC_USDC }, output: { amount: "250000000000000000000", minimumAmount: "248750000000000000000", token }, classicGasUseEstimateUSD: "0.01", slippageTolerance: 0.5 } };

@@ -16,6 +16,43 @@ El Hub muestra el sistema completo y distingue capacidades reales de planes futu
 - **Automation Sandbox:** comprueba listas permitidas, topes, vencimiento, pausa y revocación como simulación; nunca instala permisos ni mueve fondos.
 - **Guardian:** vigilará estrategias o posiciones registradas.
 - **Automation:** administrará permisos revocables y límites de ejecución.
+- **Interop Observer:** observa eventos recientes de salida y entrada de CCTP V2 en Arc; no mueve fondos, no obtiene una cotización de puente y no se conecta a StableFX.
+
+## Interop Observer
+
+### Objetivo
+
+Dar evidencia verificable sobre actividad crosschain de stablecoins en Arc. El agente consulta una ventana reciente y acotada de bloques mediante el RPC configurado y decodifica únicamente dos tipos de eventos de los contratos oficiales de CCTP V2:
+
+- `DepositForBurn`: una salida iniciada desde Arc;
+- `MessageReceived`: un mensaje crosschain recibido en Arc.
+
+### Indicadores
+
+- cantidad de quemados de salida;
+- cantidad de mensajes recibidos;
+- intervalo exacto de bloques observado;
+- número de bloque e índice de log para ordenar cada evento;
+- dominio de origen o destino, monto atómico normalizado y transacción en el explorador cuando estén disponibles.
+
+Arc puede producir varios bloques con la misma marca de tiempo. Por eso el agente ordena por `blockNumber` y después por `logIndex`; no usa la hora como orden canónico. Un resultado de cero eventos significa solamente que no hubo eventos compatibles dentro de esa ventana, no que Arc carezca de liquidez crosschain.
+
+### Lo que puede modificarse
+
+El endpoint limita internamente la consulta a un máximo de 500 bloques y 100 logs para proteger el RPC. La interfaz solicita 250 bloques. Ampliar estos límites requiere revisar capacidad, costo y paginación del proveedor; no debe hacerse desde el navegador sin control.
+
+### Límites actuales
+
+- CCTP es observable pero no ejecutable.
+- App Kits aparece como capacidad documentada, no conectada a una wallet.
+- StableFX muestra su secuencia publicada —cotización, ejecución, confirmación de intención, fondeo y liquidación— pero no presenta precios ni operaciones como reales porque todavía no existe una cuenta/API conectada.
+- No hay custodia, firma, puente, swap, liquidación ni recomendación automática.
+
+### Funcionamiento 24/7
+
+Cuando `ARC_RPC_URL`, el almacén durable y el scheduler están configurados, cada ciclo protegido observa hasta 500 bloques recientes, crea un recibo verificable y conserva hasta 50 recibos. Una falla de Interop se registra como `UNAVAILABLE` y no cancela el análisis de mercados ni la vigilancia de Guardian.
+
+Las ventanas se solapan intencionalmente para no perder eventos entre ejecuciones. El agente identifica cada evento por `transactionHash + logIndex`, elimina del conteo de actividad nueva los eventos ya vistos y clasifica el ciclo como `BASELINE_CREATED`, `NEW_ACTIVITY` o `NO_NEW_ACTIVITY`.
 
 La meta de la suite es que cada agente entregue evidencia estructurada al siguiente. La automatización real con fondos permanecerá bloqueada hasta contar con arquitectura de wallet, contratos revisados y autorización explícita.
 
@@ -238,6 +275,8 @@ El usuario puede elegir uno de tres perfiles. Cambiar el perfil no cambia el mer
 - `AGENT DEGRADED · SOURCE FAILURE`: la última ejecución falló y se guardó el diagnóstico.
 
 ### Indicadores
+
+El estado del servidor se consulta automáticamente cada minuto mientras la página está visible. Al regresar a una pestaña que llevaba tiempo oculta se solicita una actualización inmediata. `REFRESH STATUS` permite comprobarlo manualmente; una solicitud tiene un límite de diez segundos y, si falla, conserva el último estado conocido señalándolo como `CONNECTION LOST` en lugar de borrar la evidencia anterior.
 
 - `LAST SERVER RUN`: hora del último ciclo.
 - `LAST DECISION`: `NO_ACTION`, `WATCH`, `REVIEW` o `ESCALATE`.
@@ -501,6 +540,19 @@ Evalúa si los campos necesarios para el análisis básico están presentes. En 
 **Buenas prácticas:** comparar la hora, Market ID y direcciones del recibo con la pantalla y el explorador.
 
 ## 19. Flujo operativo sugerido
+
+### Memoria segura de Action Center, Guardian y Automation
+
+La cadena operativa se conserva en este navegador para que una recarga no borre el trabajo del operador. El espacio guardado puede incluir el preview de Action Center, la revisión humana, la vigilancia y última observación de Guardian, y la política y evaluación simuladas de Automation.
+
+- El conjunto se guarda como un documento sellado. Si se altera un campo o dejan de coincidir el objetivo, el recibo fuente o la identidad entre etapas, la aplicación lo rechaza en vez de reconstruir una cadena dudosa.
+- La restauración nunca prepara, firma ni envía una transacción. Los indicadores `Prepared`, `Signed` y `Submitted` permanecen en `NO`.
+- La aprobación humana caduca 15 minutos después de registrarse. Recargar la página no reinicia ese plazo.
+- Una vigilancia de Guardian puede conservarse como historial después del vencimiento, pero no cuenta como una autorización fresca. Crear una nueva vigilancia o una nueva política simulada exige volver a revisar el intent en Action Center.
+- Una política simulada ya guardada puede inspeccionarse, pausarse o revocarse. Cualquier evaluación nueva recibe `WOULD_BLOCK` si la aprobación humana dejó de estar vigente.
+- `CLEAR WORKSPACE` elimina del navegador toda esta cadena operativa sin borrar el historial independiente de sesiones de investigación.
+
+Esto permite continuidad y auditoría local, no autonomía financiera ni custodia.
 
 1. Confirmar `LIVE ARC DATA`.
 2. Elegir el perfil que representa el objetivo de investigación.

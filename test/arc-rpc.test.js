@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { verifyArcMarketContracts } from "../src/arc-rpc.js";
+import { verifyArcMarketContracts } from "../packages/arc-data/index.js";
 
 const addresses = {
   loan: "0x1111111111111111111111111111111111111111",

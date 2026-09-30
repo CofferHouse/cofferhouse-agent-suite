@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { simulateBorrow, suggestedBorrowAmount } from "../src/simulator.js";
-import { policyProfiles } from "../src/policy.js";
+import { simulateBorrow, suggestedBorrowAmount } from "../packages/agent-modules/index.js";
+import { policyProfiles } from "../packages/policies/index.js";
 
 const market = {
   network: "Arc",

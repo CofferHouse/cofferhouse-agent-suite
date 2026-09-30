@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { addMonitorObservation, clearMonitorHistory, loadMonitorHistory, saveMonitorHistory } from "../src/history.js";
+import { addMonitorObservation, clearMonitorHistory, loadMonitorHistory, saveMonitorHistory } from "../packages/shared/index.js";
 
 function memoryStorage(initial = {}) {
   const data = new Map(Object.entries(initial));

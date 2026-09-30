@@ -54,7 +54,7 @@ Agent Mode runs a bounded lifecycle without repeated operator clicks: observe li
 
 ### Durable server runtime
 
-`/api/agent/run` executes the same shared agent cycle without a browser, authenticates scheduled invocations with `CRON_SECRET`, and stores the latest snapshot plus the 100 most recent cycles in Upstash Redis. `/api/agent/status` exposes a read-only operational status and non-secret capability flags for the dashboard. Vercel invokes the included daily safety schedule; the included GitHub Actions workflow calls the same protected endpoint every 15 minutes without changing the policy engine.
+`/api/agent/run` executes the same shared agent cycle without a browser, authenticates scheduled invocations with `CRON_SECRET`, and stores the latest snapshot plus the 100 most recent cycles in Upstash Redis. `/api/agent/status` exposes only a public aggregate by default; durable receipts, incident history, capability detail and execution traces require the exact operator bearer token. Vercel invokes the included daily safety schedule; the included GitHub Actions workflow calls the same protected endpoint every 15 minutes without changing the policy engine.
 
 Material `REVIEW` and `ESCALATE` decisions can be delivered to a protected webhook. Alerts carry deterministic fingerprints and the runtime stores the last successfully delivered alert, preventing the same condition from being sent on every cycle.
 
@@ -83,31 +83,32 @@ Version 2 Scout and simulation receipts are serialized with a stable canonical J
 - Private keys must never be exposed to the frontend.
 - No transaction is sent without explicit user authorization.
 
-## Proposed repository structure
+## Repository structure
 
 ```text
 apps/
-  web/                 # User interface
+  agent-suite/         # Agent Room interface and domain modules
 packages/
-  market-schema/       # Normalized types and validation
-  adapters/            # Arc market/data adapters
-  policy-engine/       # Deterministic scoring rules
-  explanations/        # Human-readable report generation
+  agent-core/          # Scan, lifecycle, monitoring, alerts and acknowledgment
+  agent-modules/       # Opportunity through Automation domain behavior
+  arc-data/            # Arc market/data adapters
+  evidence/            # Receipts and integrity verification
+  market-schema/       # Normalized identities and validation
+  policies/            # Deterministic scoring rules
+  shared/              # Safe rendering, retry and local history
 contracts/             # Optional report registry/attestation
 docs/                  # Public specifications
 ```
 
 ## Prototype implementation
 
-- `src/morpho.js` queries and normalizes listed Morpho markets on Arc chain ID `5042`.
-- `src/markets.js` contains normalized demonstration observations used only as a safe fallback.
-- `src/policy.js` contains the versioned deterministic policy and evaluation engine.
-- `src/agent.js` scans and ranks all normalized markets without execution permissions.
-- `src/receipt.js` creates the deterministic, downloadable Scout Receipt.
-- `src/simulator.js` projects bounded borrow impact without execution.
-- `src/monitor.js` detects material differences between consecutive live snapshots.
-- `src/agent-runtime.js` implements the explicit agent lifecycle and bounded decision states.
-- `src/main.js` renders the report and plain-language explanations.
+- `packages/arc-data/morpho.js` queries and normalizes listed Morpho markets on Arc chain ID `5042`.
+- `packages/arc-data/arc-rpc.js` independently verifies observed contract bytecode.
+- `packages/policies/market-policy.js` contains the versioned deterministic policy engine.
+- `packages/evidence/` creates and verifies all supported agent receipts.
+- `packages/agent-core/` implements scanning, lifecycle, monitoring, bounded incident analysis, alerts and human acknowledgment for both browser and server runtimes.
+- `packages/agent-modules/` implements Opportunities, Strategy, DEX research, simulation, Action Center, Guardian, Automation and CCTP V2 event observation without UI dependencies.
+- `apps/agent-suite/src/main.js` is the browser presentation and interaction entrypoint.
 - `test/agent.test.js` verifies bounded ranking and explanation behavior.
 - `test/morpho.test.js` verifies API filtering, normalization and safe failure.
 - `test/policy.test.js` verifies PASS, REVIEW, REJECT and reproducibility.

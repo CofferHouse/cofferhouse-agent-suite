@@ -1,10 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeOpportunities, loadOpportunityPreferences, normalizeOpportunityPreferences, saveOpportunityPreferences } from "../src/opportunity.js";
-import { createOpportunityReceipt } from "../src/opportunity-receipt.js";
-import { demoMarkets } from "../src/markets.js";
-import { policyProfiles } from "../src/policy.js";
-import { verifySealedDocument } from "../src/integrity.js";
+import { analyzeOpportunities, loadOpportunityPreferences, normalizeOpportunityPreferences, saveOpportunityPreferences } from "../packages/agent-modules/index.js";
+import { createOpportunityReceipt, verifySealedDocument } from "../packages/evidence/index.js";
+import { demoMarkets } from "../packages/arc-data/index.js";
+import { policyProfiles } from "../packages/policies/index.js";
 
 test("Opportunity Agent filters and ranks markets with visible user limits", () => {
   const analysis = analyzeOpportunities(demoMarkets, policyProfiles.balanced, {

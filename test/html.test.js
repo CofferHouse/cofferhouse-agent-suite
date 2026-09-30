@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { escapeHtml, safeExternalUrl } from "../src/html.js";
+import { escapeHtml, safeExternalUrl } from "../packages/shared/index.js";
 
 test("escapes untrusted HTML before rendering", () => {
   assert.equal(escapeHtml('<img src=x onerror="alert(1)">'), "&lt;img src=x onerror=&quot;alert(1)&quot;&gt;");

@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { runAgentCycle } from "../src/agent-cycle.js";
-import { demoMarkets } from "../src/markets.js";
-import { policyProfiles } from "../src/policy.js";
+import { runAgentCycle } from "../packages/agent-core/index.js";
+import { demoMarkets } from "../packages/arc-data/index.js";
+import { policyProfiles } from "../packages/policies/index.js";
 
 test("server-ready agent cycle observes, evaluates, decides and records", () => {
   const cycle = runAgentCycle({

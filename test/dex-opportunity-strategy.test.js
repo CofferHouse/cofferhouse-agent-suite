@@ -1,9 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeDexOpportunities, loadDexOpportunityPreferences, saveDexOpportunityPreferences } from "../src/dex-opportunity.js";
-import { buildDexStrategy, impermanentLossReference, loadDexStrategyPreferences, saveDexStrategyPreferences } from "../src/dex-strategy.js";
-import { createDexOpportunityReceipt, createDexStrategyReceipt } from "../src/dex-research-receipt.js";
-import { verifyReceiptDocument } from "../src/receipt.js";
+import { analyzeDexOpportunities, buildDexStrategy, impermanentLossReference, loadDexOpportunityPreferences, loadDexStrategyPreferences, saveDexOpportunityPreferences, saveDexStrategyPreferences } from "../packages/agent-modules/index.js";
+import { createDexOpportunityReceipt, createDexStrategyReceipt, verifyReceiptDocument } from "../packages/evidence/index.js";
 
 const report = { status: "REVIEW", score: 76, modeledLiquidityImpactPct: 0.5, pool: { pairAddress: "0x2222222222222222222222222222222222222222", baseToken: { address: "0x1111111111111111111111111111111111111111", symbol: "MEME" }, quoteToken: { symbol: "USDC" }, liquidityUsd: 200_000, volume24hUsd: 100_000, priceChange24hPct: 10, speculativeApproval: true }, checks: [{ outcome: "review", detail: "Token evidence requires review." }] };
 

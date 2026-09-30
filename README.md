@@ -1,18 +1,18 @@
-# CofferHouse Scout
+# CofferHouse Agent Suite
 
-**Risk-aware market intelligence and bounded agents built on Arc.**
+**A connected room of bounded research agents built on Arc.**
 
-Scout includes both a session-scoped monitor and a protected server runtime with an explicit, inspectable lifecycle: observe, independently verify contract deployment, evaluate versioned policy, compare durable history, decide whether changes require attention, and record the result. It has no custody, signing, or transaction authority.
+The suite connects Scout, Opportunity, Strategy, DEX, Action Center, Guardian, Automation and Interop Observer into one inspectable research flow. Scout includes both a session-scoped monitor and a protected server runtime with an explicit lifecycle: observe, independently verify, evaluate versioned policy, compare durable history, decide whether changes require attention, and record the result. The current public release has no custody, signing, or transaction authority.
 
-CofferHouse Scout is the first working product planned for CofferHouse: a transparent research and risk layer that helps users inspect onchain markets before any capital is routed.
+CofferHouse Agent Suite is a working room inside the larger CofferHouse product: a transparent research and risk layer that helps users inspect onchain markets, build bounded proposals and preserve evidence before any capital is routed.
 
-> **Status:** Public hackathon prototype · Live, read-only Morpho market intelligence on Arc mainnet.
+> **Status:** Public hackathon prototype · Live, read-only Arc market and interoperability intelligence.
 
 **Live demo:** [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/)
 
-## What Scout is designed to do
+## What the suite is designed to do
 
-Scout currently:
+The suite currently:
 
 - discover supported markets on Arc;
 - normalize liquidity, utilization, yield and contract data;
@@ -34,8 +34,12 @@ Scout currently:
 - transform eligible opportunities into a bounded Strategy Lab allocation proposal;
 - preserve reserve, diversification and per-market concentration limits;
 - export a tamper-evident Strategy Lab receipt.
+- inspect user-selected Arc DEX pools without inventing missing pools or executable quotes;
+- carry one approved research intent through Action Center, Guardian and the revocable Automation sandbox;
+- observe Arc CCTP interoperability events, compare non-overlapping windows and seal an Interop receipt;
+- coordinate the complete evidence path from Agent Hub without merging agent responsibilities.
 
-The first version will be **read-only**. It will not custody funds, promise returns or execute autonomous strategies.
+This release is **read-only**. It does not custody funds, promise returns or execute autonomous strategies.
 
 ## Why Arc
 
@@ -70,9 +74,8 @@ See [MVP scope](docs/MVP.md) and [architecture](docs/ARCHITECTURE.md).
 | Explanation layer | Prototype complete |
 | Web interface | Prototype complete |
 | Bounded Scout Agent | Live |
-| Agent Hub | Live |
+| Agent Hub | Live: coordinates one bounded Scout → Opportunity → Strategy research session, includes DEX only when observed, and seals one session receipt |
 | Agent Suite navigation | Live: focused Hub, Scout, Opportunity, Strategy, DEX, Action Center, Guardian and Automation workspaces |
-| CofferHouse identity | Live: The Agent Room, official House Host, hand-drawn navigation and distinct agent marks |
 | Opportunity Agent | Live, read-only research prioritization |
 | Strategy Lab | Live, read-only allocation research |
 | DEX Pool Scanner | Live: user watchlist, indexed Arc screening and sealed receipts |
@@ -81,6 +84,7 @@ See [MVP scope](docs/MVP.md) and [architecture](docs/ARCHITECTURE.md).
 | Action Center | Live: one human gate, expiring approval and non-executable receipt |
 | Guardian | Live: approved-intent baseline monitoring and bounded responses |
 | Automation Sandbox | Live: allowlists, caps, expiry, pause and revocation simulation |
+| Interop Observer | Live: Arc CCTP event observation, window comparison, durable history and sealed receipts |
 | Official Uniswap quote adapter | Implemented; server-side API key required |
 | Verifiable market identity | Live |
 | Downloadable Scout Receipt | Live |
@@ -123,20 +127,25 @@ Live protocol listing does not equal CofferHouse approval. Markets remain in `RE
 │   └── ROADMAP.md
 ├── api/
 │   ├── agent/              # protected run, status and acknowledgment
+│   ├── interop/            # manual Arc CCTP observation endpoint
 │   ├── receipt/            # independent receipt verification
 │   └── health.js           # non-secret deployment readiness
 ├── contracts/              # optional, undeployed receipt registry source
-├── src/
-│   ├── main.js
-│   ├── agent*.js           # scan, lifecycle, alerts and server cycle
-│   ├── arc-rpc.js          # independent bytecode verification
-│   ├── morpho.js           # live Arc market adapter
-│   ├── policy.js           # deterministic policy profiles
-│   ├── receipt.js          # sealed Scout and simulation receipts
-│   └── styles.css
+├── apps/
+│   └── agent-suite/        # Agent Room UI and agent-specific domain logic
+├── packages/
+│   ├── agent-core/         # scanning, lifecycle, monitoring, alerts and human acknowledgment
+│   ├── agent-modules/      # Opportunity, Strategy, DEX, Action, Guardian and Automation logic
+│   ├── arc-data/           # Morpho adapter, Arc RPC and safe demo data
+│   ├── evidence/           # receipts, registry, sealing and verification
+│   ├── market-schema/      # normalized Arc identities and validation
+│   ├── policies/           # deterministic profiles and alert limits
+│   ├── product-config/     # safe House, Agent Suite and repository routes
+│   ├── shared/             # safe rendering, retries and browser history
+│   └── ui/                 # official tokens and shared rocket cursor behavior
 ├── test/                   # complete Node test suite
 ├── .github/workflows/      # protected 15-minute scheduler
-├── index.html
+├── vite.config.js          # preserves root build and dist deployment contract
 ├── package.json
 ├── package-lock.json
 ├── .env.example
@@ -147,11 +156,13 @@ Live protocol listing does not equal CofferHouse approval. Markets remain in `RE
 └── README.md
 ```
 
-The application code lives in `src/`. No contracts are required for the read-only prototype.
+The Agent Room application lives in `apps/agent-suite/` and now contains presentation code only; reusable agent behavior lives in `packages/`. Vite still emits the deployable site to root `dist/`, so the Vercel deployment contract is unchanged. No contracts are required for the read-only prototype.
 
 See [Production deployment](docs/DEPLOYMENT.md) to activate durable memory, the protected 15-minute agent scheduler, operator acknowledgment, and optional alerts or bounded Gemini briefings.
 
-See the [hackathon submission brief](docs/HACKATHON_SUBMISSION.md) for the concise agent explanation, trust model, limitations, and three-minute demo sequence.
+See the [hackathon submission brief](docs/HACKATHON_SUBMISSION.md), [demo script](docs/HACKATHON_DEMO_SCRIPT.md), and [submission checklist](docs/HACKATHON_ASSET_CHECKLIST.md) for the complete delivery package.
+
+See the [X launch pack](docs/X_LAUNCH_PACK.md) for ready-to-publish build-in-public posts that describe the product without overstating autonomy.
 
 See [Agent Hub](docs/AGENT_HUB.md) for the multi-agent product sequence and the October 14 delivery boundary.
 
@@ -166,11 +177,11 @@ La [guía operativa en español](docs/GUIA_OPERATIVA_ES.md) explica cada apartad
 ## Official links
 
 - X: [@TheCofferHouse](https://x.com/TheCofferHouse)
-- Scout: [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/)
-- CofferHouse website: coming soon
+- Agent Suite: [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/#agents)
+- CofferHouse website: [cofferhouse.cheesemachineco.chatgpt.site](https://cofferhouse.cheesemachineco.chatgpt.site/)
 - Public documentation: included in this repository
 - Contracts: not deployed
 
 ## Important notice
 
-CofferHouse Scout is experimental software under active development. It is not financial advice, does not guarantee the accuracy of third-party data and does not guarantee any return. Do not use unfinished software with funds you cannot afford to lose.
+CofferHouse Agent Suite is experimental software under active development. It is not financial advice, does not guarantee the accuracy of third-party data and does not guarantee any return. Do not use unfinished software with funds you cannot afford to lose.
