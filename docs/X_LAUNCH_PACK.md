@@ -13,6 +13,25 @@ The first working room is live: CofferHouse Agent Suite.
 Live: https://cofferhouse-scout.vercel.app/#agents
 Source: https://github.com/CofferHouse/cofferhouse-agent-suite
 
+## Hackathon build post
+
+We are entering October with a working Arc micro-agent.
+
+CofferHouse Scout observes live mainnet markets, applies visible policy, remembers material changes and records tamper-evident evidence.
+
+Autonomous research. Human financial authority.
+
+Live: https://cofferhouse-scout.vercel.app/#agents/scout
+Code: https://github.com/CofferHouse/cofferhouse-agent-suite
+
+## Holder Center post
+
+CofferHouse is one product, not a pile of disconnected bots.
+
+The public House now leads into a Holder Command Center for access keys, progression, rewards preferences and level-based tools. Agent Suite is the first working room inside it.
+
+Preview: https://cofferhouse-scout.vercel.app/#holders
+
 ## Launch thread
 
 ### 1/6

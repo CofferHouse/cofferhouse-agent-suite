@@ -30,7 +30,9 @@ main { width: min(1180px, calc(100% - 36px)); margin: auto; }
 .holder-hero h1 { margin: 10px 0 16px; font-size: clamp(38px,5.2vw,70px); }
 .holder-hero > div > p:last-child { max-width: 700px; margin: 0; font: 13px/1.55 "DM Mono"; color: #555; }
 .holder-connection { padding: 18px; border: 2px solid var(--ink); background: #fff3bd; box-shadow: 7px 7px 0 var(--blue); }
+.holder-connection.connected { background: #e5f7ed; box-shadow: 7px 7px 0 #48a978; }
 .holder-connection span,.holder-connection b,.holder-connection small { display: block; }.holder-connection span { color: var(--blue); font: 8px "DM Mono"; }.holder-connection b { margin: 6px 0; font: 15px "Archivo Black"; }.holder-connection small { font: 8px/1.45 "DM Mono"; color: #555; }.holder-connection button { width: 100%; margin-top: 12px; padding: 10px; border: 2px solid var(--ink); background: #ddd7ca; font: 8px "Archivo Black"; }
+.holder-connection code { display: block; margin-top: 9px; padding: 7px; border: 1px solid #151515; background: #faf7ef; font: 8px "DM Mono"; }
 .holder-demo-note { display: grid; grid-template-columns: 190px 1fr; gap: 16px; padding: 12px 25px; border-bottom: 2px solid var(--ink); background: #dfeaff; box-shadow: inset 8px 0 var(--blue); }.holder-demo-note b { font: 9px "Archivo Black"; }.holder-demo-note span { font: 8px/1.5 "DM Mono"; }
 .holder-dashboard { display: grid; grid-template-columns: 1.2fr .8fr; border-bottom: 2px solid var(--ink); }
 .holder-dashboard > article { min-width: 0; padding: 22px; border-right: 1px solid #999; border-bottom: 1px solid #999; }.holder-dashboard > article:nth-child(2n) { border-right: 0; }

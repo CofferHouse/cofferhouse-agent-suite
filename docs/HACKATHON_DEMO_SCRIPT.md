@@ -1,10 +1,10 @@
 # Three-minute demo script
 
-## 0:00–0:20 — One House, one Agent Room
+## 0:00–0:20 — One House, one holder doorway
 
-Open the CofferHouse website and use **Enter Agent Suite**. Explain that the suite is a working room inside the broader CofferHouse product, not a separate dashboard.
+Open the CofferHouse website and use **Holder Access**. Show the read-only Holder Command Center, then open Agent Suite. Explain that the suite is a working room unlocked from the broader CofferHouse product, not a separate dashboard.
 
-Say: “CofferHouse is building member access and financial tooling on Arc. The public prototype proves the research, evidence and permission layers before custody or execution.”
+Say: “CofferHouse is building member access and financial tooling on Arc. The public prototype proves holder identity, research, evidence and permission layers before custody or execution.”
 
 ## 0:20–0:55 — Scout proves the observation loop
 

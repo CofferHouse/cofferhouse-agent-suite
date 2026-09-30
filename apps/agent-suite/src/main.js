@@ -4,7 +4,7 @@ import { evaluateMarket, loadAlertLimits, policyProfiles, saveAlertLimits } from
 import { addResearchSessionReceipt, clearOperatorWorkspace, clearResearchSessionHistory, compareResearchSessions, createActionReceipt, createAutomationReceipt, createDexOpportunityReceipt, createDexReceipt, createDexStrategyReceipt, createGuardianReceipt, createInteropReceipt, createOpportunityReceipt, createResearchSessionReceipt, createScoutReceipt, createSimulationReceipt, createStrategyReceipt, downloadScoutReceipt, loadOperatorWorkspace, loadResearchSessionHistory, researchSessionFromReceipt, saveOperatorWorkspace, saveResearchSessionHistory, verifyReceiptDocument } from "../../../packages/evidence/index.js";
 import { addMonitorObservation, clearMonitorHistory, escapeHtml as h, loadMonitorHistory, safeExternalUrl, saveMonitorHistory } from "../../../packages/shared/index.js";
 import { SERVER_STATUS_REFRESH_MS, advanceAgentState, agentCatalog, agentDecision, buildMissionControl, compareMarketSnapshots, createAgentRuntimeState, runtimeConnectionLabel, scanMarkets, shouldRefreshRuntimeStatus } from "../../../packages/agent-core/index.js";
-import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeOpportunities, buildDexStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultOpportunityPreferences, defaultStrategyPreferences, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcPoolsForToken, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
+import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeOpportunities, buildDexStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcPoolsForToken, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
 import { productLinks } from "../../../packages/product-config/index.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -56,6 +56,8 @@ let automationPolicy = restoredOperatorWorkspace?.automationPolicy ?? null;
 let automationEvaluation = restoredOperatorWorkspace?.automationEvaluation ?? null;
 let activeSuiteView = "holder";
 let holderPreferences = loadHolderPreferences(window.localStorage);
+let holderIdentity = disconnectedHolderIdentity(Boolean(window.ethereum));
+let holderIdentityBusy = false;
 const demoHolderLevel = "member";
 let researchSessionHistory = loadResearchSessionHistory(window.localStorage);
 let researchSession = researchSessionHistory[0] ? researchSessionFromReceipt(researchSessionHistory[0]) : null;
@@ -189,7 +191,7 @@ function render() {
       <section class="holder-center suite-view ${activeSuiteView === "holder" ? "is-active" : ""}" data-suite-view="holder" id="holder-center" aria-labelledby="holder-center-title">
         <header class="holder-hero">
           <div><p class="eyebrow">YOUR KEY TO THE HOUSE · DEMO MODE</p><h1 id="holder-center-title">Holder Command Center.</h1><p>One place for membership, progression, rewards and the CofferHouse tools unlocked by your access key.</p></div>
-          <div class="holder-connection"><span>WALLET STATUS</span><b>NOT CONNECTED</b><small>Balances and ownership remain unavailable until verified contracts and wallet access are connected.</small><button type="button" disabled>CONNECT WALLET · COMING NEXT</button></div>
+          <div class="holder-connection ${holderIdentity.isArc ? "connected" : ""}"><span>WALLET STATUS</span><b>${h(holderIdentity.status.replaceAll("_", " "))}</b><small>${h(holderIdentity.message)}</small>${holderIdentity.address ? `<code title="${h(holderIdentity.address)}">${h(shortId(holderIdentity.address))} · ${holderIdentity.isArc ? "ARC MAINNET" : `CHAIN ${holderIdentity.chainId ?? "?"}`}</code>` : ""}<button class="holder-connect-wallet" type="button" ${holderIdentityBusy || !window.ethereum ? "disabled" : ""}>${holderIdentityBusy ? "CONNECTING…" : holderIdentity.address ? "REFRESH READ-ONLY IDENTITY" : window.ethereum ? "CONNECT READ-ONLY WALLET" : "INSTALL A BROWSER WALLET"}</button></div>
         </header>
         <div class="holder-demo-note"><b>REPRESENTATIVE PREVIEW</b><span>This screen demonstrates the holder experience. It does not claim NFT ownership, token balances, rewards or financial execution.</span></div>
         <div class="holder-dashboard">
@@ -652,6 +654,18 @@ function render() {
 
   document.querySelectorAll(".suite-tab").forEach((button) => button.addEventListener("click", () => openSuiteView(button.dataset.view)));
   document.querySelectorAll(".holder-open-tool").forEach((button) => button.addEventListener("click", () => openSuiteView(button.dataset.view)));
+  document.querySelector(".holder-connect-wallet")?.addEventListener("click", async () => {
+    holderIdentityBusy = true;
+    render();
+    try {
+      holderIdentity = await readHolderIdentity(window.ethereum);
+    } catch {
+      holderIdentity = Object.freeze({ ...disconnectedHolderIdentity(true), status: "DECLINED", message: "The wallet request was declined or unavailable. No signature or transaction was requested." });
+    } finally {
+      holderIdentityBusy = false;
+      render();
+    }
+  });
   document.querySelector(".holder-reward-form")?.addEventListener("submit", (event) => {
     event.preventDefault();
     holderPreferences = saveHolderPreferences(window.localStorage, { rewardMode: new FormData(event.currentTarget).get("rewardMode") });
