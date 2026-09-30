@@ -177,7 +177,8 @@ La [guía operativa en español](docs/GUIA_OPERATIVA_ES.md) explica cada apartad
 ## Official links
 
 - X: [@TheCofferHouse](https://x.com/TheCofferHouse)
-- Agent Suite: [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/#agents)
+- Holder Command Center: [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/#holders)
+- Agent Suite (holder tool): [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/#agents)
 - CofferHouse website: [cofferhouse.cheesemachineco.chatgpt.site](https://cofferhouse.cheesemachineco.chatgpt.site/)
 - Public documentation: included in this repository
 - Contracts: not deployed

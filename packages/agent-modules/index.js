@@ -12,3 +12,4 @@ export * from "./durable-guardian.js";
 export * from "./interop-observer.js";
 export * from "./automation.js";
 export * from "./research-session.js";
+export * from "./holder-center.js";

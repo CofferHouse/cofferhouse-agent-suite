@@ -4,7 +4,7 @@ import { evaluateMarket, loadAlertLimits, policyProfiles, saveAlertLimits } from
 import { addResearchSessionReceipt, clearOperatorWorkspace, clearResearchSessionHistory, compareResearchSessions, createActionReceipt, createAutomationReceipt, createDexOpportunityReceipt, createDexReceipt, createDexStrategyReceipt, createGuardianReceipt, createInteropReceipt, createOpportunityReceipt, createResearchSessionReceipt, createScoutReceipt, createSimulationReceipt, createStrategyReceipt, downloadScoutReceipt, loadOperatorWorkspace, loadResearchSessionHistory, researchSessionFromReceipt, saveOperatorWorkspace, saveResearchSessionHistory, verifyReceiptDocument } from "../../../packages/evidence/index.js";
 import { addMonitorObservation, clearMonitorHistory, escapeHtml as h, loadMonitorHistory, safeExternalUrl, saveMonitorHistory } from "../../../packages/shared/index.js";
 import { SERVER_STATUS_REFRESH_MS, advanceAgentState, agentCatalog, agentDecision, buildMissionControl, compareMarketSnapshots, createAgentRuntimeState, runtimeConnectionLabel, scanMarkets, shouldRefreshRuntimeStatus } from "../../../packages/agent-core/index.js";
-import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeOpportunities, buildDexStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultOpportunityPreferences, defaultStrategyPreferences, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcPoolsForToken, guardianEvidenceFromDex, guardianEvidenceFromLending, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadOpportunityPreferences, loadStrategyPreferences, pausePermissionPolicy, requestUniswapQuote, revokePermissionPolicy, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
+import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeOpportunities, buildDexStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultOpportunityPreferences, defaultStrategyPreferences, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcPoolsForToken, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
 import { productLinks } from "../../../packages/product-config/index.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -54,7 +54,9 @@ let guardianObservation = restoredOperatorWorkspace?.guardianObservation ?? null
 let durableGuardianMessage = "Register a lending watch once to evaluate it during every protected server cycle.";
 let automationPolicy = restoredOperatorWorkspace?.automationPolicy ?? null;
 let automationEvaluation = restoredOperatorWorkspace?.automationEvaluation ?? null;
-let activeSuiteView = "hub";
+let activeSuiteView = "holder";
+let holderPreferences = loadHolderPreferences(window.localStorage);
+const demoHolderLevel = "member";
 let researchSessionHistory = loadResearchSessionHistory(window.localStorage);
 let researchSession = researchSessionHistory[0] ? researchSessionFromReceipt(researchSessionHistory[0]) : null;
 let interopState = { mode: "idle", message: "Run an observation to inspect recent Arc CCTP V2 activity.", observation: null };
@@ -75,7 +77,8 @@ function resetOperatorState(message) {
 }
 
 const suiteTabs = Object.freeze([
-  { id: "hub", label: "Agent Hub", mark: "⌂" },
+  { id: "holder", label: "Holder Center", mark: "⌂" },
+  { id: "hub", label: "Agent Hub", mark: "00" },
   { id: "scout", label: "Scout", mark: "01" },
   { id: "opportunity", label: "Opportunities", mark: "02" },
   { id: "strategy", label: "Strategy", mark: "03" },
@@ -86,13 +89,16 @@ const suiteTabs = Object.freeze([
   { id: "interop", label: "Interop", mark: "08" }
 ]);
 
-const requestedSuiteView = window.location.hash.match(/^#agents\/(.+)$/)?.[1];
-if (suiteTabs.some((tab) => tab.id === requestedSuiteView)) activeSuiteView = requestedSuiteView;
+const requestedRoute = window.location.hash;
+const requestedSuiteView = requestedRoute.match(/^#agents\/(.+)$/)?.[1];
+if (requestedRoute === "#agents") activeSuiteView = "hub";
+else if (requestedRoute === "#holders" || requestedRoute === "") activeSuiteView = "holder";
+else if (suiteTabs.some((tab) => tab.id === requestedSuiteView)) activeSuiteView = requestedSuiteView;
 
 function openSuiteView(view) {
   if (!suiteTabs.some((tab) => tab.id === view)) return;
   activeSuiteView = view;
-  window.history.replaceState(null, "", view === "hub" ? "#agents" : `#agents/${view}`);
+  window.history.replaceState(null, "", view === "holder" ? "#holders" : view === "hub" ? "#agents" : `#agents/${view}`);
   render();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -162,21 +168,50 @@ function render() {
   const automationReceipt = automationPolicy ? createAutomationReceipt(automationPolicy, automationEvaluation) : null;
   const interopReceipt = interopState.observation ? createInteropReceipt(interopState.observation) : null;
   const durableInteropVerification = serverRuntime.interop ? verifyReceiptDocument(serverRuntime.interop) : null;
+  const holderEntitlements = holderAccess(demoHolderLevel);
+  const nextHolderLevel = nextAscension(demoHolderLevel);
+  const holderLevelIndex = holderLevels.findIndex((level) => level.id === demoHolderLevel);
   app.innerHTML = `
     <header class="topbar">
       <a class="brand house-home" href="${h(PRODUCT_LINKS.house)}" aria-label="Back to the CofferHouse">
         <img class="brand-arch" src="/brand/cofferhouse-arch-official.png" alt="">
         <strong class="brand-name" aria-hidden="true"><i>C</i><i>O</i><i>F</i><i>F</i><i>E</i><i>R</i><i>H</i><i>O</i><i>U</i><i>S</i><i>E</i></strong>
-        <span>AGENT SUITE · BACK TO THE HOUSE ↗</span>
+        <span>HOLDER CENTER · BACK TO THE HOUSE ↗</span>
       </a>
       <div class="network"><span></span> ARC MAINNET · READ ONLY</div>
     </header>
-    <nav class="suite-nav" aria-label="CofferHouse Agent Suite">
+    <nav class="suite-nav" aria-label="CofferHouse holder tools">
       <div class="suite-nav-inner">
         ${suiteTabs.map((tab) => `<button class="suite-tab ${activeSuiteView === tab.id ? "active" : ""}" data-view="${tab.id}" type="button" aria-current="${activeSuiteView === tab.id ? "page" : "false"}"><span>${tab.mark}</span>${tab.label}</button>`).join("")}
       </div>
     </nav>
     <main>
+      <section class="holder-center suite-view ${activeSuiteView === "holder" ? "is-active" : ""}" data-suite-view="holder" id="holder-center" aria-labelledby="holder-center-title">
+        <header class="holder-hero">
+          <div><p class="eyebrow">YOUR KEY TO THE HOUSE · DEMO MODE</p><h1 id="holder-center-title">Holder Command Center.</h1><p>One place for membership, progression, rewards and the CofferHouse tools unlocked by your access key.</p></div>
+          <div class="holder-connection"><span>WALLET STATUS</span><b>NOT CONNECTED</b><small>Balances and ownership remain unavailable until verified contracts and wallet access are connected.</small><button type="button" disabled>CONNECT WALLET · COMING NEXT</button></div>
+        </header>
+        <div class="holder-demo-note"><b>REPRESENTATIVE PREVIEW</b><span>This screen demonstrates the holder experience. It does not claim NFT ownership, token balances, rewards or financial execution.</span></div>
+        <div class="holder-dashboard">
+          <article class="holder-key-card">
+            <div class="holder-key-art"><img src="/brand/cofferhouse-arch-official.png" alt="CofferHouse access-key arch"><span>ACCESS KEY</span><b>OWNER VIEW</b></div>
+            <div><span>NFT / ACCESS KEY</span><h2>Connect to identify your key</h2><p>Card class and token ID will be read from the verified membership contract.</p><dl><div><dt>CARD CLASS</dt><dd>Unavailable</dd></div><div><dt>TOKEN ID</dt><dd>Unavailable</dd></div><div><dt>NETWORK</dt><dd>Arc · pending verification</dd></div></dl></div>
+          </article>
+          <article class="holder-level-card">
+            <span>PROGRESSION LEVEL · PREVIEW</span><h2>Member</h2><p>Permanent progression determines which CofferHouse services become available. Card rarity and progression level are separate.</p>
+            <div class="level-rail">${holderLevels.map((level, index) => `<div class="${index <= holderLevelIndex ? "reached" : ""}"><i>${index + 1}</i><span>${h(level.label)}</span></div>`).join("")}</div>
+            <footer><span>NEXT LEVEL</span><b>${h(nextHolderLevel?.label ?? "Highest level")}</b><small>${nextHolderLevel ? `${nextHolderLevel.cofferThreshold.toLocaleString("en-US")} $COFFERS threshold · contract verification required` : "All levels reached"}</small></footer>
+          </article>
+          <article class="holder-balance-card"><span>$COFFERS BALANCE</span><b>—</b><p>Unavailable until wallet and token contract are connected.</p></article>
+          <article class="holder-balance-card rewards"><span>REWARDS</span><b>—</b><p>Accrued and claimable amounts will come from verified reward contracts.</p></article>
+          <article class="holder-reward-card">
+            <div><span>REWARD DESTINATION</span><h2>Choose how future rewards are handled</h2><p>This preference is saved only in this browser. It does not move funds or authorize a transaction.</p></div>
+            <form class="holder-reward-form"><label>REWARD MODE<select name="rewardMode">${rewardModes.map((mode) => `<option value="${h(mode.id)}" ${holderPreferences.rewardMode === mode.id ? "selected" : ""}>${h(mode.label)}</option>`).join("")}</select></label><button type="submit">SAVE PREFERENCE</button><output aria-live="polite"></output></form>
+          </article>
+        </div>
+        <section class="holder-tools" aria-labelledby="holder-tools-title"><div class="holder-tools-head"><div><p class="eyebrow">YOUR HOUSE TOOLS</p><h2 id="holder-tools-title">Services by level.</h2></div><p>Research previews may open now. Financial services remain locked until their contracts, controls and eligibility checks are live.</p></div><div class="holder-tool-grid">${holderEntitlements.map((service) => `<article class="${service.unlocked ? "unlocked" : "locked"}"><span>${h(service.status.toUpperCase())} · ${h(holderLevels.find((level) => level.id === service.level)?.label ?? service.level)}</span><h3>${h(service.label)}</h3><p>${h(service.description)}</p>${service.view && service.unlocked ? `<button class="holder-open-tool" data-view="${h(service.view)}" type="button">OPEN ${h(service.label.toUpperCase())} →</button>` : `<button type="button" disabled>${service.unlocked ? "ROADMAP" : `UNLOCKS AT ${h(service.level.toUpperCase())}`}</button>`}</article>`).join("")}</div></section>
+        <footer class="holder-boundary"><b>MEMBERSHIP VIEW, NOT A WALLET</b><span>Demo · Read only · No custody · No execution</span></footer>
+      </section>
       <section class="hero suite-view ${activeSuiteView === "hub" ? "is-active" : ""}" data-suite-view="hub">
         <div>
           <p class="eyebrow">RISK INTELLIGENCE FOR PROGRAMMABLE MARKETS</p>
@@ -616,6 +651,12 @@ function render() {
     <footer class="site-footer"><span>Research first. Execution later.</span><span>Experimental software · Not financial advice</span></footer>`;
 
   document.querySelectorAll(".suite-tab").forEach((button) => button.addEventListener("click", () => openSuiteView(button.dataset.view)));
+  document.querySelectorAll(".holder-open-tool").forEach((button) => button.addEventListener("click", () => openSuiteView(button.dataset.view)));
+  document.querySelector(".holder-reward-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    holderPreferences = saveHolderPreferences(window.localStorage, { rewardMode: new FormData(event.currentTarget).get("rewardMode") });
+    event.currentTarget.querySelector("output").textContent = "Preference saved in this browser ✓";
+  });
   document.querySelector(".interop-scan")?.addEventListener("click", observeInterop);
   document.querySelector(".interop-download")?.addEventListener("click", () => downloadScoutReceipt(interopReceipt));
   document.querySelector(".interop-open-durable")?.addEventListener("click", () => {
