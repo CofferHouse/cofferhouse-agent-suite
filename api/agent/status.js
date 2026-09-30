@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { durableStoreConfigured, getJson, listJson } from "../_redis.js";
-import { evaluateDeploymentReadiness } from "../../packages/agent-core/index.js";
+import { deploymentCapabilities, evaluateDeploymentReadiness } from "../../packages/agent-core/index.js";
 
 const STATUS_KEY = "cofferhouse:scout:agent-status";
 const HISTORY_KEY = "cofferhouse:scout:agent-history";
@@ -15,16 +15,7 @@ const INTEROP_LATEST_KEY = "cofferhouse:interop:latest-receipt";
 const INTEROP_HISTORY_KEY = "cofferhouse:interop:receipt-history";
 
 function runtimeCapabilities() {
-  return {
-    durableMemory: durableStoreConfigured(),
-    protectedScheduler: Boolean(process.env.CRON_SECRET),
-    outboundAlerts: Boolean(process.env.SCOUT_ALERT_WEBHOOK_URL),
-    boundedIntelligence: Boolean(process.env.GEMINI_API_KEY),
-    humanAcknowledgment: Boolean(process.env.SCOUT_OPERATOR_TOKEN),
-    arcRpcVerification: Boolean(process.env.ARC_RPC_URL),
-    officialUniswapQuotes: Boolean(process.env.UNISWAP_API_KEY),
-    onchainAnchor: Boolean(process.env.SCOUT_RECEIPT_REGISTRY_ADDRESS)
-  };
+  return { ...deploymentCapabilities(process.env), durableMemory: durableStoreConfigured() };
 }
 
 function bearerToken(request) {

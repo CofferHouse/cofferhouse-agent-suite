@@ -55,14 +55,18 @@ The workflow `.github/workflows/scout-agent.yml` runs every 15 minutes and can a
 
 ## 4. Confirm operation
 
-1. Open `/api/health` on the deployment and confirm `readyForUnattendedCycles` is `true`.
-2. Run **Scout Agent Cycle** manually once in GitHub Actions.
-3. Open the public Scout page.
-4. Confirm that **SERVER AGENT · 24/7 CORE** shows `DURABLE AGENT ONLINE`.
-5. Confirm a recent **LAST SERVER RUN**, a decision, an execution trace, and at least one durable history cycle.
-6. Run the workflow again after market data changes and confirm that the history count increases.
-7. Create and approve a lending intent, start Guardian, register its sealed watch with the operator token, run another protected cycle, and confirm a durable Guardian decision appears.
-8. Open Interop Observer and confirm the latest protected observation can be restored from durable memory. Zero events is a valid bounded-window result.
+1. Run `npm run verify:production -- https://cofferhouse-scout.vercel.app`. Before activation it exits non-zero and lists the missing capabilities without exposing values.
+2. Open `/api/health` on the deployment and confirm `readyForUnattendedCycles` is `true`.
+3. Run **Scout Agent Cycle** manually once in GitHub Actions.
+4. Run `npm run verify:production -- https://cofferhouse-scout.vercel.app` again and require `OPERATIONAL`.
+5. Open the public Scout page.
+6. Confirm that **SERVER AGENT · 24/7 CORE** shows `DURABLE AGENT ONLINE`.
+7. Confirm a recent **LAST SERVER RUN**, a decision, an execution trace, and at least one durable history cycle.
+8. Run the workflow again after market data changes and confirm that the history count increases.
+9. Create and approve a lending intent, start Guardian, register its sealed watch with the operator token, run another protected cycle, and confirm a durable Guardian decision appears.
+10. Open Interop Observer and confirm the latest protected observation can be restored from durable memory. Zero events is a valid bounded-window result.
+
+Example values such as `replace-with...`, `your-...` and non-HTTPS endpoints are intentionally reported as unconfigured. A successful deployment must contain real server-side values.
 
 Detailed `/api/agent/status` responses require `Authorization: Bearer <SCOUT_OPERATOR_TOKEN>`. Anonymous requests receive only aggregate counts, the last run time and a coarse health/decision summary; durable receipts, traces, incidents and capability flags are never returned publicly.
 

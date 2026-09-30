@@ -1,5 +1,7 @@
+import { configuredHttpsEndpoint } from "../packages/agent-core/index.js";
+
 export function notificationConfigured() {
-  return Boolean(process.env.SCOUT_ALERT_WEBHOOK_URL);
+  return configuredHttpsEndpoint(process.env.SCOUT_ALERT_WEBHOOK_URL);
 }
 
 export async function deliverAlert(alert) {

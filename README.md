@@ -160,6 +160,8 @@ The Agent Room application lives in `apps/agent-suite/` and now contains present
 
 See [Production deployment](docs/DEPLOYMENT.md) to activate durable memory, the protected 15-minute agent scheduler, operator acknowledgment, and optional alerts or bounded Gemini briefings.
 
+La activación paso a paso para el propietario está en [`ACTIVACION_OPERATIVA_ES.md`](docs/ACTIVACION_OPERATIVA_ES.md). No requiere compartir secretos ni claves privadas.
+
 See the [hackathon submission brief](docs/HACKATHON_SUBMISSION.md), [demo script](docs/HACKATHON_DEMO_SCRIPT.md), and [submission checklist](docs/HACKATHON_ASSET_CHECKLIST.md) for the complete delivery package.
 
 See the [X launch pack](docs/X_LAUNCH_PACK.md) for ready-to-publish build-in-public posts that describe the product without overstating autonomy.

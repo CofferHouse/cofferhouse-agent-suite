@@ -2,7 +2,7 @@ const redisUrl = () => process.env.UPSTASH_REDIS_REST_URL?.replace(/\/$/, "");
 const redisToken = () => process.env.UPSTASH_REDIS_REST_TOKEN;
 
 export function durableStoreConfigured() {
-  return Boolean(redisUrl() && redisToken());
+  return configuredHttpsEndpoint(redisUrl()) && configuredSecret(redisToken());
 }
 
 async function command(parts) {
@@ -41,3 +41,4 @@ export async function listJson(key, limit = 10) {
   const values = await command(["LRANGE", key, "0", String(limit - 1)]);
   return (values ?? []).map((value) => JSON.parse(value));
 }
+import { configuredHttpsEndpoint, configuredSecret } from "../packages/agent-core/index.js";

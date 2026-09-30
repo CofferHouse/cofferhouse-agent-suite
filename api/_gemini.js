@@ -1,7 +1,7 @@
-import { createIncidentPrompt, deterministicIncidentAnalysis, validateIncidentAnalysis } from "../packages/agent-core/index.js";
+import { configuredSecret, createIncidentPrompt, deterministicIncidentAnalysis, validateIncidentAnalysis } from "../packages/agent-core/index.js";
 
 export function geminiConfigured() {
-  return Boolean(process.env.GEMINI_API_KEY);
+  return configuredSecret(process.env.GEMINI_API_KEY, 8);
 }
 
 const responseSchema = {
