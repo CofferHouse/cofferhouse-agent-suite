@@ -4,7 +4,7 @@ import { evaluateMarket, loadAlertLimits, policyProfiles, saveAlertLimits } from
 import { addResearchSessionReceipt, clearOperatorWorkspace, clearResearchSessionHistory, compareResearchSessions, createActionReceipt, createAutomationReceipt, createDexOpportunityReceipt, createDexReceipt, createDexStrategyReceipt, createGuardianReceipt, createInteropReceipt, createOpportunityReceipt, createResearchSessionReceipt, createScoutReceipt, createSimulationReceipt, createStrategyReceipt, downloadScoutReceipt, loadOperatorWorkspace, loadResearchSessionHistory, researchSessionFromReceipt, saveOperatorWorkspace, saveResearchSessionHistory, verifyReceiptDocument } from "../../../packages/evidence/index.js";
 import { addMonitorObservation, clearMonitorHistory, escapeHtml as h, loadMonitorHistory, safeExternalUrl, saveMonitorHistory } from "../../../packages/shared/index.js";
 import { SERVER_STATUS_REFRESH_MS, advanceAgentState, agentCatalog, agentDecision, buildMissionControl, compareMarketSnapshots, createAgentRuntimeState, runtimeConnectionLabel, scanMarkets, shouldRefreshRuntimeStatus } from "../../../packages/agent-core/index.js";
-import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeOpportunities, buildDexStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcPoolsForToken, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
+import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcEarnVaults, fetchArcPoolsForToken, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
 import { productLinks } from "../../../packages/product-config/index.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -62,6 +62,7 @@ const demoHolderLevel = "member";
 let researchSessionHistory = loadResearchSessionHistory(window.localStorage);
 let researchSession = researchSessionHistory[0] ? researchSessionFromReceipt(researchSessionHistory[0]) : null;
 let interopState = { mode: "idle", message: "Run an observation to inspect recent Arc CCTP V2 activity.", observation: null };
+let earnKitState = { mode: "loading", message: "Discovering official Arc Earn vaults…", data: null };
 
 function persistOperatorState() {
   saveOperatorWorkspace(window.localStorage, { actionPreview, actionApproval, guardianWatch, guardianObservation, automationPolicy, automationEvaluation });
@@ -173,6 +174,9 @@ function render() {
   const holderEntitlements = holderAccess(demoHolderLevel);
   const nextHolderLevel = nextAscension(demoHolderLevel);
   const holderLevelIndex = holderLevels.findIndex((level) => level.id === demoHolderLevel);
+  const earnKit = arcAppKitCatalog.find((kit) => kit.id === "earn");
+  const onrampKit = arcAppKitCatalog.find((kit) => kit.id === "onramp");
+  const borrowKit = arcAppKitCatalog.find((kit) => kit.id === "borrow");
   app.innerHTML = `
     <header class="topbar">
       <a class="brand house-home" href="${h(PRODUCT_LINKS.house)}" aria-label="Back to the CofferHouse">
@@ -194,6 +198,7 @@ function render() {
           <div class="holder-connection ${holderIdentity.isArc ? "connected" : ""}"><span>WALLET STATUS</span><b>${h(holderIdentity.status.replaceAll("_", " "))}</b><small>${h(holderIdentity.message)}</small>${holderIdentity.address ? `<code title="${h(holderIdentity.address)}">${h(shortId(holderIdentity.address))} · ${holderIdentity.isArc ? "ARC MAINNET" : `CHAIN ${holderIdentity.chainId ?? "?"}`}</code>` : ""}<button class="holder-connect-wallet" type="button" ${holderIdentityBusy || !window.ethereum ? "disabled" : ""}>${holderIdentityBusy ? "CONNECTING…" : holderIdentity.address ? "REFRESH READ-ONLY IDENTITY" : window.ethereum ? "CONNECT READ-ONLY WALLET" : "INSTALL A BROWSER WALLET"}</button></div>
         </header>
         <div class="holder-demo-note"><b>REPRESENTATIVE PREVIEW</b><span>This screen demonstrates the holder experience. It does not claim NFT ownership, token balances, rewards or financial execution.</span></div>
+        <section class="app-kit-strip onramp"><div><span>ARC APP KIT · FUNDING</span><h2>${h(onrampKit.label)} is mapped to Holder Center.</h2><p>${h(onrampKit.capability)}</p></div><div><b>SERVER SESSION REQUIRED</b><small>${h(onrampKit.boundary)}</small><a href="${h(onrampKit.docs)}" target="_blank" rel="noreferrer">OFFICIAL DOCS ↗</a></div></section>
         <div class="holder-dashboard">
           <article class="holder-key-card">
             <div class="holder-key-art"><img src="/brand/cofferhouse-arch-official.png" alt="CofferHouse access-key arch"><span>ACCESS KEY</span><b>OWNER VIEW</b></div>
@@ -368,6 +373,11 @@ function render() {
           <div><p class="eyebrow">AGENT 02 · RESEARCH PRIORITIZATION</p><h2 id="opportunity-title">Opportunity Agent. ${infoTip("Filters Scout results through your visible research limits. It prioritizes candidates but does not recommend or execute an investment.")}</h2><p>Turn Scout evidence into a transparent shortlist without hiding blockers or missing data.</p></div>
           <button class="opportunity-download" type="button">DOWNLOAD OPPORTUNITY RECEIPT</button>
         </div>
+        <section class="earn-kit-panel ${h(earnKitState.mode)}">
+          <div class="app-kit-panel-head"><div><span>OFFICIAL ARC APP KIT · READ ONLY</span><h3>${h(earnKit.label)} vault discovery.</h3><p>${h(earnKit.capability)}</p></div><div><b>${earnKitState.mode === "ready" ? `${earnKitState.data.summary.total} LIVE VAULTS` : earnKitState.mode === "loading" ? "CONNECTING" : "UNAVAILABLE"}</b><small>${h(earnKitState.message)}</small><a href="${h(earnKit.docs)}" target="_blank" rel="noreferrer">OFFICIAL DOCS ↗</a></div></div>
+          ${earnKitState.data?.vaults?.length ? `<div class="earn-vaults">${earnKitState.data.vaults.slice(0, 6).map((vault) => `<article><div><span>${h(vault.asset)} · ${h(vault.protocol)}</span><h4>${h(vault.name)}</h4><small>${h(shortId(vault.vaultAddress))}</small></div><div><span>OBSERVED APY</span><b>${formatPct(vault.apyPct, 3)}</b></div><div><span>AVAILABLE LIQUIDITY</span><b>${formatMoney(vault.availableLiquidityUsd)}</b></div><em>${h(vault.status.replaceAll("_", " ").toUpperCase())}</em></article>`).join("")}</div>` : ""}
+          <footer><span>${h(earnKit.boundary)}</span><span>Discovery only · No deposit · No withdrawal</span></footer>
+        </section>
         <div class="opportunity-summary">
           <div><span>MARKETS ANALYZED</span><b>${opportunityAnalysis.summary.total}</b></div>
           <div class="eligible"><span>ELIGIBLE FOR RESEARCH</span><b>${opportunityAnalysis.summary.eligible}</b></div>
@@ -502,6 +512,7 @@ function render() {
           <div><p class="eyebrow">ACTION CENTER · HUMAN GATE</p><h2 id="action-title">Understand the action before authorization. ${infoTip("Converts one modeled Strategy position into an auditable intent and checks what evidence is present or still missing. It does not create an executable transaction.")}</h2><p>Research becomes an explicit intent here. Wallet connection, token approval, calldata, signature and transaction submission remain unavailable.</p></div>
           <div class="action-head-actions">${actionReceipt ? `<button class="action-download" type="button">DOWNLOAD ACTION RECEIPT</button>` : ""}${actionPreview ? `<button class="action-clear" type="button">CLEAR WORKSPACE</button>` : ""}</div>
         </div>
+        <section class="app-kit-strip borrow"><div><span>ARC APP KIT · COLLATERALIZED CREDIT</span><h3>${h(borrowKit.label)} is mapped to Action Center.</h3><p>${h(borrowKit.capability)}</p></div><div><b>SIMULATION BOUNDARY ACTIVE</b><small>${h(borrowKit.boundary)}</small><a href="${h(borrowKit.docs)}" target="_blank" rel="noreferrer">OFFICIAL DOCS ↗</a></div></section>
         <form class="action-builder">
           <label>MODELED POSITION<select name="choice" ${actionChoices.length ? "" : "disabled"}>${actionChoices.length ? actionChoices.map((item) => `<option value="${h(item.key)}">${h(item.label)}</option>`).join("") : `<option>No eligible Strategy position</option>`}</select></label>
           <button type="submit" ${actionChoices.length ? "" : "disabled"}>CREATE READ-ONLY PREVIEW</button>
@@ -1102,6 +1113,22 @@ async function refreshMarkets({ agentCycle = false } = {}) {
   }
 }
 
+async function loadEarnKitVaults() {
+  earnKitState = { mode: "loading", message: "Discovering official Arc Earn vaults…", data: null };
+  render();
+  try {
+    const data = await fetchArcEarnVaults();
+    earnKitState = {
+      mode: "ready",
+      message: `${data.summary.usdc} USDC and ${data.summary.eurc} EURC vaults returned by Circle's Arc Earn Kit.`,
+      data
+    };
+  } catch (error) {
+    earnKitState = { mode: "error", message: error?.message ?? "Earn Kit discovery is unavailable.", data: null };
+  }
+  render();
+}
+
 async function loadServerRuntimeStatus({ showProgress = false } = {}) {
   if (serverRuntimeLoading) return;
   serverRuntimeLoading = true;
@@ -1138,5 +1165,6 @@ document.addEventListener("visibilitychange", () => {
 
 render();
 refreshMarkets();
+loadEarnKitVaults();
 loadServerRuntimeStatus();
 scheduleServerRuntimeRefresh();

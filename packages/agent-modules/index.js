@@ -14,3 +14,4 @@ export * from "./automation.js";
 export * from "./research-session.js";
 export * from "./holder-center.js";
 export * from "./holder-identity.js";
+export * from "./arc-app-kits.js";

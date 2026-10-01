@@ -24,6 +24,7 @@ export function deploymentCapabilities(environment = {}) {
     boundedIntelligence: configuredSecret(environment.GEMINI_API_KEY, 8),
     humanAcknowledgment: configuredSecret(environment.SCOUT_OPERATOR_TOKEN),
     officialUniswapQuotes: configuredSecret(environment.UNISWAP_API_KEY, 8),
+    circleAppKits: configuredSecret(environment.CIRCLE_API_KEY, 8),
     onchainAnchor: /^0x[a-fA-F0-9]{40}$/.test(String(environment.SCOUT_RECEIPT_REGISTRY_ADDRESS ?? ""))
   });
 }

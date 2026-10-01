@@ -170,6 +170,8 @@ See [Agent Hub](docs/AGENT_HUB.md) for the multi-agent product sequence and the 
 
 See [Opportunity Agent](docs/OPPORTUNITY_AGENT.md) for its limits, research score, sizing bound and receipt schema.
 
+See [Arc App Kits](docs/ARC_APP_KITS.md) for the official Earn, Onramp and Borrow integration boundaries.
+
 See [Strategy Lab](docs/STRATEGY_LAB.md) for allocation bounds, sizing, exclusions, observed-rate calculations and receipt schema.
 
 See [DEX Pool Scanner](docs/DEX_POOL_SCANNER.md) for contract watchlists, Arc pool evidence, speculative labels and current quote limitations.
