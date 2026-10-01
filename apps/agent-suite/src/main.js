@@ -1,10 +1,10 @@
 import "./styles.css";
 import { demoMarkets, fetchMorphoArcMarkets } from "../../../packages/arc-data/index.js";
 import { evaluateMarket, loadAlertLimits, policyProfiles, saveAlertLimits } from "../../../packages/policies/index.js";
-import { addResearchSessionReceipt, clearOperatorWorkspace, clearResearchSessionHistory, compareResearchSessions, createActionReceipt, createAutomationReceipt, createDexOpportunityReceipt, createDexReceipt, createDexStrategyReceipt, createGuardianReceipt, createInteropReceipt, createOpportunityReceipt, createResearchSessionReceipt, createScoutReceipt, createSimulationReceipt, createStrategyReceipt, downloadScoutReceipt, loadOperatorWorkspace, loadResearchSessionHistory, researchSessionFromReceipt, saveOperatorWorkspace, saveResearchSessionHistory, verifyReceiptDocument } from "../../../packages/evidence/index.js";
+import { addResearchSessionReceipt, clearOperatorWorkspace, clearResearchSessionHistory, compareResearchSessions, createActionReceipt, createAutomationReceipt, createDexOpportunityReceipt, createDexReceipt, createDexStrategyReceipt, createEarnOpportunityReceipt, createGuardianReceipt, createInteropReceipt, createOpportunityReceipt, createResearchSessionReceipt, createScoutReceipt, createSimulationReceipt, createStrategyReceipt, downloadScoutReceipt, loadOperatorWorkspace, loadResearchSessionHistory, researchSessionFromReceipt, saveOperatorWorkspace, saveResearchSessionHistory, verifyReceiptDocument } from "../../../packages/evidence/index.js";
 import { addMonitorObservation, clearMonitorHistory, escapeHtml as h, loadMonitorHistory, safeExternalUrl, saveMonitorHistory } from "../../../packages/shared/index.js";
 import { SERVER_STATUS_REFRESH_MS, advanceAgentState, agentCatalog, agentDecision, buildMissionControl, compareMarketSnapshots, createAgentRuntimeState, runtimeConnectionLabel, scanMarkets, shouldRefreshRuntimeStatus } from "../../../packages/agent-core/index.js";
-import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcEarnVaults, fetchArcPoolsForToken, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
+import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeEarnOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultEarnOpportunityPreferences, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcEarnVaults, fetchArcPoolsForToken, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadEarnOpportunityPreferences, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveEarnOpportunityPreferences, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
 import { productLinks } from "../../../packages/product-config/index.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -63,6 +63,7 @@ let researchSessionHistory = loadResearchSessionHistory(window.localStorage);
 let researchSession = researchSessionHistory[0] ? researchSessionFromReceipt(researchSessionHistory[0]) : null;
 let interopState = { mode: "idle", message: "Run an observation to inspect recent Arc CCTP V2 activity.", observation: null };
 let earnKitState = { mode: "loading", message: "Discovering official Arc Earn vaults…", data: null };
+let earnOpportunityPreferences = loadEarnOpportunityPreferences(window.localStorage);
 
 function persistOperatorState() {
   saveOperatorWorkspace(window.localStorage, { actionPreview, actionApproval, guardianWatch, guardianObservation, automationPolicy, automationEvaluation });
@@ -177,6 +178,8 @@ function render() {
   const earnKit = arcAppKitCatalog.find((kit) => kit.id === "earn");
   const onrampKit = arcAppKitCatalog.find((kit) => kit.id === "onramp");
   const borrowKit = arcAppKitCatalog.find((kit) => kit.id === "borrow");
+  const earnAnalysis = analyzeEarnOpportunities(earnKitState.data?.vaults ?? [], earnOpportunityPreferences);
+  const earnReceipt = earnAnalysis.opportunities.length ? createEarnOpportunityReceipt(earnAnalysis) : null;
   app.innerHTML = `
     <header class="topbar">
       <a class="brand house-home" href="${h(PRODUCT_LINKS.house)}" aria-label="Back to the CofferHouse">
@@ -374,8 +377,9 @@ function render() {
           <button class="opportunity-download" type="button">DOWNLOAD OPPORTUNITY RECEIPT</button>
         </div>
         <section class="earn-kit-panel ${h(earnKitState.mode)}">
-          <div class="app-kit-panel-head"><div><span>OFFICIAL ARC APP KIT · READ ONLY</span><h3>${h(earnKit.label)} vault discovery.</h3><p>${h(earnKit.capability)}</p></div><div><b>${earnKitState.mode === "ready" ? `${earnKitState.data.summary.total} LIVE VAULTS` : earnKitState.mode === "loading" ? "CONNECTING" : "UNAVAILABLE"}</b><small>${h(earnKitState.message)}</small><a href="${h(earnKit.docs)}" target="_blank" rel="noreferrer">OFFICIAL DOCS ↗</a></div></div>
-          ${earnKitState.data?.vaults?.length ? `<div class="earn-vaults">${earnKitState.data.vaults.slice(0, 6).map((vault) => `<article><div><span>${h(vault.asset)} · ${h(vault.protocol)}</span><h4>${h(vault.name)}</h4><small>${h(shortId(vault.vaultAddress))}</small></div><div><span>OBSERVED APY</span><b>${formatPct(vault.apyPct, 3)}</b></div><div><span>AVAILABLE LIQUIDITY</span><b>${formatMoney(vault.availableLiquidityUsd)}</b></div><em>${h(vault.status.replaceAll("_", " ").toUpperCase())}</em></article>`).join("")}</div>` : ""}
+          <div class="app-kit-panel-head"><div><span>OFFICIAL ARC APP KIT · READ ONLY</span><h3>${h(earnKit.label)} opportunity research.</h3><p>${h(earnKit.capability)}</p></div><div><b>${earnKitState.mode === "ready" ? `${earnAnalysis.summary.eligible} OF ${earnAnalysis.summary.total} ELIGIBLE` : earnKitState.mode === "loading" ? "CONNECTING" : "UNAVAILABLE"}</b><small>${h(earnKitState.message)}</small><div class="earn-kit-actions">${earnReceipt ? `<button class="earn-receipt-download" type="button">DOWNLOAD EARN RECEIPT</button>` : ""}<a href="${h(earnKit.docs)}" target="_blank" rel="noreferrer">OFFICIAL DOCS ↗</a></div></div></div>
+          <form class="earn-preferences"><label>CAPITAL · USD<input name="capitalUsd" type="number" min="1" step="1" value="${earnOpportunityPreferences.capitalUsd}"></label><label>ASSET<select name="asset"><option value="ANY" ${earnOpportunityPreferences.asset === "ANY" ? "selected" : ""}>ANY</option><option value="USDC" ${earnOpportunityPreferences.asset === "USDC" ? "selected" : ""}>USDC</option><option value="EURC" ${earnOpportunityPreferences.asset === "EURC" ? "selected" : ""}>EURC</option></select></label><label>MIN APY · %<input name="minApyPct" type="number" min="0" step="0.01" value="${earnOpportunityPreferences.minApyPct}"></label><label>MIN LIQUIDITY · USD<input name="minAvailableLiquidityUsd" type="number" min="0" step="1000" value="${earnOpportunityPreferences.minAvailableLiquidityUsd}"></label><label>MIN DEPOSITS · USD<input name="minTotalDepositsUsd" type="number" min="0" step="1000" value="${earnOpportunityPreferences.minTotalDepositsUsd}"></label><label>MAX LIQUIDITY SHARE · %<input name="maxLiquiditySharePct" type="number" min="0.01" max="10" step="0.01" value="${earnOpportunityPreferences.maxLiquiditySharePct}"></label><label class="earn-checkbox"><input name="includeLowLiquidity" type="checkbox" ${earnOpportunityPreferences.includeLowLiquidity ? "checked" : ""}> INCLUDE LOW LIQUIDITY</label><div><button type="submit">APPLY EARN LIMITS</button><button class="earn-preferences-reset" type="button">RESET</button></div></form>
+          ${earnAnalysis.opportunities.length ? `<div class="earn-vaults">${earnAnalysis.opportunities.slice(0, 10).map((vault, index) => `<article class="${vault.eligible ? "eligible" : "blocked"}"><span class="earn-rank">${String(index + 1).padStart(2, "0")}</span><div><span>${h(vault.asset)} · ${h(vault.protocol)}</span><h4>${h(vault.name)}</h4><small>${h(shortId(vault.vaultAddress))}</small><p>${h(vault.reason)}</p></div><div><span>RESEARCH SCORE</span><b>${vault.researchScore}</b></div><div><span>OBSERVED APY</span><b>${formatPct(vault.apyPct, 3)}</b></div><div><span>AVAILABLE LIQUIDITY</span><b>${formatMoney(vault.availableLiquidityUsd)}</b></div><div><span>MAX RESEARCH SIZE</span><b>${formatMoney(vault.maxResearchAmountUsd)}</b></div><em>${vault.eligible ? "RESEARCH" : "BLOCKED"}</em></article>`).join("")}</div>` : ""}
           <footer><span>${h(earnKit.boundary)}</span><span>Discovery only · No deposit · No withdrawal</span></footer>
         </section>
         <div class="opportunity-summary">
@@ -748,6 +752,16 @@ function render() {
     render();
   });
   document.querySelector(".opportunity-download")?.addEventListener("click", () => downloadScoutReceipt(opportunityReceipt));
+  document.querySelector(".earn-preferences")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    earnOpportunityPreferences = saveEarnOpportunityPreferences(window.localStorage, Object.fromEntries(new FormData(event.currentTarget)));
+    render();
+  });
+  document.querySelector(".earn-preferences-reset")?.addEventListener("click", () => {
+    earnOpportunityPreferences = saveEarnOpportunityPreferences(window.localStorage, defaultEarnOpportunityPreferences);
+    render();
+  });
+  document.querySelector(".earn-receipt-download")?.addEventListener("click", () => downloadScoutReceipt(earnReceipt));
   document.querySelectorAll(".opportunity-open-market").forEach((button) => button.addEventListener("click", () => {
     selectedId = button.dataset.id;
     simulationAmount = suggestedBorrowAmount(markets.find((market) => market.id === selectedId));

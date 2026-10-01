@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { arcAppKitCatalog, fetchArcEarnVaults, normalizeEarnVaultResponse } from "../packages/agent-modules/index.js";
+import { analyzeEarnOpportunities, arcAppKitCatalog, fetchArcEarnVaults, loadEarnOpportunityPreferences, normalizeEarnVaultResponse, saveEarnOpportunityPreferences } from "../packages/agent-modules/index.js";
+import { createEarnOpportunityReceipt, verifyReceiptDocument } from "../packages/evidence/index.js";
 
 test("Arc App Kit catalog preserves the three product boundaries", () => {
   assert.deepEqual(arcAppKitCatalog.map((kit) => kit.id), ["earn", "onramp", "borrow"]);
@@ -19,4 +20,26 @@ test("Earn Kit browser adapter uses the protected server route", async () => {
   const result = await fetchArcEarnVaults(async () => ({ ok: true, json: async () => ({ vaults: [] }) }));
   assert.equal(result.source, "Circle Arc Earn Kit");
   assert.equal(result.summary.total, 0);
+});
+
+test("Earn opportunity research preserves low-liquidity blockers", () => {
+  const data = normalizeEarnVaultResponse({ vaults: [
+    { vaultAddress: "0x1111111111111111111111111111111111111111", name: "Deep USDC", protocol: "MORPHO", asset: "USDC", currentApy: 0.04, liquidity: "500000", totalDeposits: "1000000", status: "active" },
+    { vaultAddress: "0x2222222222222222222222222222222222222222", name: "Thin USDC", protocol: "MORPHO", asset: "USDC", currentApy: 0.09, liquidity: "500", totalDeposits: "100000", status: "low_liquidity" }
+  ] });
+  const analysis = analyzeEarnOpportunities(data.vaults, { minApyPct: 1, minAvailableLiquidityUsd: 10_000, minTotalDepositsUsd: 50_000 });
+  assert.equal(analysis.summary.eligible, 1);
+  assert.equal(analysis.opportunities[0].name, "Deep USDC");
+  assert.match(analysis.opportunities[1].reason, /liquidity/i);
+});
+
+test("Earn preferences persist and receipts detect supported evidence", () => {
+  const memory = new Map();
+  const storage = { getItem: (key) => memory.get(key), setItem: (key, value) => memory.set(key, value) };
+  saveEarnOpportunityPreferences(storage, { asset: "EURC", minApyPct: 3.5, includeLowLiquidity: true });
+  assert.equal(loadEarnOpportunityPreferences(storage).asset, "EURC");
+  const data = normalizeEarnVaultResponse({ vaults: [{ vaultAddress: "0x1111111111111111111111111111111111111111", name: "EURC", protocol: "MORPHO", asset: "EURC", currentApy: 0.04, liquidity: "500000", totalDeposits: "1000000", status: "active" }] });
+  const receipt = createEarnOpportunityReceipt(analyzeEarnOpportunities(data.vaults, { asset: "EURC", minApyPct: 3.5 }));
+  assert.equal(verifyReceiptDocument(receipt).valid, true);
+  assert.match(receipt.receiptId, /^earn-opportunity-/);
 });
