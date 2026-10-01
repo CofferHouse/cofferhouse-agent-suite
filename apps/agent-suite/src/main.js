@@ -1,10 +1,10 @@
 import "./styles.css";
 import { demoMarkets, fetchMorphoArcMarkets } from "../../../packages/arc-data/index.js";
 import { evaluateMarket, loadAlertLimits, policyProfiles, saveAlertLimits } from "../../../packages/policies/index.js";
-import { addResearchSessionReceipt, clearOperatorWorkspace, clearResearchSessionHistory, compareResearchSessions, createActionReceipt, createAutomationReceipt, createDexOpportunityReceipt, createDexReceipt, createDexStrategyReceipt, createEarnOpportunityReceipt, createGuardianReceipt, createInteropReceipt, createOpportunityReceipt, createResearchSessionReceipt, createScoutReceipt, createSimulationReceipt, createStrategyReceipt, downloadScoutReceipt, loadOperatorWorkspace, loadResearchSessionHistory, researchSessionFromReceipt, saveOperatorWorkspace, saveResearchSessionHistory, verifyReceiptDocument } from "../../../packages/evidence/index.js";
+import { addResearchSessionReceipt, clearOperatorWorkspace, clearResearchSessionHistory, compareResearchSessions, createActionReceipt, createAutomationReceipt, createDexOpportunityReceipt, createDexReceipt, createDexStrategyReceipt, createEarnOpportunityReceipt, createEarnStrategyReceipt, createGuardianReceipt, createInteropReceipt, createOpportunityReceipt, createResearchSessionReceipt, createScoutReceipt, createSimulationReceipt, createStrategyReceipt, downloadScoutReceipt, loadOperatorWorkspace, loadResearchSessionHistory, researchSessionFromReceipt, saveOperatorWorkspace, saveResearchSessionHistory, verifyReceiptDocument } from "../../../packages/evidence/index.js";
 import { addMonitorObservation, clearMonitorHistory, escapeHtml as h, loadMonitorHistory, safeExternalUrl, saveMonitorHistory } from "../../../packages/shared/index.js";
 import { SERVER_STATUS_REFRESH_MS, advanceAgentState, agentCatalog, agentDecision, buildMissionControl, compareMarketSnapshots, createAgentRuntimeState, runtimeConnectionLabel, scanMarkets, shouldRefreshRuntimeStatus } from "../../../packages/agent-core/index.js";
-import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeEarnOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultEarnOpportunityPreferences, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcEarnVaults, fetchArcPoolsForToken, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadEarnOpportunityPreferences, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveEarnOpportunityPreferences, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
+import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeEarnOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildEarnStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultEarnOpportunityPreferences, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcEarnVaults, fetchArcPoolsForToken, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadEarnOpportunityPreferences, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveEarnOpportunityPreferences, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
 import { productLinks } from "../../../packages/product-config/index.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -129,6 +129,10 @@ function render() {
   const opportunityReceipt = createOpportunityReceipt(opportunityAnalysis);
   const strategyProposal = buildStrategy(opportunityAnalysis, strategyPreferences);
   const strategyReceipt = createStrategyReceipt(strategyProposal);
+  const earnAnalysis = analyzeEarnOpportunities(earnKitState.data?.vaults ?? [], earnOpportunityPreferences);
+  const earnReceipt = earnAnalysis.opportunities.length ? createEarnOpportunityReceipt(earnAnalysis) : null;
+  const earnStrategyProposal = buildEarnStrategy(earnAnalysis, strategyPreferences);
+  const earnStrategyReceipt = createEarnStrategyReceipt(earnStrategyProposal);
   const dexReports = dexPools.map((pool) => evaluateDexPool(pool, undefined, dexModeledSwapUsd)).sort((a, b) => b.score - a.score || (b.pool.liquidityUsd ?? -1) - (a.pool.liquidityUsd ?? -1));
   const dexReceipt = createDexReceipt(dexReports, dexWatchlist, dexModeledSwapUsd);
   const dexOpportunityAnalysis = analyzeDexOpportunities(dexReports, dexOpportunityPreferences, dexQuotes);
@@ -178,8 +182,6 @@ function render() {
   const earnKit = arcAppKitCatalog.find((kit) => kit.id === "earn");
   const onrampKit = arcAppKitCatalog.find((kit) => kit.id === "onramp");
   const borrowKit = arcAppKitCatalog.find((kit) => kit.id === "borrow");
-  const earnAnalysis = analyzeEarnOpportunities(earnKitState.data?.vaults ?? [], earnOpportunityPreferences);
-  const earnReceipt = earnAnalysis.opportunities.length ? createEarnOpportunityReceipt(earnAnalysis) : null;
   app.innerHTML = `
     <header class="topbar">
       <a class="brand house-home" href="${h(PRODUCT_LINKS.house)}" aria-label="Back to the CofferHouse">
@@ -445,6 +447,12 @@ function render() {
           <div><span>MODELED OBSERVED ANNUALIZED YIELD</span><b>${formatMoney(strategyProposal.summary.observedAnnualizedYieldUsd)}</b><small>Arithmetic at current observed rates; not predicted or guaranteed.</small></div>
           <div><span>UNALLOCATED AFTER CAPS</span><b>${formatMoney(strategyProposal.summary.unallocatedUsd)}</b><small>Kept outside proposed positions in addition to the explicit reserve.</small></div>
         </div>
+        <section class="earn-strategy-branch" aria-labelledby="earn-strategy-title">
+          <div class="earn-strategy-head"><div><span>OFFICIAL ARC EARN KIT · SEPARATE EVIDENCE BRANCH</span><h3 id="earn-strategy-title">Earn vault allocation research.</h3><p>Uses the same capital bounds, but never merges or double-counts vault evidence with Morpho market evidence.</p></div><button class="earn-strategy-download" type="button">DOWNLOAD EARN STRATEGY RECEIPT</button></div>
+          <div class="earn-strategy-summary"><b>${earnStrategyProposal.summary.vaults} VAULT${earnStrategyProposal.summary.vaults === 1 ? "" : "S"}</b><span>${formatMoney(earnStrategyProposal.summary.allocatedUsd)} modeled · ${formatPct(earnStrategyProposal.summary.weightedObservedApyPct, 3)} observed weighted APY</span></div>
+          ${earnKitState.mode === "loading" ? `<div class="strategy-empty"><b>DISCOVERING OFFICIAL VAULTS</b><p>Strategy Lab will build this branch after Earn Kit evidence arrives.</p></div>` : earnStrategyProposal.positions.length ? `<div class="earn-strategy-positions">${earnStrategyProposal.positions.map((position, index) => `<article><span>${String(index + 1).padStart(2, "0")}</span><div><h4>${h(position.name)}</h4><small>${h(position.asset)} · ${h(position.protocol)} · ${h(shortId(position.vaultAddress))}</small><p>Research score ${position.researchScore} · ${h(position.status)}${position.warnings[0] ? ` · ${h(position.warnings[0])}` : ""}</p></div><strong>${formatMoney(position.amountUsd)}</strong><div><b>${formatPct(position.observedApyPct, 3)}</b><small>OBSERVED APY</small></div><details><summary>REVIEW CONDITIONS</summary>${position.reviewConditions.map((condition) => `<p>${h(condition)}</p>`).join("")}</details></article>`).join("")}</div>` : `<div class="strategy-empty"><b>NO ELIGIBLE EARN ALLOCATION</b><p>No official Earn vault clears both the active Earn filters and Strategy bounds.</p></div>`}
+          <footer><span>${h(earnStrategyProposal.status.replaceAll("_", " "))} · ${earnStrategyReceipt.receiptId}</span><span>No deposit · No approval · No signature · No execution</span></footer>
+        </section>
         <footer><span>${h(strategyProposal.status.replaceAll("_", " "))} · ${strategyReceipt.receiptId}</span><span>Research proposal only · Human decision required · No transaction</span></footer>
       </section>
 
@@ -778,6 +786,7 @@ function render() {
     render();
   });
   document.querySelector(".strategy-download")?.addEventListener("click", () => downloadScoutReceipt(strategyReceipt));
+  document.querySelector(".earn-strategy-download")?.addEventListener("click", () => downloadScoutReceipt(earnStrategyReceipt));
   document.querySelectorAll(".strategy-open-market").forEach((button) => button.addEventListener("click", () => {
     selectedId = button.dataset.id;
     simulationAmount = suggestedBorrowAmount(markets.find((market) => market.id === selectedId));

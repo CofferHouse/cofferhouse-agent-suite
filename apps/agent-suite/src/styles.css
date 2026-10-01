@@ -247,3 +247,19 @@ h1 em { color: #1755bc; font-style: normal; text-shadow: 4px 4px 0 #ffd735; }
 @media (max-width: 560px) { .mission-control-head { padding: 18px; }.mission-control-action { width: 100%; }.mission-indicators { grid-template-columns: 1fr; }.mission-indicators article { border-right: 0; }.mission-control footer { padding: 10px 18px; } }
 @media (max-width: 560px) { .hub-history-list { grid-template-columns: 1fr; }.hub-history-item,.hub-history-item:nth-child(2n),.hub-history-item:nth-child(3n) { border-right: 0; } }
 @media (max-width: 560px) { .hub-durable-memory { align-items: flex-start; flex-direction: column; }.hub-open-server-session { width: 100%; } }
+.earn-strategy-branch { border-top: 8px solid #1755bc; background: #f5efdf; }
+.earn-strategy-head { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end; padding: 22px 18px 16px; }
+.earn-strategy-head span { font: 8px "DM Mono"; color: #1755bc; }
+.earn-strategy-head h3 { margin: 6px 0; font: 20px "Archivo Black"; text-transform: uppercase; }
+.earn-strategy-head p { margin: 0; font: 8px/1.5 "DM Mono"; color: #555; }
+.earn-strategy-download { padding: 10px 12px; border: 2px solid #151515; background: #ffd735; box-shadow: 4px 4px 0 #1755bc; font: 8px "Archivo Black"; cursor: pointer; }
+.earn-strategy-summary { display: flex; justify-content: space-between; gap: 15px; padding: 11px 18px; border-block: 1px solid #999; background: #dfeaff; font: 8px "DM Mono"; }
+.earn-strategy-positions article { display: grid; grid-template-columns: 38px 1fr 130px 120px minmax(180px,.7fr); gap: 14px; align-items: center; padding: 15px 18px; border-bottom: 1px solid #bbb; box-shadow: inset 6px 0 #48a978; }
+.earn-strategy-positions article > span { color: #1755bc; font: 9px "DM Mono"; }
+.earn-strategy-positions h4 { margin: 0; font-size: 11px; }
+.earn-strategy-positions small { display: block; margin-top: 4px; font: 7px "DM Mono"; color: #1755bc; }
+.earn-strategy-positions p { margin: 5px 0 0; font: 7px/1.4 "DM Mono"; color: #555; }
+.earn-strategy-positions article > strong { font: 15px "Archivo Black"; }
+.earn-strategy-positions details summary { cursor: pointer; font: 8px "Archivo Black"; }
+@media (max-width: 900px) { .earn-strategy-head { grid-template-columns: 1fr; }.earn-strategy-download { width: fit-content; }.earn-strategy-positions article { grid-template-columns: 35px 1fr 110px; }.earn-strategy-positions article > div:nth-of-type(2),.earn-strategy-positions details { grid-column: 2/-1; } }
+@media (max-width: 560px) { .earn-strategy-summary { flex-direction: column; }.earn-strategy-positions article { grid-template-columns: 30px 1fr; }.earn-strategy-positions article > strong,.earn-strategy-positions article > div:nth-of-type(2),.earn-strategy-positions details { grid-column: 2; } }

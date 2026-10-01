@@ -4,6 +4,8 @@ CofferHouse uses Circle's official Arc App Kit SDK as an integration layer rathe
 
 ## Earn Kit — Opportunities
 
+Earn candidates that clear the visible Opportunity limits now feed a dedicated Strategy Lab branch. The branch uses the shared capital, reserve, diversification and concentration bounds, but it preserves Arc Earn vault evidence separately from direct Morpho market evidence. It never merges the two datasets or counts an apparent underlying exposure twice. Its sealed receipt records the official source, vault identity, modeled amount, observed APY, sizing cap, warnings and human-review conditions.
+
 - `/api/app-kits/earn` performs read-only Arc mainnet vault discovery.
 - Opportunity Agent displays observed APY, available liquidity, protocol, asset and liquidity status.
 - Discovery works without an API key at a shared rate limit. `CIRCLE_API_KEY` is recommended for production and must remain server-side.

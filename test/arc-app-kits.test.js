@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeEarnOpportunities, arcAppKitCatalog, fetchArcEarnVaults, loadEarnOpportunityPreferences, normalizeEarnVaultResponse, saveEarnOpportunityPreferences } from "../packages/agent-modules/index.js";
-import { createEarnOpportunityReceipt, verifyReceiptDocument } from "../packages/evidence/index.js";
+import { analyzeEarnOpportunities, arcAppKitCatalog, buildEarnStrategy, fetchArcEarnVaults, loadEarnOpportunityPreferences, normalizeEarnVaultResponse, saveEarnOpportunityPreferences } from "../packages/agent-modules/index.js";
+import { createEarnOpportunityReceipt, createEarnStrategyReceipt, verifyReceiptDocument } from "../packages/evidence/index.js";
 
 test("Arc App Kit catalog preserves the three product boundaries", () => {
   assert.deepEqual(arcAppKitCatalog.map((kit) => kit.id), ["earn", "onramp", "borrow"]);
@@ -42,4 +42,18 @@ test("Earn preferences persist and receipts detect supported evidence", () => {
   const receipt = createEarnOpportunityReceipt(analyzeEarnOpportunities(data.vaults, { asset: "EURC", minApyPct: 3.5 }));
   assert.equal(verifyReceiptDocument(receipt).valid, true);
   assert.match(receipt.receiptId, /^earn-opportunity-/);
+});
+
+test("Strategy Lab allocates eligible Earn vaults without merging evidence types", () => {
+  const data = normalizeEarnVaultResponse({ vaults: [
+    { vaultAddress: "0x1111111111111111111111111111111111111111", name: "USDC Alpha", protocol: "MORPHO", asset: "USDC", currentApy: 0.05, liquidity: "1000000", totalDeposits: "2000000", status: "active" },
+    { vaultAddress: "0x2222222222222222222222222222222222222222", name: "EURC Beta", protocol: "MORPHO", asset: "EURC", currentApy: 0.04, liquidity: "800000", totalDeposits: "1000000", status: "active" }
+  ] });
+  const analysis = analyzeEarnOpportunities(data.vaults, { capitalUsd: 10_000, minApyPct: 1, maxLiquiditySharePct: 1 });
+  const proposal = buildEarnStrategy(analysis, { capitalUsd: 10_000, reservePct: 20, maxMarkets: 2, maxPerMarketPct: 50, minResearchScore: 0 });
+  assert.equal(proposal.schema, "cofferhouse.arc-app-kits.earn-strategy.v1");
+  assert.equal(proposal.summary.allocatedUsd, 8000);
+  assert.equal(proposal.positions.every((position) => position.sourceType === "ARC_EARN_VAULT"), true);
+  assert.match(proposal.separationRule, /separate/i);
+  assert.equal(verifyReceiptDocument(createEarnStrategyReceipt(proposal)).valid, true);
 });

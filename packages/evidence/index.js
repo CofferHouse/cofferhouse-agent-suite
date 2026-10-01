@@ -3,6 +3,7 @@ export * from "./receipt-registry.js";
 export * from "./scout-receipts.js";
 export * from "./opportunity-receipt.js";
 export * from "./earn-opportunity-receipt.js";
+export * from "./earn-strategy-receipt.js";
 export * from "./strategy-receipt.js";
 export * from "./dex-receipt.js";
 export * from "./dex-research-receipt.js";
