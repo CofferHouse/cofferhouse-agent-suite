@@ -1,12 +1,12 @@
-import { AppKit } from "@circle-fin/app-kit";
+import { EarnKit } from "@circle-fin/earn-kit";
 
-const kit = new AppKit({ disableErrorReporting: true });
+const kit = new EarnKit({ disableErrorReporting: true });
 
 export default async function handler(request, response) {
   if (request.method !== "GET") return response.status(405).json({ ok: false, error: "Method not allowed" });
   response.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   try {
-    const result = await kit.earn.exploreVaults({
+    const result = await kit.exploreVaults({
       chain: "Arc",
       sortBy: "apy",
       page: 1,
