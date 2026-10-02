@@ -263,3 +263,27 @@ h1 em { color: #1755bc; font-style: normal; text-shadow: 4px 4px 0 #ffd735; }
 .earn-strategy-positions details summary { cursor: pointer; font: 8px "Archivo Black"; }
 @media (max-width: 900px) { .earn-strategy-head { grid-template-columns: 1fr; }.earn-strategy-download { width: fit-content; }.earn-strategy-positions article { grid-template-columns: 35px 1fr 110px; }.earn-strategy-positions article > div:nth-of-type(2),.earn-strategy-positions details { grid-column: 2/-1; } }
 @media (max-width: 560px) { .earn-strategy-summary { flex-direction: column; }.earn-strategy-positions article { grid-template-columns: 30px 1fr; }.earn-strategy-positions article > strong,.earn-strategy-positions article > div:nth-of-type(2),.earn-strategy-positions details { grid-column: 2; } }
+.onramp-center { display: grid; grid-template-columns: 1.1fr .9fr; margin: 0 30px 24px; border: 3px solid #151515; background: #faf7ef; box-shadow: 9px 9px 0 #1755bc; }
+.onramp-copy,.onramp-gates { padding: 20px; }
+.onramp-copy { border-right: 2px solid #151515; }
+.onramp-copy > span { color: #1755bc; font: 8px "DM Mono"; }
+.onramp-copy h2 { margin: 7px 0; font: 20px "Archivo Black"; text-transform: uppercase; }
+.onramp-copy p { margin: 0 0 10px; color: #555; font: 8px/1.55 "DM Mono"; }
+.onramp-copy a { color: #1755bc; font: 8px "Archivo Black"; }
+.onramp-gates { background: #dfeaff; }
+.onramp-gates > b,.onramp-gates > span { display: block; }
+.onramp-gates > b { font: 11px "Archivo Black"; }
+.onramp-gates > span { margin-top: 6px; font: 8px/1.4 "DM Mono"; }
+.onramp-gates ul { display: grid; grid-template-columns: repeat(2,1fr); gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
+.onramp-gates li { padding: 6px; border: 1px solid #151515; background: #eee6d4; font: 7px "DM Mono"; }
+.onramp-gates li.ready { background: #84dab0; }.onramp-gates li.missing { background: #ffb09d; }.onramp-gates li.review { background: #ffd735; }
+.onramp-session-form { grid-column: 1/-1; display: grid; grid-template-columns: 1.3fr .55fr 1fr auto; gap: 9px; align-items: end; padding: 15px 20px; border-top: 2px solid #151515; background: #eee6d4; }
+.onramp-session-form label { color: #555; font: 7px "DM Mono"; }
+.onramp-session-form input { box-sizing: border-box; width: 100%; margin-top: 5px; padding: 9px; border: 1px solid #151515; background: #faf7ef; font: 9px "DM Mono"; }
+.onramp-session-form button,.onramp-session-ready a { padding: 10px 12px; border: 2px solid #151515; background: #ffd735; color: #151515; font: 8px "Archivo Black"; text-decoration: none; }
+.onramp-session-form button:disabled { opacity: .45; cursor: not-allowed; }
+.onramp-session-ready { grid-column: 1/-1; display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 15px 20px; border-top: 2px solid #151515; background: #84dab0; }
+.onramp-session-ready span,.onramp-session-ready b,.onramp-session-ready small { display: block; }.onramp-session-ready span { font: 7px "DM Mono"; }.onramp-session-ready b { margin-top: 5px; font: 10px "Archivo Black"; }.onramp-session-ready small { margin-top: 4px; font: 7px "DM Mono"; }
+.onramp-center > footer { grid-column: 1/-1; display: flex; justify-content: space-between; gap: 18px; padding: 9px 20px; background: #151515; color: white; font: 7px/1.4 "DM Mono"; }
+@media (max-width: 900px) { .onramp-center { grid-template-columns: 1fr; margin-inline: 18px; }.onramp-copy { border-right: 0; border-bottom: 2px solid #151515; }.onramp-session-form { grid-template-columns: 1fr 1fr; }.onramp-session-form button { grid-column: 1/-1; } }
+@media (max-width: 560px) { .onramp-session-form { grid-template-columns: 1fr; }.onramp-session-form button { grid-column: 1; }.onramp-session-ready,.onramp-center > footer { align-items: flex-start; flex-direction: column; } }

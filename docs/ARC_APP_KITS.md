@@ -6,6 +6,18 @@ CofferHouse uses Circle's official Arc App Kit SDK as an integration layer rathe
 
 Earn candidates that clear the visible Opportunity limits now feed a dedicated Strategy Lab branch. The branch uses the shared capital, reserve, diversification and concentration bounds, but it preserves Arc Earn vault evidence separately from direct Morpho market evidence. It never merges the two datasets or counts an apparent underlying exposure twice. Its sealed receipt records the official source, vault identity, modeled amount, observed APY, sizing cap, warnings and human-review conditions.
 
+## Onramp Kit — Holder Center
+
+Holder Center now exposes a protected Onramp readiness flow. The public `GET /api/app-kits/onramp` route reports only whether the required server gates exist. Session minting uses `POST` and currently requires the operator bearer gate in addition to a valid connected Arc destination. The Circle API key and referrer domain never enter the browser bundle. A created session is short-lived and opens Circle's hosted flow; it does not itself purchase, deposit or invest funds.
+
+Production holder access must replace the temporary operator demo gate with authenticated membership sessions. The destination wallet must be bound to that authenticated holder before a Circle session is minted.
+
+## Product signals from the Arc ecosystem
+
+- **Embedded wallets:** 1shot demonstrates the product path from passkey-controlled wallet to fiat-funded USDC and scoped permissions. CofferHouse treats this as a UX reference, not a dependency or custody claim.
+- **Institutional RWA:** Centrifuge's Arc deployment introduces ERC-4626 exposures to tokenized Treasuries, AAA CLOs and high-yield corporate credit. A future RWA Opportunity adapter must preserve asset class, issuer, NAV oracle, liquidity and transfer restrictions separately from lending-vault evidence.
+- **Borrow lifecycle:** Borrow Kit provides market discovery, collateral sizing, quote-time health factor, atomic wallet actions and ongoing health bands. Action Center will own quote review; Guardian will own post-origination health monitoring. No write is enabled until wallet, quote freshness and human approval are independently verified.
+
 - `/api/app-kits/earn` performs read-only Arc mainnet vault discovery.
 - Opportunity Agent displays observed APY, available liquidity, protocol, asset and liquidity status.
 - Discovery works without an API key at a shared rate limit. `CIRCLE_API_KEY` is recommended for production and must remain server-side.

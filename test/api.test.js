@@ -7,6 +7,7 @@ import dexPoolHandler from "../api/dex/pools.js";
 import dexQuoteHandler from "../api/dex/quote.js";
 import guardianWatchHandler from "../api/guardian/watch.js";
 import interopObserveHandler from "../api/interop/observe.js";
+import onrampHandler, { onrampReadiness } from "../api/app-kits/onramp.js";
 import { createScoutReceipt } from "../packages/evidence/index.js";
 import { scanMarkets } from "../packages/agent-core/index.js";
 import { demoMarkets } from "../packages/arc-data/index.js";
@@ -76,7 +77,7 @@ test("receipt API verifies supported files and rejects altered content", async (
 });
 
 test("public endpoints reject unsupported methods", async () => {
-  for (const handler of [healthHandler, statusHandler, verifyHandler, dexPoolHandler, dexQuoteHandler, interopObserveHandler]) {
+  for (const handler of [healthHandler, statusHandler, verifyHandler, dexPoolHandler, dexQuoteHandler, interopObserveHandler, onrampHandler]) {
     const response = responseMock();
     await handler({ method: "DELETE", headers: {} }, response);
     assert.equal(response.statusCode, 405);
@@ -84,6 +85,25 @@ test("public endpoints reject unsupported methods", async () => {
   const guardianResponse = responseMock();
   await guardianWatchHandler({ method: "PATCH", headers: {} }, guardianResponse);
   assert.equal(guardianResponse.statusCode, 405);
+});
+
+test("Onramp readiness exposes gates without returning secrets", async () => {
+  const readiness = onrampReadiness({ CIRCLE_API_KEY: "circle-live-key", SCOUT_OPERATOR_TOKEN: "operator-token-long-enough", ONRAMP_REFERRER_DOMAIN: "cofferhouse-scout.vercel.app" });
+  assert.equal(readiness.configured, true);
+  assert.equal(readiness.sessionTtlMinutes, 30);
+  assert.equal("apiKey" in readiness, false);
+  const response = responseMock();
+  await onrampHandler({ method: "GET", headers: {} }, response);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.source, "Circle Arc Onramp Kit");
+  assert.equal("CIRCLE_API_KEY" in response.body, false);
+});
+
+test("Onramp session creation is protected before any upstream request", async () => {
+  const response = responseMock();
+  await onrampHandler({ method: "POST", headers: {}, body: { destinationAddress: "0x1111111111111111111111111111111111111111", amount: "100" } }, response);
+  assert.equal(response.statusCode, 401);
+  assert.match(response.body.error, /authorization/i);
 });
 
 test("Interop observation fails visibly when Arc RPC is not configured", async () => {

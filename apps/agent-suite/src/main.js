@@ -4,7 +4,7 @@ import { evaluateMarket, loadAlertLimits, policyProfiles, saveAlertLimits } from
 import { addResearchSessionReceipt, clearOperatorWorkspace, clearResearchSessionHistory, compareResearchSessions, createActionReceipt, createAutomationReceipt, createDexOpportunityReceipt, createDexReceipt, createDexStrategyReceipt, createEarnOpportunityReceipt, createEarnStrategyReceipt, createGuardianReceipt, createInteropReceipt, createOpportunityReceipt, createResearchSessionReceipt, createScoutReceipt, createSimulationReceipt, createStrategyReceipt, downloadScoutReceipt, loadOperatorWorkspace, loadResearchSessionHistory, researchSessionFromReceipt, saveOperatorWorkspace, saveResearchSessionHistory, verifyReceiptDocument } from "../../../packages/evidence/index.js";
 import { addMonitorObservation, clearMonitorHistory, escapeHtml as h, loadMonitorHistory, safeExternalUrl, saveMonitorHistory } from "../../../packages/shared/index.js";
 import { SERVER_STATUS_REFRESH_MS, advanceAgentState, agentCatalog, agentDecision, buildMissionControl, compareMarketSnapshots, createAgentRuntimeState, runtimeConnectionLabel, scanMarkets, shouldRefreshRuntimeStatus } from "../../../packages/agent-core/index.js";
-import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeEarnOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildEarnStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultEarnOpportunityPreferences, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcEarnVaults, fetchArcPoolsForToken, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadEarnOpportunityPreferences, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveEarnOpportunityPreferences, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
+import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeEarnOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildEarnStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultEarnOpportunityPreferences, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcEarnVaults, fetchArcPoolsForToken, fetchOnrampReadiness, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadEarnOpportunityPreferences, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestOnrampSession, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveEarnOpportunityPreferences, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
 import { productLinks } from "../../../packages/product-config/index.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -64,6 +64,7 @@ let researchSession = researchSessionHistory[0] ? researchSessionFromReceipt(res
 let interopState = { mode: "idle", message: "Run an observation to inspect recent Arc CCTP V2 activity.", observation: null };
 let earnKitState = { mode: "loading", message: "Discovering official Arc Earn vaults…", data: null };
 let earnOpportunityPreferences = loadEarnOpportunityPreferences(window.localStorage);
+let onrampState = { mode: "checking", message: "Checking protected Onramp readiness…", readiness: null, session: null };
 
 function persistOperatorState() {
   saveOperatorWorkspace(window.localStorage, { actionPreview, actionApproval, guardianWatch, guardianObservation, automationPolicy, automationEvaluation });
@@ -203,7 +204,18 @@ function render() {
           <div class="holder-connection ${holderIdentity.isArc ? "connected" : ""}"><span>WALLET STATUS</span><b>${h(holderIdentity.status.replaceAll("_", " "))}</b><small>${h(holderIdentity.message)}</small>${holderIdentity.address ? `<code title="${h(holderIdentity.address)}">${h(shortId(holderIdentity.address))} · ${holderIdentity.isArc ? "ARC MAINNET" : `CHAIN ${holderIdentity.chainId ?? "?"}`}</code>` : ""}<button class="holder-connect-wallet" type="button" ${holderIdentityBusy || !window.ethereum ? "disabled" : ""}>${holderIdentityBusy ? "CONNECTING…" : holderIdentity.address ? "REFRESH READ-ONLY IDENTITY" : window.ethereum ? "CONNECT READ-ONLY WALLET" : "INSTALL A BROWSER WALLET"}</button></div>
         </header>
         <div class="holder-demo-note"><b>REPRESENTATIVE PREVIEW</b><span>This screen demonstrates the holder experience. It does not claim NFT ownership, token balances, rewards or financial execution.</span></div>
-        <section class="app-kit-strip onramp"><div><span>ARC APP KIT · FUNDING</span><h2>${h(onrampKit.label)} is mapped to Holder Center.</h2><p>${h(onrampKit.capability)}</p></div><div><b>SERVER SESSION REQUIRED</b><small>${h(onrampKit.boundary)}</small><a href="${h(onrampKit.docs)}" target="_blank" rel="noreferrer">OFFICIAL DOCS ↗</a></div></section>
+        <section class="onramp-center ${h(onrampState.mode)}" aria-labelledby="onramp-title">
+          <div class="onramp-copy"><span>OFFICIAL ARC APP KIT · USER-CONTROLLED FUNDING</span><h2 id="onramp-title">Fund the connected Arc wallet with USDC.</h2><p>${h(onrampKit.capability)} CofferHouse creates only a short-lived hosted session; Circle's widget handles eligibility, payment and settlement.</p><a href="${h(onrampKit.docs)}" target="_blank" rel="noreferrer">OFFICIAL DOCS ↗</a></div>
+          <div class="onramp-gates"><b>${onrampState.mode === "checking" ? "CHECKING DEPLOYMENT" : onrampState.readiness?.configured ? "OPERATOR-GATED DEMO READY" : "SETUP REQUIRED"}</b><span>${h(onrampState.message)}</span><ul><li class="${onrampState.readiness?.circleConfigured ? "ready" : "missing"}">Circle server key</li><li class="${onrampState.readiness?.operatorGateConfigured ? "ready" : "missing"}">Protected session gate</li><li class="${holderIdentity.isArc ? "ready" : "missing"}">Connected Arc destination</li><li class="${onrampState.readiness?.referrerConfigured ? "ready" : "review"}">Approved referrer domain</li></ul></div>
+          <form class="onramp-session-form">
+            <label>DESTINATION WALLET<input name="destinationAddress" type="text" value="${h(holderIdentity.address ?? "")}" placeholder="Connect an Arc wallet above" readonly></label>
+            <label>USD AMOUNT<input name="amount" type="number" min="0.01" max="100000" step="0.01" value="100"></label>
+            <label>DEMO OPERATOR TOKEN<input name="operatorToken" type="password" autocomplete="off" placeholder="Never stored in the browser"></label>
+            <button type="submit" ${!onrampState.readiness?.configured || !holderIdentity.isArc || onrampState.mode === "creating" ? "disabled" : ""}>${onrampState.mode === "creating" ? "CREATING SESSION…" : "PREPARE 30-MIN SESSION"}</button>
+          </form>
+          ${onrampState.session ? `<div class="onramp-session-ready"><div><span>SESSION READY · EXPIRES ${h(new Date(onrampState.session.expiresAt).toLocaleTimeString())}</span><b>Circle's hosted flow will deliver USDC only to ${h(shortId(onrampState.session.destinationWallet ?? holderIdentity.address))}.</b><small>No purchase, deposit or investment has happened yet.</small></div><a href="${h(safeExternalUrl(onrampState.session.widgetUrl))}" target="_blank" rel="noreferrer">OPEN SECURE ONRAMP ↗</a></div>` : ""}
+          <footer><span>NO CUSTODY · NO AUTOMATIC PURCHASE · NO AUTOMATIC INVESTMENT</span><span>${h(onrampKit.boundary)}</span></footer>
+        </section>
         <div class="holder-dashboard">
           <article class="holder-key-card">
             <div class="holder-key-art"><img src="/brand/cofferhouse-arch-official.png" alt="CofferHouse access-key arch"><span>ACCESS KEY</span><b>OWNER VIEW</b></div>
@@ -694,6 +706,19 @@ function render() {
     holderPreferences = saveHolderPreferences(window.localStorage, { rewardMode: new FormData(event.currentTarget).get("rewardMode") });
     event.currentTarget.querySelector("output").textContent = "Preference saved in this browser ✓";
   });
+  document.querySelector(".onramp-session-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const values = new FormData(event.currentTarget);
+    onrampState = { ...onrampState, mode: "creating", message: "Requesting a short-lived Circle session…", session: null };
+    render();
+    try {
+      const payload = await requestOnrampSession({ destinationAddress: values.get("destinationAddress"), amount: values.get("amount"), operatorToken: values.get("operatorToken") });
+      onrampState = { ...onrampState, mode: "ready", message: "Short-lived session created. Review the destination before opening Circle's hosted flow.", session: payload.session };
+    } catch (error) {
+      onrampState = { ...onrampState, mode: "error", message: error.message ?? "Onramp session could not be created.", session: null };
+    }
+    render();
+  });
   document.querySelector(".interop-scan")?.addEventListener("click", observeInterop);
   document.querySelector(".interop-download")?.addEventListener("click", () => downloadScoutReceipt(interopReceipt));
   document.querySelector(".interop-open-durable")?.addEventListener("click", () => {
@@ -1152,6 +1177,16 @@ async function loadEarnKitVaults() {
   render();
 }
 
+async function loadOnrampReadiness() {
+  try {
+    const readiness = await fetchOnrampReadiness();
+    onrampState = { mode: "ready", message: readiness.configured ? "Server key and protected demo gate are configured." : "Add the missing server configuration before minting a session.", readiness, session: null };
+  } catch (error) {
+    onrampState = { mode: "error", message: error.message ?? "Onramp readiness is unavailable.", readiness: null, session: null };
+  }
+  render();
+}
+
 async function loadServerRuntimeStatus({ showProgress = false } = {}) {
   if (serverRuntimeLoading) return;
   serverRuntimeLoading = true;
@@ -1189,5 +1224,6 @@ document.addEventListener("visibilitychange", () => {
 render();
 refreshMarkets();
 loadEarnKitVaults();
+loadOnrampReadiness();
 loadServerRuntimeStatus();
 scheduleServerRuntimeRefresh();

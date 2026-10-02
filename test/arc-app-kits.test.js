@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeEarnOpportunities, arcAppKitCatalog, buildEarnStrategy, fetchArcEarnVaults, loadEarnOpportunityPreferences, normalizeEarnVaultResponse, saveEarnOpportunityPreferences } from "../packages/agent-modules/index.js";
+import { analyzeEarnOpportunities, arcAppKitCatalog, buildEarnStrategy, fetchArcEarnVaults, fetchOnrampReadiness, loadEarnOpportunityPreferences, normalizeEarnVaultResponse, requestOnrampSession, saveEarnOpportunityPreferences } from "../packages/agent-modules/index.js";
 import { createEarnOpportunityReceipt, createEarnStrategyReceipt, verifyReceiptDocument } from "../packages/evidence/index.js";
 
 test("Arc App Kit catalog preserves the three product boundaries", () => {
@@ -20,6 +20,16 @@ test("Earn Kit browser adapter uses the protected server route", async () => {
   const result = await fetchArcEarnVaults(async () => ({ ok: true, json: async () => ({ vaults: [] }) }));
   assert.equal(result.source, "Circle Arc Earn Kit");
   assert.equal(result.summary.total, 0);
+});
+
+test("Onramp client uses only the protected host route", async () => {
+  const calls = [];
+  const fetcher = async (url, options) => { calls.push({ url, options }); return { ok: true, json: async () => ({ configured: true, session: { sessionId: "s1" } }) }; };
+  assert.equal((await fetchOnrampReadiness(fetcher)).configured, true);
+  assert.equal((await requestOnrampSession({ destinationAddress: "0x1111111111111111111111111111111111111111", amount: "100", operatorToken: "secret" }, fetcher)).session.sessionId, "s1");
+  assert.equal(calls[1].url, "/api/app-kits/onramp");
+  assert.equal(calls[1].options.headers.Authorization, "Bearer secret");
+  assert.equal(calls[1].options.body.includes("secret"), false);
 });
 
 test("Earn opportunity research preserves low-liquidity blockers", () => {
