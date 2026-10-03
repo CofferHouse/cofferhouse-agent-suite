@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 34702)
-Total output lines: 1276
-
 import "./styles.css";
 import { demoMarkets, fetchMorphoArcMarkets } from "../../../packages/arc-data/index.js";
 import { evaluateMarket, loadAlertLimits, policyProfiles, saveAlertLimits } from "../../../packages/policies/index.js";
@@ -459,7 +456,100 @@ function render() {
             <details class="strategy-exits"><summary>REVIEW / EXIT CONDITIONS</summary>${position.exitConditions.map((condition) => `<p>${h(condition)}</p>`).join("")}</details>
             <button class="strategy-open-market" type="button" data-id="${h(position.selectedMarketId)}">INSPECT MARKET →</button>
           </article>`).join("")}
-        </div>` : `<div clas…4702 tokens truncated…{borrowKitState.preview.requiredCollateral.amount?.toFixed(8) ?? "Unavailable"}</b><small>${h(borrowKitState.preview.requiredCollateral.token)}</small></div>
+        </div>` : `<div class="strategy-empty"><b>NO ELIGIBLE ALLOCATION</b><p>No Opportunity candidate clears the current Strategy bounds. Lowering a limit changes the model only; it does not make a market safer.</p></div>`}
+        <div class="strategy-total">
+          <div><span>MODELED OBSERVED ANNUALIZED YIELD</span><b>${formatMoney(strategyProposal.summary.observedAnnualizedYieldUsd)}</b><small>Arithmetic at current observed rates; not predicted or guaranteed.</small></div>
+          <div><span>UNALLOCATED AFTER CAPS</span><b>${formatMoney(strategyProposal.summary.unallocatedUsd)}</b><small>Kept outside proposed positions in addition to the explicit reserve.</small></div>
+        </div>
+        <section class="earn-strategy-branch" aria-labelledby="earn-strategy-title">
+          <div class="earn-strategy-head"><div><span>OFFICIAL ARC EARN KIT · SEPARATE EVIDENCE BRANCH</span><h3 id="earn-strategy-title">Earn vault allocation research.</h3><p>Uses the same capital bounds, but never merges or double-counts vault evidence with Morpho market evidence.</p></div><button class="earn-strategy-download" type="button">DOWNLOAD EARN STRATEGY RECEIPT</button></div>
+          <div class="earn-strategy-summary"><b>${earnStrategyProposal.summary.vaults} VAULT${earnStrategyProposal.summary.vaults === 1 ? "" : "S"}</b><span>${formatMoney(earnStrategyProposal.summary.allocatedUsd)} modeled · ${formatPct(earnStrategyProposal.summary.weightedObservedApyPct, 3)} observed weighted APY</span></div>
+          ${earnKitState.mode === "loading" ? `<div class="strategy-empty"><b>DISCOVERING OFFICIAL VAULTS</b><p>Strategy Lab will build this branch after Earn Kit evidence arrives.</p></div>` : earnStrategyProposal.positions.length ? `<div class="earn-strategy-positions">${earnStrategyProposal.positions.map((position, index) => `<article><span>${String(index + 1).padStart(2, "0")}</span><div><h4>${h(position.name)}</h4><small>${h(position.asset)} · ${h(position.protocol)} · ${h(shortId(position.vaultAddress))}</small><p>Research score ${position.researchScore} · ${h(position.status)}${position.warnings[0] ? ` · ${h(position.warnings[0])}` : ""}</p></div><strong>${formatMoney(position.amountUsd)}</strong><div><b>${formatPct(position.observedApyPct, 3)}</b><small>OBSERVED APY</small></div><details><summary>REVIEW CONDITIONS</summary>${position.reviewConditions.map((condition) => `<p>${h(condition)}</p>`).join("")}</details></article>`).join("")}</div>` : `<div class="strategy-empty"><b>NO ELIGIBLE EARN ALLOCATION</b><p>No official Earn vault clears both the active Earn filters and Strategy bounds.</p></div>`}
+          <footer><span>${h(earnStrategyProposal.status.replaceAll("_", " "))} · ${earnStrategyReceipt.receiptId}</span><span>No deposit · No approval · No signature · No execution</span></footer>
+        </section>
+        <footer><span>${h(strategyProposal.status.replaceAll("_", " "))} · ${strategyReceipt.receiptId}</span><span>Research proposal only · Human decision required · No transaction</span></footer>
+      </section>
+
+      <section class="dex-agent suite-view ${activeSuiteView === "dex" ? "is-active" : ""}" data-suite-view="dex" id="dex-agent" aria-labelledby="dex-title">
+        <div class="dex-head">
+          <div><p class="eyebrow">DEX POOL SCANNER · USER WATCHLIST</p><h2 id="dex-title">Find the pools people actually trade. ${infoTip("Discovers indexed Arc pools for token contracts selected by the user, then applies pool-specific screening. Selection never means endorsement.")}</h2><p>Inspect liquidity, activity, volatility, pool age and modeled trade size without confusing LP metrics with lending APY.</p></div>
+          <div class="dex-actions">${dexReports.length ? `<button class="dex-download" type="button">DOWNLOAD DEX RECEIPT</button>` : ""}<button class="dex-refresh" type="button" ${dexState.mode === "loading" || !dexWatchlist.length ? "disabled" : ""}>${dexState.mode === "loading" ? "SCANNING…" : "SCAN WATCHLIST"}</button></div>
+        </div>
+        <div class="dex-status ${h(dexState.mode)}"><b>${dexState.mode === "ready" ? `${dexReports.length} ARC POOL${dexReports.length === 1 ? "" : "S"} FOUND` : dexState.mode === "error" ? "SCAN NEEDS ATTENTION" : dexState.mode === "loading" ? "DISCOVERING POOLS" : "WATCHLIST READY"}</b><span>${h(dexState.message)}</span></div>
+        <form class="dex-watch-form">
+          <label>TOKEN CONTRACT ON ARC<input name="address" type="text" inputmode="text" placeholder="0x…" required></label>
+          <label>LABEL<input name="label" type="text" maxlength="48" placeholder="Token name or ticker"></label>
+          <label class="dex-speculative"><input name="speculativeApproval" type="checkbox"> INCLUDE AS USER-APPROVED SPECULATIVE</label>
+          <button type="submit">ADD & SCAN</button>
+        </form>
+        <div class="dex-controls">
+          <label>MODELED SWAP · USD<input class="dex-swap-amount" type="number" min="1" step="1" value="${dexModeledSwapUsd}"></label>
+          <label>QUOTE SLIPPAGE · %<input class="dex-slippage" type="number" min="0.01" max="50" step="0.01" value="${dexSlippageTolerancePct}"></label>
+          <p><b>SCREENING RATIO, NOT EXECUTABLE QUOTE.</b> The current model compares trade size with reported liquidity. A later Uniswap quote will add route-specific output, fees and price impact.</p>
+        </div>
+        <div class="dex-watchlist">
+          ${dexWatchlist.length ? dexWatchlist.map((item) => `<div><span>${h(item.label)}</span><code>${h(shortId(item.address))}</code><b class="${item.speculativeApproval ? "speculative" : "standard"}">${item.speculativeApproval ? "SPECULATIVE APPROVED" : "STANDARD RESEARCH"}</b><button class="dex-remove" data-address="${h(item.address)}" type="button">REMOVE</button></div>`).join("") : `<p>No token contracts added. Contract identity is required to avoid selecting an imitation by ticker.</p>`}
+        </div>
+        <div class="dex-results">
+          ${dexReports.length ? dexReports.map((report, index) => `<article class="dex-pool ${report.status.toLowerCase()}">
+            <div class="dex-rank"><span>${String(index + 1).padStart(2, "0")}</span><b>${h(report.status)} · ${report.score}</b></div>
+            <div class="dex-pair"><h3>${h(report.pool.baseToken.symbol)} / ${h(report.pool.quoteToken.symbol)}</h3><small>${h(report.pool.dexId.toUpperCase())} · ${h(shortId(report.pool.pairAddress))}</small><p>${h(report.firstAttention)}</p></div>
+            <div class="dex-metrics"><div><span>LIQUIDITY</span><b>${formatMoney(report.pool.liquidityUsd)}</b></div><div><span>VOLUME 24H</span><b>${formatMoney(report.pool.volume24hUsd)}</b></div><div><span>PRICE CHANGE 24H</span><b>${formatPct(report.pool.priceChange24hPct, 2)}</b></div><div><span>MODELED LIQUIDITY RATIO</span><b>${formatPct(report.modeledLiquidityImpactPct, 3)}</b></div></div>
+            <div class="dex-flags"><b>${h(report.label)}</b><span>${report.pool.poolAgeHours === null ? "AGE UNAVAILABLE" : `${Math.floor(report.pool.poolAgeHours)}H OLD`} · ${report.pool.buys24h ?? "?"} BUYS / ${report.pool.sells24h ?? "?"} SELLS</span></div>
+            <div class="dex-pool-actions"><button class="dex-quote" type="button" data-pair="${h(report.pool.pairAddress)}" data-token="${h(report.pool.baseToken.address === ARC_USDC ? report.pool.quoteToken.address : report.pool.baseToken.address)}">${dexQuotes[report.pool.pairAddress]?.state === "loading" ? "QUOTING…" : "GET UNISWAP QUOTE"}</button>${report.pool.pairUrl ? `<a href="${h(safeExternalUrl(report.pool.pairUrl))}" target="_blank" rel="noreferrer">OPEN POOL ↗</a>` : ""}</div>
+            ${dexQuotes[report.pool.pairAddress] ? `<div class="dex-quote-result ${h(dexQuotes[report.pool.pairAddress].state)}">${dexQuotes[report.pool.pairAddress].state === "ready" ? `<b>OFFICIAL UNISWAP QUOTE · ${h(dexQuotes[report.pool.pairAddress].quote.routing)}</b><span>${formatMoney(dexModeledSwapUsd)} USDC → ${dexQuotes[report.pool.pairAddress].quote.outputAmount === null ? `${h(dexQuotes[report.pool.pairAddress].quote.outputRaw)} base units` : `${dexQuotes[report.pool.pairAddress].quote.outputAmount.toLocaleString("en-US", { maximumFractionDigits: 8 })} ${h(report.pool.baseToken.address === ARC_USDC ? report.pool.quoteToken.symbol : report.pool.baseToken.symbol)}`}</span><small>Slippage ${formatPct(dexQuotes[report.pool.pairAddress].quote.slippageTolerancePct, 2)} · Gas estimate ${formatMoney(dexQuotes[report.pool.pairAddress].quote.gasEstimateUsd)} · ${dexQuotes[report.pool.pairAddress].quote.simulated ? "Route simulation returned without a failure reason" : h(dexQuotes[report.pool.pairAddress].quote.failureReason)}</small>` : dexQuotes[report.pool.pairAddress].state === "error" ? `<b>QUOTE UNAVAILABLE</b><span>${h(dexQuotes[report.pool.pairAddress].error)}</span>` : `<b>REQUESTING OFFICIAL ROUTE…</b>`}</div>` : ""}
+          </article>`).join("") : `<div class="dex-empty"><b>NO POOL OBSERVATIONS YET</b><p>Add a token contract or scan the saved watchlist. If an indexer has no Arc pair, Scout will not invent one.</p></div>`}
+        </div>
+        <section class="dex-opportunity" aria-labelledby="dex-opportunity-title">
+          <div class="dex-subhead"><div><p class="eyebrow">DEX OPPORTUNITY AGENT</p><h3 id="dex-opportunity-title">Prioritize pools within your limits. ${infoTip("Turns pool observations into a bounded research queue. REVIEW warnings remain visible and user speculative approval never makes a pool safe.")}</h3></div><div class="dex-subactions">${dexOpportunityAnalysis.candidates.length ? `<button class="dex-opportunity-download" type="button">DOWNLOAD RECEIPT</button>` : ""}<div class="dex-summary"><b>${dexOpportunityAnalysis.summary.eligible}</b><span>ELIGIBLE OF ${dexOpportunityAnalysis.summary.total}</span></div></div></div>
+          <form class="dex-opportunity-form">
+            <label>MIN POOL SCORE<input name="minPoolScore" type="number" min="0" max="100" step="1" value="${dexOpportunityPreferences.minPoolScore}"></label>
+            <label>MIN LIQUIDITY · USD<input name="minLiquidityUsd" type="number" min="0" step="1000" value="${dexOpportunityPreferences.minLiquidityUsd}"></label>
+            <label>MIN VOLUME 24H · USD<input name="minVolume24hUsd" type="number" min="0" step="100" value="${dexOpportunityPreferences.minVolume24hUsd}"></label>
+            <label>MAX 24H MOVE · %<input name="maxAbsPriceChange24hPct" type="number" min="0" step="1" value="${dexOpportunityPreferences.maxAbsPriceChange24hPct}"></label>
+            <label>MAX MODELED IMPACT · %<input name="maxModeledImpactPct" type="number" min="0.01" max="100" step="0.01" value="${dexOpportunityPreferences.maxModeledImpactPct}"></label>
+            <label class="dex-checkbox"><input name="includeReview" type="checkbox" ${dexOpportunityPreferences.includeReview ? "checked" : ""}> INCLUDE REVIEW POOLS</label>
+            <button type="submit">APPLY DEX LIMITS</button>
+          </form>
+          <div class="dex-candidates">
+            ${dexOpportunityAnalysis.candidates.length ? dexOpportunityAnalysis.candidates.map((candidate, index) => `<article class="${candidate.eligible ? "eligible" : "blocked"}"><span>${String(index + 1).padStart(2, "0")}</span><div><h4>${h(candidate.pairName)}</h4><small>${h(shortId(candidate.pairAddress))} · ${candidate.officialQuoteAvailable ? "OFFICIAL QUOTE AVAILABLE" : "QUOTE NOT REQUESTED"}</small><p>${h(candidate.reason)}</p>${candidate.warnings.length ? `<em>${candidate.warnings.length} warning${candidate.warnings.length === 1 ? "" : "s"} preserved</em>` : ""}</div><b>${candidate.eligible ? "RESEARCH" : "BLOCKED"} · ${candidate.opportunityScore}</b></article>`).join("") : `<p class="dex-subempty">Scan at least one pool to create the DEX research queue.</p>`}
+          </div>
+        </section>
+        <section class="dex-strategy" aria-labelledby="dex-strategy-title">
+          <div class="dex-subhead"><div><p class="eyebrow">DEX STRATEGY LAB · NO EXECUTION</p><h3 id="dex-strategy-title">Model a bounded ${dexStrategyProposal.mode === "LP" ? "LP research" : "swap research"} proposal. ${infoTip("Allocates only among pools that clear DEX Opportunity limits. It does not connect a wallet, sign, approve tokens or send a transaction.")}</h3></div><div class="dex-subactions">${dexStrategyProposal.positions.length ? `<button class="dex-strategy-download" type="button">DOWNLOAD RECEIPT</button>` : ""}<div class="dex-summary"><b>${formatMoney(dexStrategyProposal.summary.allocatedUsd)}</b><span>MODELED ALLOCATION</span></div></div></div>
+          <form class="dex-strategy-form">
+            <label>RESEARCH MODE<select name="mode"><option value="SWAP" ${dexStrategyPreferences.mode === "SWAP" ? "selected" : ""}>Swap research</option><option value="LP" ${dexStrategyPreferences.mode === "LP" ? "selected" : ""}>LP research</option></select></label>
+            <label>MODELED CAPITAL · USD<input name="capitalUsd" type="number" min="1" step="100" value="${dexStrategyPreferences.capitalUsd}"></label>
+            <label>RESERVE · %<input name="reservePct" type="number" min="0" max="90" step="1" value="${dexStrategyPreferences.reservePct}"></label>
+            <label>MAX POOLS<input name="maxPools" type="number" min="1" max="8" step="1" value="${dexStrategyPreferences.maxPools}"></label>
+            <label>MAX PER POOL · %<input name="maxPerPoolPct" type="number" min="5" max="100" step="1" value="${dexStrategyPreferences.maxPerPoolPct}"></label>
+            <button type="submit">BUILD PROPOSAL</button>
+          </form>
+          <div class="dex-strategy-notice"><b>${h(dexStrategyProposal.status.replaceAll("_", " "))}</b><span>${h(dexStrategyProposal.notice)}</span></div>
+          ${dexStrategyProposal.positions.length ? `<div class="dex-strategy-positions">${dexStrategyProposal.positions.map((position, index) => `<article><div><span>${String(index + 1).padStart(2, "0")}</span><h4>${h(position.pairName)}</h4><small>Opportunity ${position.opportunityScore} · ${formatPct(position.portfolioPct, 2)} of modeled capital</small></div><strong>${formatMoney(position.amountUsd)}</strong><p>${h(position.riskConditions[0])}</p>${dexStrategyProposal.mode === "SWAP" ? `<em>${position.officialQuoteAvailable ? "Official route evidence attached; re-quote required before action." : "No official route attached; request a quote in Pool Scanner."}</em>` : `<em>Verified fee yield unavailable; no APY is claimed.</em>`}</article>`).join("")}</div>` : `<p class="dex-subempty">No pool clears the active DEX limits, so the model allocates nothing.</p>`}
+          ${dexStrategyProposal.impermanentLossReferencePct ? `<div class="dex-il"><b>REFERENCE IMPERMANENT LOSS · FULL-RANGE CONSTANT PRODUCT · FEES EXCLUDED</b><div><span>PRICE 0.5× <strong>${formatPct(dexStrategyProposal.impermanentLossReferencePct.priceDown50Pct, 2)}</strong></span><span>PRICE 2× <strong>${formatPct(dexStrategyProposal.impermanentLossReferencePct.priceUp100Pct, 2)}</strong></span><span>PRICE 4× <strong>${formatPct(dexStrategyProposal.impermanentLossReferencePct.priceUp300Pct, 2)}</strong></span></div></div>` : ""}
+          <div class="dex-strategy-totals"><span>CAPITAL ${formatMoney(dexStrategyProposal.summary.capitalUsd)}</span><span>RESERVE ${formatMoney(dexStrategyProposal.summary.reserveUsd)}</span><span>UNALLOCATED ${formatMoney(dexStrategyProposal.summary.unallocatedUsd)}</span></div>
+        </section>
+        <footer><span>LENDING AND DEX EVIDENCE REMAIN SEPARATE</span><span>User selection does not override REVIEW or REJECT</span></footer>
+      </section>
+
+      <section class="action-center suite-view ${activeSuiteView === "action" ? "is-active" : ""}" data-suite-view="action" id="action-agent" aria-labelledby="action-title">
+        <div class="action-head">
+          <div><p class="eyebrow">ACTION CENTER · HUMAN GATE</p><h2 id="action-title">Understand the action before authorization. ${infoTip("Converts one modeled Strategy position into an auditable intent and checks what evidence is present or still missing. It does not create an executable transaction.")}</h2><p>Research becomes an explicit intent here. Wallet connection, token approval, calldata, signature and transaction submission remain unavailable.</p></div>
+          <div class="action-head-actions">${actionReceipt ? `<button class="action-download" type="button">DOWNLOAD ACTION RECEIPT</button>` : ""}${actionPreview ? `<button class="action-clear" type="button">CLEAR WORKSPACE</button>` : ""}</div>
+        </div>
+        <section class="borrow-kit-center" aria-labelledby="borrow-kit-title">
+          <div class="borrow-kit-head"><div><span>OFFICIAL ARC BORROW KIT · READ-ONLY SIZING</span><h3 id="borrow-kit-title">Preview a cirBTC-backed USDC loan.</h3><p>${h(borrowKit.capability)} The preview asks Borrow Kit for collateral sizing and liquidation evidence before any wallet action exists.</p></div><div><b>${borrowKitState.mode === "ready" ? `${borrowKitState.data.markets.length} CIRBTC MARKET${borrowKitState.data.markets.length === 1 ? "" : "S"}` : borrowKitState.mode === "loading" ? "DISCOVERING MARKETS" : "BORROW KIT UNAVAILABLE"}</b><small>${h(borrowKitState.message)}</small><a href="${h(borrowKit.docs)}" target="_blank" rel="noreferrer">OFFICIAL DOCS ↗</a></div></div>
+          <form class="borrow-kit-form">
+            <label>MARKET<select name="marketId" ${borrowKitState.data?.markets.length ? "" : "disabled"}>${borrowKitState.data?.markets.map((market) => `<option value="${h(market.marketId)}">${h(shortId(market.marketId))} · ${formatMoney(market.liquidityUsd)} liquidity · ${formatPct(market.utilizationPct, 2)} utilized</option>`).join("") ?? `<option>No live cirBTC market</option>`}</select></label>
+            <label>BORROW · USDC<input name="borrowAmount" type="number" min="0.01" max="1000000" step="0.01" value="100"></label>
+            <label>TARGET HEALTH FACTOR<input name="targetHealthFactor" type="number" min="1.2" max="5" step="0.05" value="1.5"></label>
+            <button type="submit" ${borrowKitState.data?.markets.length && borrowKitState.mode !== "quoting" ? "" : "disabled"}>${borrowKitState.mode === "quoting" ? "CALCULATING…" : "CALCULATE COLLATERAL"}</button>
+          </form>
+          ${borrowKitState.preview ? `<div class="borrow-kit-result ${h(borrowKitState.preview.healthFactorBand.toLowerCase())}">
+            <div class="borrow-verdict"><span>HEALTH BAND</span><b>${h(borrowKitState.preview.healthFactorBand)}</b><small>Health factor ${borrowKitState.preview.resultingHealthFactor.toFixed(3)}</small></div>
+            <div><span>BORROW</span><b>${formatMoney(borrowKitState.preview.borrowAmountUsdc)}</b><small>USDC requested</small></div>
+            <div><span>REQUIRED COLLATERAL</span><b>${borrowKitState.preview.requiredCollateral.amount?.toFixed(8) ?? "Unavailable"}</b><small>${h(borrowKitState.preview.requiredCollateral.token)}</small></div>
             <div><span>LIQUIDATION PRICE</span><b>${formatMoney(borrowKitState.preview.liquidationPrice.amount)}</b><small>denominated in ${h(borrowKitState.preview.liquidationPrice.token)}</small></div>
             <div><span>MARKET UTILIZATION</span><b>${formatPct(borrowKitState.preview.market.utilizationPct, 3)}</b><small>${formatMoney(borrowKitState.preview.market.liquidityUsd)} liquidity</small></div>
             <div class="borrow-kit-warnings"><b>${borrowKitState.preview.warnings.length} REVIEW CONDITION${borrowKitState.preview.warnings.length === 1 ? "" : "S"}</b>${borrowKitState.preview.warnings.map((warning) => `<p>${h(warning)}</p>`).join("")}</div>
