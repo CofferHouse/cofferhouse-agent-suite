@@ -18,6 +18,12 @@ Production holder access must replace the temporary operator demo gate with auth
 - **Institutional RWA:** Centrifuge's Arc deployment introduces ERC-4626 exposures to tokenized Treasuries, AAA CLOs and high-yield corporate credit. A future RWA Opportunity adapter must preserve asset class, issuer, NAV oracle, liquidity and transfer restrictions separately from lending-vault evidence.
 - **Borrow lifecycle:** Borrow Kit provides market discovery, collateral sizing, quote-time health factor, atomic wallet actions and ongoing health bands. Action Center will own quote review; Guardian will own post-origination health monitoring. No write is enabled until wallet, quote freshness and human approval are independently verified.
 
+## Borrow Kit — Action Center
+
+Action Center now discovers official Arc cirBTC/USDC markets through Borrow Kit and requests `getRequiredCollateral` sizing for a user-selected USDC amount and target health factor. The result preserves market liquidity, utilization, LLTV, variable borrow APY, required cirBTC, resulting health factor, Borrow Kit risk band and liquidation price. Utilization at or above 95% is elevated as a visible review condition.
+
+Each preview can be downloaded as a sealed `cofferhouse.arc-app-kits.borrow-preview-receipt.v1` document. The receipt explicitly records that no wallet adapter, token approval, calldata, signature, loan or transaction was created. Future wallet execution must re-fetch the market and a fresh actionable quote, pass the single human gate and reconcile any submitted result before retrying.
+
 - `/api/app-kits/earn` performs read-only Arc mainnet vault discovery.
 - Opportunity Agent displays observed APY, available liquidity, protocol, asset and liquidity status.
 - Discovery works without an API key at a shared rate limit. `CIRCLE_API_KEY` is recommended for production and must remain server-side.

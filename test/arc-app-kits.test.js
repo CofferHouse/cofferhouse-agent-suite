@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeEarnOpportunities, arcAppKitCatalog, buildEarnStrategy, fetchArcEarnVaults, fetchOnrampReadiness, loadEarnOpportunityPreferences, normalizeEarnVaultResponse, requestOnrampSession, saveEarnOpportunityPreferences } from "../packages/agent-modules/index.js";
-import { createEarnOpportunityReceipt, createEarnStrategyReceipt, verifyReceiptDocument } from "../packages/evidence/index.js";
+import { analyzeEarnOpportunities, arcAppKitCatalog, buildEarnStrategy, fetchArcBorrowMarkets, fetchArcEarnVaults, fetchOnrampReadiness, healthFactorBand, loadEarnOpportunityPreferences, normalizeBorrowPreview, normalizeEarnVaultResponse, requestBorrowPreview, requestOnrampSession, saveEarnOpportunityPreferences } from "../packages/agent-modules/index.js";
+import { createBorrowPreviewReceipt, createEarnOpportunityReceipt, createEarnStrategyReceipt, verifyReceiptDocument } from "../packages/evidence/index.js";
 
 test("Arc App Kit catalog preserves the three product boundaries", () => {
   assert.deepEqual(arcAppKitCatalog.map((kit) => kit.id), ["earn", "onramp", "borrow"]);
@@ -66,4 +66,27 @@ test("Strategy Lab allocates eligible Earn vaults without merging evidence types
   assert.equal(proposal.positions.every((position) => position.sourceType === "ARC_EARN_VAULT"), true);
   assert.match(proposal.separationRule, /separate/i);
   assert.equal(verifyReceiptDocument(createEarnStrategyReceipt(proposal)).valid, true);
+});
+
+test("Borrow Kit normalizes live market risk and seals a non-executable preview", async () => {
+  const market = { marketId: `0x${"1".repeat(64)}`, protocol: "morpho", chain: "Arc", loanAsset: { symbol: "USDC" }, collateralAsset: { symbol: "cirBTC" }, liquidity: { amount: "8737.81" }, borrowApy: 0.029672, utilization: 0.991891, lltv: 0.86 };
+  const payload = { observedAt: "2026-10-03T00:00:00.000Z", market, quote: { requiredCollateral: { token: "cirBTC", amount: "0.00232137" }, resultingHealthFactor: 1.5, liquidationPrice: { token: "EURC", amount: "50090.70" } }, request: { borrowAmount: "100", targetHealthFactor: 1.5 } };
+  const preview = normalizeBorrowPreview(payload);
+  assert.equal(preview.healthFactorBand, "SAFE");
+  assert.match(preview.warnings[0], /95%/);
+  assert.equal(preview.execution.transactionPrepared, false);
+  assert.equal(verifyReceiptDocument(createBorrowPreviewReceipt(preview)).valid, true);
+  assert.equal(healthFactorBand(1.15), "WARN");
+  assert.equal(healthFactorBand(0.99), "LIQUIDATABLE");
+});
+
+test("Borrow Kit browser adapters use the protected host route", async () => {
+  const market = { marketId: `0x${"1".repeat(64)}`, loanAsset: { symbol: "USDC" }, collateralAsset: { symbol: "cirBTC" }, liquidity: { amount: "1000" }, borrowApy: 0.01, utilization: 0.5, lltv: 0.86 };
+  const calls = [];
+  const fetcher = async (url, options) => { calls.push({ url, options }); return { ok: true, json: async () => options?.method === "POST" ? { market, quote: { requiredCollateral: { token: "cirBTC", amount: "0.1" }, resultingHealthFactor: 1.5, liquidationPrice: { token: "USD", amount: "50000" } } } : { markets: [market] } }; };
+  assert.equal((await fetchArcBorrowMarkets(fetcher)).markets.length, 1);
+  const preview = await requestBorrowPreview({ marketId: market.marketId, borrowAmount: "100", targetHealthFactor: 1.5 }, fetcher);
+  assert.equal(preview.borrowAmountUsdc, 100);
+  assert.equal(calls[1].url, "/api/app-kits/borrow");
+  assert.equal(calls[1].options.body.includes("privateKey"), false);
 });

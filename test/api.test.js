@@ -8,6 +8,7 @@ import dexQuoteHandler from "../api/dex/quote.js";
 import guardianWatchHandler from "../api/guardian/watch.js";
 import interopObserveHandler from "../api/interop/observe.js";
 import onrampHandler, { onrampReadiness } from "../api/app-kits/onramp.js";
+import borrowHandler from "../api/app-kits/borrow.js";
 import { createScoutReceipt } from "../packages/evidence/index.js";
 import { scanMarkets } from "../packages/agent-core/index.js";
 import { demoMarkets } from "../packages/arc-data/index.js";
@@ -77,7 +78,7 @@ test("receipt API verifies supported files and rejects altered content", async (
 });
 
 test("public endpoints reject unsupported methods", async () => {
-  for (const handler of [healthHandler, statusHandler, verifyHandler, dexPoolHandler, dexQuoteHandler, interopObserveHandler, onrampHandler]) {
+  for (const handler of [healthHandler, statusHandler, verifyHandler, dexPoolHandler, dexQuoteHandler, interopObserveHandler, onrampHandler, borrowHandler]) {
     const response = responseMock();
     await handler({ method: "DELETE", headers: {} }, response);
     assert.equal(response.statusCode, 405);
