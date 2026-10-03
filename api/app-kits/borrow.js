@@ -1,11 +1,11 @@
-import { AppKit } from "@circle-fin/app-kit";
+import { BorrowKit } from "@circle-fin/borrow-kit";
 
-const kit = new AppKit({ disableErrorReporting: true });
+const kit = new BorrowKit({ disableErrorReporting: true });
 const marketIdPattern = /^0x[a-fA-F0-9]{64}$/;
 const validAmount = (value) => /^\d+(\.\d{1,6})?$/.test(String(value ?? "")) && Number(value) > 0 && Number(value) <= 1_000_000;
 
 async function cirBtcMarkets() {
-  const result = await kit.borrow.exploreMarkets({ chain: "Arc", sortBy: "borrowApy" });
+  const result = await kit.exploreMarkets({ chain: "Arc", sortBy: "borrowApy" });
   return (result.markets ?? []).filter((market) => market.collateralAsset?.symbol === "cirBTC" && market.loanAsset?.symbol === "USDC");
 }
 
@@ -26,7 +26,7 @@ export default async function handler(request, response) {
     const market = markets.find((item) => item.marketId.toLowerCase() === marketId.toLowerCase());
     if (!market) return response.status(404).json({ ok: false, error: "The selected cirBTC/USDC market is not currently returned by Borrow Kit." });
     if (Number(borrowAmount) > Number(market.liquidity?.amount ?? 0)) return response.status(422).json({ ok: false, error: "Requested borrow exceeds currently reported market liquidity." });
-    const quote = await kit.borrow.getRequiredCollateral({ chain: "Arc", marketId: market.marketId, borrowAmount, targetHealthFactor });
+    const quote = await kit.getRequiredCollateral({ chain: "Arc", marketId: market.marketId, borrowAmount, targetHealthFactor });
     return response.status(200).json({ ok: true, source: "Circle Arc Borrow Kit", chain: "Arc", observedAt: new Date().toISOString(), market, quote, execution: { walletConnected: false, approvalPrepared: false, transactionPrepared: false, submitted: false } });
   } catch (error) {
     const status = error?.type === "INPUT" ? 400 : error?.type === "RATE_LIMIT" ? 429 : error?.type === "NETWORK" ? 504 : 502;
