@@ -39,6 +39,7 @@ Create an Upstash Redis database, copy its REST URL and REST token into Vercel, 
 - the latest normalized market snapshot;
 - the latest sealed cycle status;
 - up to 100 historical cycles;
+- the current protected-run phase, up to 25 failed-attempt diagnostics, and a 90-second concurrency lock;
 - the last delivered alert fingerprint; and
 - the latest operator acknowledgment.
 
@@ -70,7 +71,7 @@ Example values such as `replace-with...`, `your-...` and non-HTTPS endpoints are
 
 Detailed `/api/agent/status` responses require `Authorization: Bearer <SCOUT_OPERATOR_TOKEN>`. Anonymous requests receive only aggregate counts, the last run time and a coarse health/decision summary; durable receipts, traces, incidents and capability flags are never returned publicly.
 
-The public health response and Scout deployment panel expose only boolean capability states and operational freshness. They never return URLs, tokens, webhook addresses or API-key values. Readiness progresses through `SETUP REQUIRED`, `READY FOR FIRST RUN`, `OPERATIONAL`, or `DEGRADED STALE` when the last cycle is more than three expected intervals old (with a 45-minute minimum).
+The public health response and Scout deployment panel expose only boolean capability states and operational freshness. They never return URLs, tokens, webhook addresses or API-key values. Readiness also distinguishes an active `RUNNING` cycle, a safely preserved `DEGRADED RECOVERABLE` failure, and a `DEGRADED INTERRUPTED` attempt whose lock expires automatically. Concurrent scheduler calls receive `409 ALREADY_RUNNING` instead of duplicating evidence or alerts.
 
 ## 5. Optional alert and intelligence services
 

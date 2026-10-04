@@ -9,6 +9,7 @@ import guardianWatchHandler from "../api/guardian/watch.js";
 import interopObserveHandler from "../api/interop/observe.js";
 import onrampHandler, { onrampReadiness } from "../api/app-kits/onramp.js";
 import borrowHandler from "../api/app-kits/borrow.js";
+import { isScheduledRunAuthorized } from "../api/agent/run.js";
 import { createScoutReceipt } from "../packages/evidence/index.js";
 import { scanMarkets } from "../packages/agent-core/index.js";
 import { demoMarkets } from "../packages/arc-data/index.js";
@@ -62,6 +63,12 @@ test("durable status detail requires the exact operator bearer token", () => {
   assert.equal(isDetailedStatusAuthorized({ headers: {} }, "operator-secret"), false);
   assert.equal(isDetailedStatusAuthorized({ headers: { authorization: "Bearer wrong" } }, "operator-secret"), false);
   assert.equal(isDetailedStatusAuthorized({ headers: { authorization: "Bearer operator-secret" } }, "operator-secret"), true);
+});
+
+test("protected scheduler requires the exact shared bearer secret", () => {
+  assert.equal(isScheduledRunAuthorized({ headers: {} }, "cron-secret"), false);
+  assert.equal(isScheduledRunAuthorized({ headers: { authorization: "Bearer wrong" } }, "cron-secret"), false);
+  assert.equal(isScheduledRunAuthorized({ headers: { authorization: "Bearer cron-secret" } }, "cron-secret"), true);
 });
 
 test("receipt API verifies supported files and rejects altered content", async () => {

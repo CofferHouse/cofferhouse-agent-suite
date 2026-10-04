@@ -18,6 +18,17 @@ async function command(parts) {
   return payload.result;
 }
 
+export async function setJsonIfAbsent(key, value, ttlSeconds = 90) {
+  const result = await command(["SET", key, JSON.stringify(value), "NX", "EX", String(ttlSeconds)]);
+  return result === "OK";
+}
+
+export async function deleteJsonIfValue(key, value) {
+  const expected = JSON.stringify(value);
+  const script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
+  return Number(await command(["EVAL", script, "1", key, expected])) === 1;
+}
+
 export async function getJson(key) {
   const value = await command(["GET", key]);
   return value ? JSON.parse(value) : null;

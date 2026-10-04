@@ -1,4 +1,5 @@
-import { getJson, pushJson, setJson, durableStoreConfigured } from "../_redis.js";
+import { randomUUID } from "node:crypto";
+import { deleteJsonIfValue, getJson, pushJson, setJson, setJsonIfAbsent, durableStoreConfigured } from "../_redis.js";
 import { fetchMorphoArcMarkets, verifyArcMarketContracts } from "../../packages/arc-data/index.js";
 import { policyProfiles } from "../../packages/policies/index.js";
 import { createAgentAlert, createGuardianAlert, runAgentCycle } from "../../packages/agent-core/index.js";
@@ -20,9 +21,11 @@ const GUARDIAN_HISTORY_KEY = "cofferhouse:guardian:receipt-history";
 const GUARDIAN_ALERT_KEY = "cofferhouse:guardian:last-alert";
 const INTEROP_LATEST_KEY = "cofferhouse:interop:latest-receipt";
 const INTEROP_HISTORY_KEY = "cofferhouse:interop:receipt-history";
+const RUN_LOCK_KEY = "cofferhouse:scout:run-lock";
+const RUN_ATTEMPT_KEY = "cofferhouse:scout:last-run-attempt";
+const FAILURE_HISTORY_KEY = "cofferhouse:scout:failure-history";
 
-function authorized(request) {
-  const secret = process.env.CRON_SECRET;
+export function isScheduledRunAuthorized(request, secret = process.env.CRON_SECRET) {
   return Boolean(secret) && request.headers.authorization === `Bearer ${secret}`;
 }
 
@@ -30,12 +33,22 @@ const asList = (value) => Array.isArray(value) ? value : value ? [value] : [];
 
 export default async function handler(request, response) {
   if (request.method !== "GET") return response.status(405).json({ ok: false, error: "Method not allowed" });
-  if (!authorized(request)) return response.status(401).json({ ok: false, error: "Unauthorized" });
+  if (!isScheduledRunAuthorized(request)) return response.status(401).json({ ok: false, error: "Unauthorized" });
   if (!durableStoreConfigured()) return response.status(503).json({ ok: false, error: "Durable store is not configured." });
 
+  const startedAt = new Date().toISOString();
+  const lock = { runId: randomUUID(), startedAt };
+  if (!await setJsonIfAbsent(RUN_LOCK_KEY, lock, 90)) {
+    const activeAttempt = await getJson(RUN_ATTEMPT_KEY);
+    return response.status(409).json({ ok: false, state: "ALREADY_RUNNING", runId: activeAttempt?.runId ?? null, startedAt: activeAttempt?.startedAt ?? null });
+  }
+  const recordAttempt = (phase, extra = {}) => setJson(RUN_ATTEMPT_KEY, { schema: "cofferhouse.scout.run-attempt.v1", runId: lock.runId, startedAt, updatedAt: new Date().toISOString(), state: "RUNNING", phase, ...extra });
+
   try {
+    await recordAttempt("LOAD_DURABLE_STATE");
     const [previousMarkets, guardianRegistrationState, previousInteropReceipt] = await Promise.all([getJson(SNAPSHOT_KEY), getJson(GUARDIAN_WATCH_KEY), getJson(INTEROP_LATEST_KEY)]);
     const guardianRegistrations = asList(guardianRegistrationState).filter((item) => item?.schema === "cofferhouse.guardian.registration.v1" && item.watch?.source === "LENDING").slice(0, 20);
+    await recordAttempt("OBSERVE_ARC_MARKETS");
     let currentMarkets = await withRetry(() => fetchMorphoArcMarkets(), { attempts: 3, delayMs: 500 });
     let verification = { configured: Boolean(process.env.ARC_RPC_URL), status: "not-configured", source: "Arc JSON-RPC · eth_getCode" };
     if (process.env.ARC_RPC_URL) {
@@ -59,6 +72,7 @@ export default async function handler(request, response) {
         interop = { configured: true, status: "UNAVAILABLE", receipt: null, error: "CCTP observation failed safely; no crosschain activity claim was produced." };
       }
     }
+    await recordAttempt("EVALUATE_AND_COMPARE");
     const cycle = runAgentCycle({
       currentMarkets,
       previousMarkets,
@@ -117,6 +131,7 @@ export default async function handler(request, response) {
     ];
     const guardian = guardianReceipts.length ? { active: true, watchCount: guardianReceipts.length, decisions: guardianReceipts.map((receipt) => ({ receiptId: receipt.receiptId, target: receipt.watch.target, decision: receipt.observation.decision, requiresHumanAttention: receipt.observation.requiresHumanAttention })), alerts: guardianAlerts, notifications: guardianNotifications } : { active: false, watchCount: 0, decisions: [], alerts: [], notifications: [] };
     const publicCycle = sealDocument({ ...cycleWithoutMarkets, trace, verification, interop: { configured: interop.configured, status: interop.status, receiptId: interop.receipt?.receiptId ?? null, counts: interop.receipt?.observation.counts ?? null, error: interop.error }, intelligence, alert, notification, guardian }, "cycle");
+    await recordAttempt("COMMIT_DURABLE_EVIDENCE", { cycleRanAt: cycle.ranAt });
     await setJson(SNAPSHOT_KEY, currentMarkets);
     await setJson(STATUS_KEY, publicCycle);
     await pushJson(HISTORY_KEY, publicCycle, 100);
@@ -130,7 +145,8 @@ export default async function handler(request, response) {
       await setJson(INTEROP_LATEST_KEY, interop.receipt);
       await pushJson(INTEROP_HISTORY_KEY, interop.receipt, 50);
     }
-    return response.status(200).json({ ok: true, cycle: publicCycle, researchSession: researchSessionReceipt, guardians: guardianReceipts, interop: interop.receipt });
+    await setJson(RUN_ATTEMPT_KEY, { schema: "cofferhouse.scout.run-attempt.v1", runId: lock.runId, startedAt, updatedAt: new Date().toISOString(), finishedAt: new Date().toISOString(), state: "SUCCEEDED", phase: "COMPLETE", cycleRanAt: cycle.ranAt });
+    return response.status(200).json({ ok: true, runId: lock.runId, cycle: publicCycle, researchSession: researchSessionReceipt, guardians: guardianReceipts, interop: interop.receipt });
   } catch (error) {
     const failure = {
       schema: "cofferhouse.scout.agent-error.v1",
@@ -139,9 +155,11 @@ export default async function handler(request, response) {
       source: error.provider ? { provider: error.provider, code: error.code, retryable: error.retryable, status: error.status ?? null } : null
     };
     try {
-      await setJson(STATUS_KEY, failure);
-      await pushJson(HISTORY_KEY, failure, 100);
+      await setJson(RUN_ATTEMPT_KEY, { ...failure, runId: lock.runId, startedAt, updatedAt: new Date().toISOString(), finishedAt: new Date().toISOString(), state: "FAILED", phase: "RECOVERABLE_FAILURE" });
+      await pushJson(FAILURE_HISTORY_KEY, { ...failure, runId: lock.runId }, 25);
     } catch {}
-    return response.status(500).json({ ok: false, ...failure });
+    return response.status(500).json({ ok: false, runId: lock.runId, recoverable: true, preservedLastSuccessfulCycle: true, ...failure });
+  } finally {
+    try { await deleteJsonIfValue(RUN_LOCK_KEY, lock); } catch {}
   }
 }

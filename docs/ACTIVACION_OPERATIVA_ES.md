@@ -71,6 +71,8 @@ La secuencia correcta es:
 3. `OPERATIONAL` después de que el ciclo quede guardado.
 4. Confirmar que un segundo ciclo aumenta el historial.
 
+Cada ejecución toma un bloqueo durable atómico con vencimiento automático. Si GitHub Actions y el cron diario coinciden, el segundo intento recibe `ALREADY_RUNNING` y no duplica observaciones ni alertas. El panel puede mostrar la fase actual del ciclo.
+
 ## Opcionales posteriores
 
 - `SCOUT_ALERT_WEBHOOK_URL`: alertas materiales deduplicadas.
@@ -94,6 +96,10 @@ Ninguno de estos opcionales debe bloquear la primera demostración del micro-age
 - `SETUP_REQUIRED`: falta Upstash o `CRON_SECRET` válido.
 - `READY_FOR_FIRST_RUN`: configuración correcta, todavía no existe un ciclo almacenado.
 - `DEGRADED_STALE`: el último ciclo supera el margen esperado; revisar GitHub Actions y Vercel.
+- `RUNNING`: existe un ciclo protegido vigente y se muestra su fase actual.
+- `DEGRADED_RECOVERABLE`: el último intento falló, pero el último ciclo exitoso se preservó y el siguiente scheduler puede reintentar.
+- `DEGRADED_INTERRUPTED`: un intento quedó marcado como activo por más de tres minutos; el bloqueo expira automáticamente y permite recuperación.
+- HTTP 409 `ALREADY_RUNNING`: otro scheduler ya posee el bloqueo temporal; no se ejecutó un ciclo duplicado.
 - HTTP 401 en `/api/agent/run`: los valores `CRON_SECRET` de GitHub y Vercel no coinciden.
 - HTTP 503: Upstash no está configurado o usa valores de ejemplo.
 - Interop `UNAVAILABLE`: revisar `ARC_RPC_URL`; Scout conserva su evaluación determinista aunque esa verificación falle.

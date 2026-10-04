@@ -13,6 +13,8 @@ const GUARDIAN_LATEST_KEY = "cofferhouse:guardian:latest-receipt";
 const GUARDIAN_HISTORY_KEY = "cofferhouse:guardian:receipt-history";
 const INTEROP_LATEST_KEY = "cofferhouse:interop:latest-receipt";
 const INTEROP_HISTORY_KEY = "cofferhouse:interop:receipt-history";
+const RUN_ATTEMPT_KEY = "cofferhouse:scout:last-run-attempt";
+const FAILURE_HISTORY_KEY = "cofferhouse:scout:failure-history";
 
 function runtimeCapabilities() {
   return { ...deploymentCapabilities(process.env), durableMemory: durableStoreConfigured() };
@@ -41,7 +43,7 @@ function publicStatus(status) {
 }
 
 function emptyDetails() {
-  return { history: [], acknowledgment: null, acknowledgments: [], researchSession: null, researchSessions: [], guardianRegistration: null, guardian: null, guardianHistory: [], interop: null, interopHistory: [] };
+  return { history: [], failureHistory: [], acknowledgment: null, acknowledgments: [], researchSession: null, researchSessions: [], guardianRegistration: null, guardian: null, guardianHistory: [], interop: null, interopHistory: [] };
 }
 
 export default async function handler(request, response) {
@@ -53,12 +55,12 @@ export default async function handler(request, response) {
     return response.status(200).json({ configured: false, access: detailed ? "operator" : "public_summary", capabilities: detailed ? capabilities : undefined, deployment: detailed ? evaluateDeploymentReadiness({ capabilities }) : null, status: null, summaryCounts: null, ...emptyDetails() });
   }
   try {
-    const [status, history, acknowledgment, acknowledgments, researchSession, researchSessions, guardianRegistration, guardian, guardianHistory, interop, interopHistory] = await Promise.all([getJson(STATUS_KEY), listJson(HISTORY_KEY, 10), getJson(ACK_KEY), listJson(ACK_HISTORY_KEY, 50), getJson(RESEARCH_SESSION_KEY), listJson(RESEARCH_HISTORY_KEY, 10), getJson(GUARDIAN_WATCH_KEY), getJson(GUARDIAN_LATEST_KEY), listJson(GUARDIAN_HISTORY_KEY, 10), getJson(INTEROP_LATEST_KEY), listJson(INTEROP_HISTORY_KEY, 10)]);
-    const deployment = evaluateDeploymentReadiness({ capabilities, lastRunAt: status?.ranAt });
+    const [status, history, runAttempt, failureHistory, acknowledgment, acknowledgments, researchSession, researchSessions, guardianRegistration, guardian, guardianHistory, interop, interopHistory] = await Promise.all([getJson(STATUS_KEY), listJson(HISTORY_KEY, 10), getJson(RUN_ATTEMPT_KEY), listJson(FAILURE_HISTORY_KEY, 10), getJson(ACK_KEY), listJson(ACK_HISTORY_KEY, 50), getJson(RESEARCH_SESSION_KEY), listJson(RESEARCH_HISTORY_KEY, 10), getJson(GUARDIAN_WATCH_KEY), getJson(GUARDIAN_LATEST_KEY), listJson(GUARDIAN_HISTORY_KEY, 10), getJson(INTEROP_LATEST_KEY), listJson(INTEROP_HISTORY_KEY, 10)]);
+    const deployment = evaluateDeploymentReadiness({ capabilities, lastRunAt: status?.ranAt, runAttempt });
     if (!detailed) {
-      return response.status(200).json({ configured: true, access: "public_summary", status: publicStatus(status), deployment: { status: deployment.status, ageMinutes: deployment.ageMinutes }, summaryCounts: { cycles: history.length, researchSessions: researchSessions.length, guardianReceipts: guardianHistory.length, interopReceipts: interopHistory.length }, ...emptyDetails() });
+      return response.status(200).json({ configured: true, access: "public_summary", status: publicStatus(status), runState: runAttempt?.state ?? null, deployment: { status: deployment.status, ageMinutes: deployment.ageMinutes, recovery: deployment.recovery }, summaryCounts: { cycles: history.length, failures: failureHistory.length, researchSessions: researchSessions.length, guardianReceipts: guardianHistory.length, interopReceipts: interopHistory.length }, ...emptyDetails() });
     }
-    return response.status(200).json({ configured: true, access: "operator", capabilities, deployment, status, history, acknowledgment, acknowledgments, researchSession, researchSessions, guardianRegistration, guardian, guardianHistory, interop, interopHistory, summaryCounts: { cycles: history.length, researchSessions: researchSessions.length, guardianReceipts: guardianHistory.length, interopReceipts: interopHistory.length } });
+    return response.status(200).json({ configured: true, access: "operator", capabilities, deployment, status, history, runAttempt, failureHistory, acknowledgment, acknowledgments, researchSession, researchSessions, guardianRegistration, guardian, guardianHistory, interop, interopHistory, summaryCounts: { cycles: history.length, failures: failureHistory.length, researchSessions: researchSessions.length, guardianReceipts: guardianHistory.length, interopReceipts: interopHistory.length } });
   } catch (error) {
     return response.status(500).json({ configured: true, access: detailed ? "operator" : "public_summary", error: detailed ? error.message : "Runtime status is temporarily unavailable.", status: null, deployment: null, summaryCounts: null, ...emptyDetails() });
   }
