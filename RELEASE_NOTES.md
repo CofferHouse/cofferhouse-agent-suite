@@ -2,6 +2,12 @@
 
 Release candidate prepared for complete visual and deployment testing.
 
+## 2026-10-05
+
+- Agent Hub sessions now seal concrete Action Center and Guardian handoffs.
+- The top bounded candidate includes its target, modeled amount, reason, review conditions and required human step.
+- Guardian plans expose monitoring limits and explicitly deny rebalance, withdrawal and swap authority.
+
 ## Included
 
 - Eight live Morpho market observations on Arc when available, with an explicit demonstration fallback.

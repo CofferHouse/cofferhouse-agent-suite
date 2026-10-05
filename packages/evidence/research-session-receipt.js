@@ -12,6 +12,7 @@ export function createResearchSessionReceipt(session) {
     stages: session.stages,
     summary: session.summary,
     outputs: session.outputs,
+    handoffs: session.handoffs,
     execution: session.execution,
     notice: session.notice
   }, "agent-session");

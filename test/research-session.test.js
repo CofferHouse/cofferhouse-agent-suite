@@ -11,9 +11,25 @@ test("Agent Hub coordinates the lending research chain without execution authori
   const session = runResearchSession({ markets: demoMarkets, policy: policyProfiles.balanced, now: fixedNow });
   assert.equal(session.schema, "cofferhouse.agent-hub.session.v1");
   assert.equal(session.stages[0].status, "COMPLETE");
-  assert.equal(session.stages.at(-1).status, "WAITING_HUMAN");
+  assert.equal(session.stages.find((stage) => stage.id === "action").status, "READY_FOR_HUMAN");
+  assert.equal(session.stages.at(-1).status, "READY_AFTER_APPROVAL");
   assert.deepEqual(session.execution, { prepared: false, signed: false, submitted: false });
   assert.equal(session.summary.marketsObserved, demoMarkets.length);
+});
+
+test("Agent Hub seals concrete Action and Guardian handoffs without execution authority", () => {
+  const market = { ...demoMarkets[0], marketId: `0x${"1".repeat(64)}` };
+  const session = runResearchSession({ markets: [market], policy: policyProfiles.balanced, now: fixedNow });
+  assert.equal(session.handoffs.action.status, "READY_FOR_HUMAN_PREVIEW");
+  assert.equal(session.handoffs.action.candidate.source, "LENDING");
+  assert.equal(session.handoffs.action.candidate.targetId, market.marketId);
+  assert.equal(session.handoffs.guardian.status, "READY_AFTER_APPROVAL");
+  assert.equal(session.handoffs.guardian.authority.monitor, true);
+  assert.equal(session.handoffs.guardian.authority.swap, false);
+  assert.deepEqual(session.execution, { prepared: false, signed: false, submitted: false });
+  const receipt = createResearchSessionReceipt(session);
+  assert.equal(receipt.handoffs.guardian.target.id, market.marketId);
+  assert.equal(verifyReceiptDocument(receipt).valid, true);
 });
 
 test("Agent Hub skips DEX honestly when no pool evidence exists", () => {

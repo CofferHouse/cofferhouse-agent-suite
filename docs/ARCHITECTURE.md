@@ -58,7 +58,11 @@ Agent Mode runs a bounded lifecycle without repeated operator clicks: observe li
 
 Material `REVIEW` and `ESCALATE` decisions can be delivered to a protected webhook. Alerts carry deterministic fingerprints and the runtime stores the last successfully delivered alert, preventing the same condition from being sent on every cycle.
 
-Provider requests have explicit timeouts and typed failure diagnostics (`timeout`, `network_error`, `http_error`, `graphql_error`, `invalid_response`, `empty_result`, or `normalization_error`). A failed cycle is persisted as a visible degraded state with retryability metadata instead of being mistaken for a valid market decision.
+Provider requests have explicit timeouts and typed failure diagnostics (`timeout`, `network_error`, `http_error`, `graphql_error`, `invalid_response`, `empty_result`, or `normalization_error`). A failed attempt is stored separately with retryability metadata while the last successful sealed cycle remains available. An atomic 90-second lock prevents concurrent schedulers from duplicating evidence or alerts; an interrupted lock expires automatically.
+
+### End-to-end Agent Hub handoffs
+
+A coordinated Agent Hub session runs Scout, Opportunity, Strategy and available DEX evidence, then seals one concrete Action Center candidate and one proposed Guardian monitoring plan. The handoff records target identity, modeled amount, selection reason, review conditions, monitoring limits and denied authorities. It does not create an Action preview automatically: the operator must open Action Center, inspect the current checks and record a fresh approval before Guardian can be activated.
 
 ### Bounded intelligence layer
 

@@ -41,6 +41,8 @@ The runtime has an explicit loop and durable state:
 
 The system can run on a protected schedule without a browser. Its autonomy covers observation, analysis, memory, incident routing and reporting—not financial execution.
 
+Each coordinated browser or server session also seals a bounded handoff into Action Center and a Guardian monitoring plan. The handoff identifies the selected target and modeled amount, but Action Center still requires fresh human review and Guardian still requires an approved intent and current evidence.
+
 ## Arc integration
 
 - Morpho-listed markets on Arc mainnet, normalized into a documented schema.
@@ -72,6 +74,7 @@ The system can run on a protected schedule without a browser. Its autonomy cover
 - Deployment: [`DEPLOYMENT.md`](DEPLOYMENT.md)
 - Demo script: [`HACKATHON_DEMO_SCRIPT.md`](HACKATHON_DEMO_SCRIPT.md)
 - Asset checklist: [`HACKATHON_ASSET_CHECKLIST.md`](HACKATHON_ASSET_CHECKLIST.md)
+- Frozen capability and claims list: [`FEATURE_FREEZE_2026-10-05.md`](FEATURE_FREEZE_2026-10-05.md)
 
 ## Honest limitations
 

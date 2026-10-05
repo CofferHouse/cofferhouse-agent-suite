@@ -274,6 +274,7 @@ function render() {
           <div class="hub-session-head">
             <div><span>COORDINATED RESEARCH SESSION ${infoTip("Runs the current Scout, Opportunity and Strategy logic as one bounded mission. DEX joins only when observed pool evidence exists.")}</span><b>${researchSession ? "SESSION COMPLETE" : "READY TO COORDINATE"}</b><small>${researchSession ? `${h(researchSession.summary.decision.replaceAll("_", " "))} · Human gate ${h(researchSession.summary.humanGate)}` : "One command will coordinate the active agents without creating, signing or submitting a transaction."}</small></div>
             <div class="hub-session-actions">
+              ${researchSession?.handoffs?.action?.candidate ? `<button class="hub-session-open-action" type="button">OPEN TOP HANDOFF</button>` : ""}
               ${researchSession ? `<button class="hub-session-download" type="button">DOWNLOAD SESSION RECEIPT</button>` : ""}
               <button class="hub-session-run" type="button">${researchSession ? "RUN AGAIN" : "RUN RESEARCH SESSION"}</button>
             </div>
@@ -281,7 +282,8 @@ function render() {
           ${researchSession ? `<div class="hub-session-stages" aria-label="Research session stages">
             ${researchSession.stages.map((stage) => `<article class="${h(stage.status.toLowerCase())}"><span>${h(stage.status.replaceAll("_", " "))}</span><b>${h(stage.agent)}</b><small>${h(stage.result)}</small></article>`).join("")}
           </div>
-          <div class="hub-session-result"><div><span>LENDING POSITIONS</span><b>${researchSession.summary.lendingPositions}</b></div><div><span>DEX POSITIONS</span><b>${researchSession.summary.dexPositions}</b></div><p>${h(researchSession.notice)}</p></div>
+          <div class="hub-session-result"><div><span>LENDING POSITIONS</span><b>${researchSession.summary.lendingPositions}</b></div><div><span>DEX POSITIONS</span><b>${researchSession.summary.dexPositions}</b></div><div><span>ACTION HANDOFFS</span><b>${researchSession.summary.actionCandidates ?? 0}</b></div><div><span>GUARDIAN PLANS</span><b>${researchSession.summary.guardianCandidates ?? 0}</b></div><p>${h(researchSession.notice)}</p></div>
+          ${researchSession.handoffs?.action?.candidate ? `<div class="hub-handoff"><div><span>TOP BOUNDED HANDOFF</span><b>${h(researchSession.handoffs.action.candidate.targetName)}</b><small>${h(researchSession.handoffs.action.candidate.source)} · ${formatMoney(researchSession.handoffs.action.candidate.amountUsd)} · ${h(researchSession.handoffs.action.candidate.reason)}</small></div><div><span>GUARDIAN ACTIVATION</span><b>HUMAN APPROVAL REQUIRED</b><small>${h(researchSession.handoffs.guardian.activationRequires.join(" → "))}</small></div></div>` : ""}
           ${sessionComparison ? `<div class="hub-session-compare"><span>CHANGE FROM PREVIOUS SESSION</span><b>${sessionComparison.decisionChanged ? `${h(sessionComparison.previousDecision)} → ${h(sessionComparison.currentDecision)}` : `DECISION UNCHANGED · ${h(sessionComparison.currentDecision)}`}</b><small>Eligible markets ${sessionComparison.changes.marketsEligible >= 0 ? "+" : ""}${sessionComparison.changes.marketsEligible} · Lending positions ${sessionComparison.changes.lendingPositions >= 0 ? "+" : ""}${sessionComparison.changes.lendingPositions} · DEX pools ${sessionComparison.changes.dexPoolsObserved >= 0 ? "+" : ""}${sessionComparison.changes.dexPoolsObserved}</small></div>` : ""}` : `<p class="hub-session-empty">The Hub will preserve each agent's evidence, show skipped stages honestly and issue one tamper-evident JSON receipt for the complete mission.</p>`}
           ${researchSessionHistory.length ? `<div class="hub-session-history"><div class="hub-history-head"><div><span>SESSION MEMORY · THIS BROWSER</span><b>${researchSessionHistory.length} VERIFIED SESSION${researchSessionHistory.length === 1 ? "" : "S"}</b></div><button class="hub-history-clear" type="button">CLEAR HISTORY</button></div><div class="hub-history-list">${researchSessionHistory.map((item) => `<button type="button" data-receipt-id="${h(item.receiptId)}" class="hub-history-item ${item.receiptId === researchSessionReceipt?.receiptId ? "active" : ""}"><time>${h(new Date(item.generatedAt).toLocaleString())}</time><b>${h(item.summary.decision.replaceAll("_", " "))}</b><small>${item.summary.marketsEligible} eligible · ${item.summary.lendingPositions} lending · ${item.summary.dexPositions} DEX</small><code>${h(item.receiptId)}</code></button>`).join("")}</div></div>` : ""}
           <div class="hub-durable-memory ${serverRuntime.configured ? (serverResearchVerification?.valid ? "online" : "waiting") : "setup"}">
@@ -774,6 +776,10 @@ function render() {
     document.querySelector(".hub-session")?.scrollIntoView({ behavior: "smooth", block: "center" });
   });
   document.querySelector(".hub-session-download")?.addEventListener("click", () => downloadScoutReceipt(researchSessionReceipt));
+  document.querySelector(".hub-session-open-action")?.addEventListener("click", () => {
+    actionMessage = "Agent Hub handoff loaded. Select the modeled position and create a separate read-only preview.";
+    openSuiteView("action");
+  });
   document.querySelectorAll(".hub-history-item").forEach((button) => button.addEventListener("click", () => {
     const receipt = researchSessionHistory.find((item) => item.receiptId === button.dataset.receiptId);
     if (!receipt) return;
