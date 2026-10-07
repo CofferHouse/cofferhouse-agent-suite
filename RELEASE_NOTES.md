@@ -2,6 +2,14 @@
 
 Release candidate prepared for complete visual and deployment testing.
 
+## 2026-10-06
+
+- Added an accessible skip link, stable main landmark and destination focus after room changes.
+- Inactive rooms are now removed from the accessibility tree while the active room remains available.
+- Added high-contrast keyboard focus, 44 px control targets and reduced-motion support.
+- Named the receipt file picker and connected navigation controls to their room containers.
+- Added an automated accessibility contract and a dated QA report; 181 tests pass.
+
 ## 2026-10-05
 
 - Agent Hub sessions now seal concrete Action Center and Guardian handoffs.

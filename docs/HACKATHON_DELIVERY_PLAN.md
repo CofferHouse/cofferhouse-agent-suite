@@ -9,7 +9,7 @@ Target: submission-ready materials and an operational public agent during the we
 | 3 Oct | Add Borrow Kit research adapter and health-risk simulation; keep execution disabled. | Record the agent decision path and human gate. **Implemented.** |
 | 4 Oct | Durable Upstash history and protected scheduler recovery implemented: atomic expiring lock, visible phases, preserved last-success state and failure diagnostics. Production credentials remain owner-configured. | Capture unattended-cycle evidence and receipts after activation. |
 | 5 Oct | End-to-end Agent Hub run across Scout, Opportunity, Strategy, Action and Guardian, with sealed bounded handoffs and explicit human gates. **Implemented.** | Freeze feature list, architecture and judging claims. |
-| 6 Oct | Cross-browser/mobile QA, accessibility and public-deployment verification. | Capture clean screenshots and short demo clips. |
+| 6 Oct | Cross-browser/mobile QA, accessibility and public-deployment verification. **Automated accessibility contract and Chrome production audit implemented; manual Firefox/Safari device pass remains.** | Capture clean screenshots and short demo clips. |
 | 7 Oct | Demo rehearsal and bug buffer. | Finalize submission copy, README, X launch thread and video script. |
 
 Every daily checkpoint must include a focused commit, passing automated tests, a successful production build and a short changelog entry. Public claims must distinguish live capabilities, simulations and roadmap items.

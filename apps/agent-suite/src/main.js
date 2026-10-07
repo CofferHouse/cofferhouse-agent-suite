@@ -95,6 +95,19 @@ const suiteTabs = Object.freeze([
   { id: "interop", label: "Interop", mark: "08" }
 ]);
 
+const suiteViewTargets = Object.freeze({
+  holder: "holder-center",
+  hub: "agent-hub",
+  scout: "scout-agent",
+  opportunity: "opportunity-agent",
+  strategy: "strategy-agent",
+  dex: "dex-agent",
+  action: "action-agent",
+  guardian: "guardian-agent",
+  automation: "automation-agent",
+  interop: "interop-agent"
+});
+
 const requestedRoute = window.location.hash;
 const requestedSuiteView = requestedRoute.match(/^#agents\/(.+)$/)?.[1];
 if (requestedRoute === "#agents") activeSuiteView = "hub";
@@ -106,7 +119,10 @@ function openSuiteView(view) {
   activeSuiteView = view;
   window.history.replaceState(null, "", view === "holder" ? "#holders" : view === "hub" ? "#agents" : `#agents/${view}`);
   render();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  const activeHeading = document.querySelector(`[data-suite-view="${view}"].is-active h1, [data-suite-view="${view}"].is-active h2`);
+  activeHeading?.setAttribute("tabindex", "-1");
+  activeHeading?.focus({ preventScroll: true });
+  window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 }
 
 const runtimeTime = (value) => value ? new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—";
@@ -186,6 +202,7 @@ function render() {
   const onrampKit = arcAppKitCatalog.find((kit) => kit.id === "onramp");
   const borrowKit = arcAppKitCatalog.find((kit) => kit.id === "borrow");
   app.innerHTML = `
+    <a class="skip-link" href="#main-content">SKIP TO MAIN CONTENT</a>
     <header class="topbar">
       <a class="brand house-home" href="${h(PRODUCT_LINKS.house)}" aria-label="Back to the CofferHouse">
         <img class="brand-arch" src="/brand/cofferhouse-arch-official.png" alt="">
@@ -196,10 +213,10 @@ function render() {
     </header>
     <nav class="suite-nav" aria-label="CofferHouse holder tools">
       <div class="suite-nav-inner">
-        ${suiteTabs.map((tab) => `<button class="suite-tab ${activeSuiteView === tab.id ? "active" : ""}" data-view="${tab.id}" type="button" aria-current="${activeSuiteView === tab.id ? "page" : "false"}"><span>${tab.mark}</span>${tab.label}</button>`).join("")}
+        ${suiteTabs.map((tab) => `<button class="suite-tab ${activeSuiteView === tab.id ? "active" : ""}" data-view="${tab.id}" type="button" aria-controls="${suiteViewTargets[tab.id]}" aria-current="${activeSuiteView === tab.id ? "page" : "false"}"><span>${tab.mark}</span>${tab.label}</button>`).join("")}
       </div>
     </nav>
-    <main>
+    <main id="main-content" tabindex="-1">
       <section class="holder-center suite-view ${activeSuiteView === "holder" ? "is-active" : ""}" data-suite-view="holder" id="holder-center" aria-labelledby="holder-center-title">
         <header class="holder-hero">
           <div><p class="eyebrow">YOUR KEY TO THE HOUSE · DEMO MODE</p><h1 id="holder-center-title">Holder Command Center.</h1><p>One place for membership, progression, rewards and the CofferHouse tools unlocked by your access key.</p></div>
@@ -309,7 +326,7 @@ function render() {
           <div class="agent-actions">
             <button class="receipt-button" type="button">DOWNLOAD RECEIPT</button>
             <button class="verify-receipt-button" type="button">VERIFY RECEIPT FILE</button>
-            <input class="receipt-file-input" type="file" accept="application/json,.json" hidden>
+            <input class="receipt-file-input" type="file" accept="application/json,.json" aria-label="Select a Scout receipt JSON file to verify" hidden>
             <button class="scan-button" type="button" ${agentState === "scanning" ? "disabled" : ""}>${agentState === "scanning" ? "SCANNING…" : "RUN NEW SCAN"}</button>
           </div>
         </div>
@@ -709,6 +726,11 @@ function render() {
     </main>
     <footer class="site-footer"><span>Research first. Execution later.</span><span>Experimental software · Not financial advice</span></footer>`;
 
+  document.querySelectorAll(".suite-view").forEach((view) => {
+    const isActive = view.classList.contains("is-active");
+    view.toggleAttribute("inert", !isActive);
+    view.setAttribute("aria-hidden", String(!isActive));
+  });
   document.querySelectorAll(".suite-tab").forEach((button) => button.addEventListener("click", () => openSuiteView(button.dataset.view)));
   document.querySelectorAll(".holder-open-tool").forEach((button) => button.addEventListener("click", () => openSuiteView(button.dataset.view)));
   document.querySelector(".holder-connect-wallet")?.addEventListener("click", async () => {
