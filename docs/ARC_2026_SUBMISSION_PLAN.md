@@ -5,6 +5,7 @@ This repository supports two separate October submissions. They must use the sam
 ## 1. Tameion Agents Hackathon
 
 - **Public event window:** September 27–October 10, 2026.
+- **Official event page:** <https://community.arc.io/public/events/tameion-agents-hackathon-jb1w9clwx7>
 - **Lead product:** Scout as a bounded micro-agent running the `observe → verify → evaluate → compare → decide → record` loop.
 - **Supporting system:** Agent Hub demonstrates how the micro-agent hands evidence to specialized agents without gaining financial authority.
 - **Submission emphasis:** autonomy, durable memory, explicit state transitions, protected scheduling, alerts and verifiable receipts.
@@ -16,8 +17,9 @@ CofferHouse Scout is a bounded Arc micro-agent that continuously observes mainne
 
 ## 2. Arc Microgrants
 
-- **Deadline:** October 14, 2026 at 23:59 ET; reviews are rolling.
-- **Required:** live Arc-mainnet deployment, public repository, short Arc-use description and public builder profile.
+- **Public closing date:** October 14, 2026. The exact form timezone must be reconfirmed inside DoraHacks before final submission.
+- **Official program page:** <https://dorahacks.io/hackathon/arc-microgrants/detail>
+- **Working delivery target:** live Arc-mainnet product, public repository, clear Arc-use description and owner-selected public builder details.
 - **Lead product:** the deployed, read-only Scout micro-agent plus Agent Suite evidence trail.
 - **Submission emphasis:** a working early experiment on Arc mainnet, technical credibility, product quality and a credible path forward.
 
@@ -47,7 +49,8 @@ CofferHouse Scout reads Morpho-listed lending markets on Arc mainnet, normalizes
 - [ ] Configure secure Arc RPC and confirm bytecode/Interop observation.
 - [ ] Capture health and status proof after configuration.
 - [ ] Record the final three-minute demo.
-- [ ] Create the DoraHacks/official event submission with final team details.
+- [ ] Reconfirm every required field and the closing timezone inside the live DoraHacks form.
+- [ ] Create the DoraHacks/official event submission with final owner-approved team details.
 - [ ] Publish the launch thread from `@TheCofferHouse` after visual assets are captured.
 
 Financial execution, custody, wallet signing and undeployed contract claims remain outside both submissions.

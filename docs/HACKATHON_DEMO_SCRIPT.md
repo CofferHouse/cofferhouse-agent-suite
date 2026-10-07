@@ -12,17 +12,19 @@ Open Scout and point to the current Arc market count, policy profile and ranking
 
 Say: “The same visible policy is applied to every observation. A simulation changes projected market state only; it does not prepare or send a transaction.”
 
-## 0:55–1:25 — Hub coordinates specialized agents
+## 0:55–1:30 — Hub coordinates specialized agents
 
-Open Agent Hub and run the read-only research sequence. Move through Opportunity and Strategy. Point out minimum liquidity, reserve, maximum allocation, diversification and review conditions.
+Open Agent Hub and run the read-only research sequence. Read the six-stage trace exactly as produced. If no market clears, point to the completed Scout, Opportunity and Strategy stages and the honestly skipped DEX, Action and Guardian stages.
 
-Say: “The Hub coordinates agents; it does not collapse them into one black box. Every handoff keeps its own limits and evidence.”
+Say: “The Hub coordinates agents; it does not collapse them into one black box. Today no market clears the active limits, so the system records no allocation and refuses to invent a downstream action. That is a valid agent decision, not a failed demo.”
 
-## 1:25–1:55 — One human gate, then protection
+If a live candidate does clear, use this alternate sentence: “The top candidate is only a bounded handoff. Its target and modeled amount remain subject to one fresh human approval.”
 
-Open Action Center, create an expiring approval and continue to Guardian. Show the approved-intent baseline and the allowed bounded responses. Open Automation and explain allowlists, caps, expiry, pause and revocation.
+## 1:30–1:55 — Human gate and protection boundary
 
-Say: “One meaningful approval records intent. Guardian and Automation cannot broaden it. The current sandbox never installs a permission or executes a transaction.”
+Open Action Center. When there is no eligible position, show that no preview can be created. When there is a candidate, create the read-only preview and explain the expiring approval without implying that approval is a transaction. Open Guardian and Automation to show the baseline requirement, allowlists, caps, expiry, pause and revocation.
+
+Say: “Downstream agents cannot operate without an eligible target and a human baseline. Even with approval, the current sandbox never installs a permission or executes a transaction.”
 
 ## 1:55–2:25 — DEX and crosschain evidence
 
@@ -48,7 +50,8 @@ Say: “CofferHouse Agent Suite autonomously observes, evaluates, compares, reco
 - Scout all-market ranking.
 - Visible simulation result.
 - Agent Hub sequence.
-- Action Center approval and Guardian baseline.
+- Agent Hub no-allocation path or, only when live evidence permits it, the Action Center handoff.
+- Action Center and Guardian boundary states.
 - Automation limits.
 - Interop observation receipt.
 - Valid and intentionally invalid receipt verification.

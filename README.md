@@ -164,6 +164,8 @@ La activación paso a paso para el propietario está en [`ACTIVACION_OPERATIVA_E
 
 See the [hackathon submission brief](docs/HACKATHON_SUBMISSION.md), [demo script](docs/HACKATHON_DEMO_SCRIPT.md), and [submission checklist](docs/HACKATHON_ASSET_CHECKLIST.md) for the complete delivery package.
 
+The [copy-ready submission fields](docs/SUBMISSION_FORM_COPY.md) separate the Tameion micro-agent positioning from the Arc Microgrants positioning. The [October 7 production rehearsal](docs/DEMO_REHEARSAL_2026-10-07.md) records the live six-stage result and the safe no-allocation demo branch.
+
 See the [X launch pack](docs/X_LAUNCH_PACK.md) for ready-to-publish build-in-public posts that describe the product without overstating autonomy.
 
 See [Agent Hub](docs/AGENT_HUB.md) for the multi-agent product sequence and the October 14 delivery boundary.

@@ -16,6 +16,7 @@
 
 - [x] Confirm the live Vercel deployment matches the Holder Center release commit.
 - [x] Confirm the official House opens the Holder Center and the Holder Center opens Agent Suite.
+- [x] Rehearse the production Agent Hub and document the safe no-allocation branch.
 - [ ] Record a 16:9 demo, maximum three minutes.
 - [ ] Capture a 20–30 second silent product loop for social media.
 - [ ] Capture one desktop hero image and one mobile image.
@@ -36,9 +37,10 @@
 ## Two-program delivery
 
 - [ ] Tameion Agents Hackathon: submit by October 10 with Scout positioned as the bounded micro-agent.
-- [ ] Arc Microgrants: submit by October 14 at 23:59 ET with Arc-mainnet deployment, public repo, short Arc-use description and public builder profile.
+- [ ] Arc Microgrants: submit by October 14; reconfirm the form timezone and fields before sending.
 - [ ] Recheck each official form immediately before submission; do not assume identical fields.
 - [ ] Use `ARC_2026_SUBMISSION_PLAN.md` for the track-specific copy.
+- [x] Prepare copy-ready field text in `SUBMISSION_FORM_COPY.md`.
 
 ## Final claim audit
 

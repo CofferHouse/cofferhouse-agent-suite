@@ -2,6 +2,13 @@
 
 Release candidate prepared for complete visual and deployment testing.
 
+## 2026-10-07
+
+- Rehearsed the coordinated Agent Hub against the public production build.
+- Confirmed the safe no-allocation path across all six stages without invented DEX or action evidence.
+- Updated the three-minute demo to remain accurate under changing live-market results.
+- Added copy-ready Tameion and Arc Microgrants submission fields plus a dated rehearsal record.
+
 ## 2026-10-06
 
 - Added an accessible skip link, stable main landmark and destination focus after room changes.
