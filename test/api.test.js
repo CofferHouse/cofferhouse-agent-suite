@@ -32,6 +32,8 @@ test("health endpoint exposes readiness without secrets", async () => {
   assert.equal(response.statusCode, 200);
   assert.equal(response.body.ok, true);
   assert.equal(response.body.mode, "read-only");
+  assert.equal(response.body.ownerActivation.id, "CONNECT_UPSTASH");
+  assert.equal(response.body.ownerActivation.secretsInResponse, false);
   assert.equal("CRON_SECRET" in response.body, false);
   assert.equal(response.headers["Cache-Control"], "no-store");
 });

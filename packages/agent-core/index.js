@@ -7,6 +7,7 @@ export * from "./alert.js";
 export * from "./intelligence.js";
 export * from "./acknowledgment.js";
 export * from "./deployment-readiness.js";
+export * from "./activation-guide.js";
 export * from "./runtime-config.js";
 export * from "./mission-control.js";
 export * from "./runtime-sync.js";

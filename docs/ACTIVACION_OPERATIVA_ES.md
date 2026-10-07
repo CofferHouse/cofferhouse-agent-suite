@@ -10,6 +10,12 @@ Al terminar, Scout podrá ejecutar sin un navegador el ciclo:
 
 La autonomía se limita a investigación, memoria, alertas y evidencia. No habrá wallet del servidor, custodia, firma ni ejecución financiera.
 
+## Cómo trabajaremos con el propietario
+
+No es necesario ejecutar toda esta guía de una vez. El endpoint público `/api/health` incluye `ownerActivation`, que devuelve un solo siguiente paso, su comprobación y el orden correspondiente. Cada vez que el propietario termine un paso, se vuelve a revisar ese endpoint antes de continuar.
+
+Los secretos se escriben directamente en Upstash, Vercel o GitHub. Nunca deben copiarse al chat, una captura, un issue, un commit ni una variable que comience con `VITE_`.
+
 ## Lo que debe crear el propietario
 
 ### 1. Memoria durable en Upstash
@@ -19,6 +25,7 @@ La autonomía se limita a investigación, memoria, alertas y evidencia. No habr�
    - `UPSTASH_REDIS_REST_URL`
    - `UPSTASH_REDIS_REST_TOKEN` estándar
 3. Agregar ambos valores como variables **server-side** en Vercel.
+4. Abrir `https://cofferhouse-scout.vercel.app/api/health` y comprobar que `required` muestre `durable-memory` con `ready: true`. Solamente entonces continuar al paso 2.
 
 El token estándar puede escribir y nunca debe exponerse en el navegador. Scout lo necesita para snapshots, sesiones, historial, Guardian, Interop y deduplicación de alertas.
 
@@ -30,6 +37,8 @@ Generarlos con un administrador de contraseñas o localmente. Deben tener al men
 - `SCOUT_OPERATOR_TOKEN`: autoriza reconocimiento humano e inscripción de Guardian.
 
 Agregar ambos en Vercel. No usar prefijo `VITE_`.
+
+Después del redeploy, comprobar que `ownerActivation.id` cambió de `ADD_CRON_SECRET` a `RUN_FIRST_CYCLE`.
 
 ### 3. RPC de Arc
 

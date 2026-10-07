@@ -1,7 +1,7 @@
 import { durableStoreConfigured, getJson } from "./_redis.js";
 import { geminiConfigured } from "./_gemini.js";
 import { notificationConfigured } from "./_notify.js";
-import { deploymentCapabilities, evaluateDeploymentReadiness } from "../packages/agent-core/index.js";
+import { deploymentCapabilities, evaluateDeploymentReadiness, ownerActivationStep } from "../packages/agent-core/index.js";
 
 const STATUS_KEY = "cofferhouse:scout:agent-status";
 
@@ -14,6 +14,7 @@ export default async function handler(request, response) {
     try { latestStatus = await getJson(STATUS_KEY); } catch { /* Readiness remains safe and reports no healthy run. */ }
   }
   const deployment = evaluateDeploymentReadiness({ capabilities, lastRunAt: latestStatus?.ranAt });
+  const ownerActivation = ownerActivationStep(deployment, capabilities);
   return response.status(200).json({
     ok: true,
     service: "cofferhouse-scout",
@@ -22,6 +23,7 @@ export default async function handler(request, response) {
     readyForUnattendedCycles: deployment.readyForUnattendedCycles,
     capabilities,
     deployment,
+    ownerActivation,
     checkedAt: new Date().toISOString()
   });
 }
