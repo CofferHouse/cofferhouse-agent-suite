@@ -17,6 +17,8 @@ Production holder access must replace the temporary operator demo gate with auth
 - **Embedded wallets:** 1shot demonstrates the product path from passkey-controlled wallet to fiat-funded USDC and scoped permissions. CofferHouse treats this as a UX reference, not a dependency or custody claim.
 - **Institutional RWA:** Centrifuge's Arc deployment introduces ERC-4626 exposures to tokenized Treasuries, AAA CLOs and high-yield corporate credit. A future RWA Opportunity adapter must preserve asset class, issuer, NAV oracle, liquidity and transfer restrictions separately from lending-vault evidence.
 - **Borrow lifecycle:** Borrow Kit provides market discovery, collateral sizing, quote-time health factor, atomic wallet actions and ongoing health bands. Action Center will own quote review; Guardian will own post-origination health monitoring. No write is enabled until wallet, quote freshness and human approval are independently verified.
+- **Stablecoin-native account experience:** Pulsar shows how Arc can support USDC/EURC balances, swaps, transfers and cross-border account flows with USDC-denominated gas and deterministic settlement. This informs a future Holder Center money room; it is not a current CofferHouse transfer or custody capability.
+- **Trading venue expansion:** Extended has announced an Arc settlement migration for the week of 19 October 2026. It is therefore a roadmap candidate for DEX/perpetual-market observation after the deployment is live and independently verified, not a source used by the current release.
 
 ## Borrow Kit — Action Center
 
@@ -51,3 +53,10 @@ Official documentation:
 - https://docs.arc.io/app-kit/earn
 - https://docs.arc.io/app-kit/onramp
 - https://docs.arc.io/app-kit/borrow
+
+Ecosystem references reviewed 8 October 2026:
+
+- https://www.arc.io/blog/let-your-users-borrow-usdc-against-their-crypto-assets-with-borrow-kit
+- https://www.arc.io/blog/how-pulsar-is-building-a-cross-border-money-experience-with-arc
+- https://community.arc.io/home/blogs/extended-is-coming-to-arc-2026-10-08
+- https://community.arc.io/home/blogs/how-earn-kit-helps-arc-apps-connect-usdc-to-morpho-vaults-2026-10-08

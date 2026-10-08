@@ -2,6 +2,13 @@
 
 Release candidate prepared for complete visual and deployment testing.
 
+## 2026-10-08
+
+- Reconciled the product roadmap with Arc's latest Borrow Kit, Earn Kit, Pulsar and Extended publications.
+- Kept Borrow and Earn as bounded, read-only evidence flows in the release candidate.
+- Recorded Pulsar's stablecoin account experience and Extended's announced Arc migration as future integrations, without presenting either as a live CofferHouse capability.
+- Prepared the owner activation sequence to recreate durable Upstash memory and capture an unattended-cycle proof.
+
 ## 2026-10-07
 
 - Rehearsed the coordinated Agent Hub against the public production build.
