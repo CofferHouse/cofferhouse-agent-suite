@@ -15,6 +15,7 @@ test("Opportunity Agent filters and ranks markets with visible user limits", () 
   });
   assert.equal(analysis.summary.total, 3);
   assert.equal(analysis.summary.eligible, 2);
+  assert.equal(analysis.summary.watchlist + analysis.summary.blocked, 1);
   assert.equal(analysis.opportunities[0].eligible, true);
   assert.equal(analysis.opportunities.at(-1).marketName, "cirBTC Growth Market");
   assert.match(analysis.opportunities.at(-1).reason, /hard limit|liquidity|utilization/i);
@@ -33,7 +34,24 @@ test("Opportunity Agent caps research sizing by observed liquidity impact", () =
 test("never treats a zero-liquidity market as a research candidate", () => {
   const analysis = analyzeOpportunities([{ ...demoMarkets[0], liquidityUsd: 0 }], policyProfiles.balanced, { minLiquidityUsd: 0 });
   assert.equal(analysis.summary.eligible, 0);
+  assert.equal(analysis.opportunities[0].classification, "BLOCKED");
   assert.match(analysis.opportunities[0].reason, /No available liquidity/);
+});
+
+test("classifies a liquid but over-utilized market as high-risk watchlist only", () => {
+  const market = {
+    ...demoMarkets[0],
+    liquidityUsd: 184_839,
+    utilizationPct: 99.905,
+    apyPct: 1.917
+  };
+  const analysis = analyzeOpportunities([market], policyProfiles.balanced);
+  assert.equal(analysis.summary.eligible, 0);
+  assert.equal(analysis.summary.watchlist, 1);
+  assert.equal(analysis.summary.blocked, 0);
+  assert.equal(analysis.opportunities[0].classification, "HIGH_RISK_WATCHLIST");
+  assert.equal(analysis.opportunities[0].decision, "WATCH_FOR_IMPROVEMENT");
+  assert.match(analysis.opportunities[0].reason, /watchlist only/i);
 });
 
 test("normalizes unsafe or invalid opportunity preferences", () => {
