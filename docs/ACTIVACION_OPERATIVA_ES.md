@@ -84,7 +84,8 @@ Cada ejecución toma un bloqueo durable atómico con vencimiento automático. Si
 
 ## Opcionales posteriores
 
-- `SCOUT_ALERT_WEBHOOK_URL`: alertas materiales deduplicadas.
+- `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`: canal nativo recomendado para alertas materiales deduplicadas.
+- `SCOUT_ALERT_WEBHOOK_URL`: canal webhook genérico alternativo.
 - `UNISWAP_API_KEY`: cotizaciones oficiales read-only.
 - `GEMINI_API_KEY`: explicación acotada; no cambia decisiones.
 - `SCOUT_RECEIPT_REGISTRY_ADDRESS`: solamente después de desplegar y revisar el contrato.
