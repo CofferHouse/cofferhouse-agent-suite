@@ -22,5 +22,14 @@ test("capabilities report only credible production configuration", () => {
   assert.equal(capabilities.protectedScheduler, true);
   assert.equal(capabilities.arcRpcVerification, true);
   assert.equal(capabilities.humanAcknowledgment, true);
+  assert.equal(capabilities.outboundAlerts, false);
   assert.equal(capabilities.onchainAnchor, false);
+});
+
+test("Telegram credentials activate outbound alerts without a generic webhook", () => {
+  const capabilities = deploymentCapabilities({
+    TELEGRAM_BOT_TOKEN: "123456789:real-telegram-token-value",
+    TELEGRAM_CHAT_ID: "-1001234567890"
+  });
+  assert.equal(capabilities.outboundAlerts, true);
 });
