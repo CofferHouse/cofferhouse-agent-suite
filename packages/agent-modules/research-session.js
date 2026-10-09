@@ -51,7 +51,7 @@ export function runResearchSession({
 
   const stages = [
     { id: "scout", agent: "Scout", status: "COMPLETE", result: `${scout.counts.PASS} pass · ${scout.counts.REVIEW} review · ${scout.counts.REJECT} reject` },
-    { id: "opportunity", agent: "Opportunity", status: "COMPLETE", result: `${opportunities.summary.eligible} of ${opportunities.summary.total} eligible for research` },
+    { id: "opportunity", agent: "Opportunity", status: "COMPLETE", result: `${opportunities.summary.eligible} eligible · ${opportunities.summary.watchlist} watchlist · ${opportunities.summary.blocked} blocked` },
     { id: "strategy", agent: "Strategy", status: "COMPLETE", result: strategy.status === "PROPOSAL_READY" ? `${strategy.summary.markets} modeled position${strategy.summary.markets === 1 ? "" : "s"}` : "No eligible lending allocation" },
     { id: "dex", agent: "DEX", status: hasDexEvidence ? "COMPLETE" : "SKIPPED", result: hasDexEvidence ? `${dexOpportunities.summary.eligible} of ${dexOpportunities.summary.total} pools eligible` : "No observed pools; no DEX result invented" },
     { id: "action", agent: "Action Center", status: handoffs.action.candidate ? "READY_FOR_HUMAN" : "SKIPPED", result: handoffs.action.candidate ? `${handoffs.action.candidate.targetName} · ${handoffs.action.candidate.amountUsd} USD modeled` : "No eligible strategy position to preview" },
@@ -68,6 +68,7 @@ export function runResearchSession({
     summary: {
       marketsObserved: scout.total,
       marketsEligible: opportunities.summary.eligible,
+      marketsWatchlist: opportunities.summary.watchlist,
       lendingPositions: strategy.summary.markets,
       dexPoolsObserved: hasDexEvidence ? dexOpportunities.summary.total : 0,
       dexPoolsEligible: hasDexEvidence ? dexOpportunities.summary.eligible : 0,
