@@ -28,8 +28,7 @@ test("capabilities report only credible production configuration", () => {
 
 test("Telegram credentials activate outbound alerts without a generic webhook", () => {
   const capabilities = deploymentCapabilities({
-    TELEGRAM_BOT_TOKEN: "123456789:real-telegram-token-value",
-    TELEGRAM_CHAT_ID: "-1001234567890"
+    TELEGRAM_BOT_TOKEN: "123456789:real-telegram-token-value"
   });
   assert.equal(capabilities.outboundAlerts, true);
 });
