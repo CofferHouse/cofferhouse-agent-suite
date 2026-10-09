@@ -420,6 +420,7 @@ function render() {
         <div class="opportunity-summary">
           <div><span>MARKETS ANALYZED</span><b>${opportunityAnalysis.summary.total}</b></div>
           <div class="eligible"><span>ELIGIBLE FOR RESEARCH</span><b>${opportunityAnalysis.summary.eligible}</b></div>
+          <div class="watchlist"><span>HIGH-RISK WATCHLIST</span><b>${opportunityAnalysis.summary.watchlist}</b></div>
           <div class="blocked"><span>BLOCKED BY LIMITS</span><b>${opportunityAnalysis.summary.blocked}</b></div>
           <div><span>DATA MODE</span><b>${h(opportunityAnalysis.dataMode.toUpperCase())}</b></div>
         </div>
@@ -434,15 +435,15 @@ function render() {
         </form>
         <div class="opportunity-method"><b>RESEARCH SCORE, NOT SAFETY PROBABILITY</b><span>65% Scout policy score · 15% liquidity depth · 10% utilization buffer · 10% observed supply APY relevance.</span></div>
         <div class="opportunity-list">
-          ${opportunityAnalysis.opportunities.map((item, index) => `<article class="opportunity-card ${item.eligible ? "eligible" : "blocked"}">
-            <div class="opportunity-rank"><span>${String(index + 1).padStart(2, "0")}</span><b>${item.eligible ? "RESEARCH" : "BLOCKED"}</b></div>
+          ${opportunityAnalysis.opportunities.map((item, index) => `<article class="opportunity-card ${item.eligible ? "eligible" : item.watchlist ? "watchlist" : "blocked"}">
+            <div class="opportunity-rank"><span>${String(index + 1).padStart(2, "0")}</span><b>${item.eligible ? "RESEARCH" : item.watchlist ? "WATCH" : "BLOCKED"}</b></div>
             <div class="opportunity-copy"><h3>${h(item.marketName)}</h3><small>ID ${h(shortId(item.marketId))}</small><p>${h(item.reason)}</p></div>
             <div class="opportunity-numbers"><div><span>RESEARCH SCORE</span><b>${item.researchScore}</b></div><div><span>SUPPLY APY</span><b>${formatPct(item.supplyApyPct, 3)}</b></div><div><span>MAX RESEARCH SIZE</span><b>${formatMoney(item.maxResearchAmountUsd)}</b></div></div>
             <div class="opportunity-evidence"><span>SCOUT ${h(item.scoutStatus)} · ${item.scoutScore}/100</span><small>${h(item.blockers[0] ?? item.warnings[0] ?? "No active blocker detected.")}</small></div>
             <button class="opportunity-open-market" type="button" data-id="${h(item.selectedMarketId)}">INSPECT MARKET →</button>
           </article>`).join("")}
         </div>
-        <footer><span>${opportunityAnalysis.summary.eligible} candidate${opportunityAnalysis.summary.eligible === 1 ? "" : "s"} clear your research limits</span><span>Human review required · No recommendation · No execution</span></footer>
+        <footer><span>${opportunityAnalysis.summary.eligible} eligible · ${opportunityAnalysis.summary.watchlist} high-risk watchlist · ${opportunityAnalysis.summary.blocked} blocked</span><span>Human review required · No recommendation · No execution</span></footer>
       </section>
 
       <section class="strategy-agent suite-view ${activeSuiteView === "strategy" ? "is-active" : ""}" data-suite-view="strategy" id="strategy-agent" aria-labelledby="strategy-title">
