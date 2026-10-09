@@ -31,13 +31,15 @@ export function createTelegramLinkChallenge({ walletAddress, nonce, expiresAt, o
   return Object.freeze({ schema: "cofferhouse.telegram.challenge.v1", walletAddress: address, nonce, expiresAt: new Date(expiresAt).toISOString(), message });
 }
 
-export function createPendingTelegramLink({ walletAddress, code, preferences, expiresAt }) {
+export function createPendingTelegramLink({ walletAddress, code, statusToken, preferences, expiresAt }) {
   if (!isEvmAddress(walletAddress)) throw new Error("A valid EVM wallet address is required.");
   if (!/^[A-Z0-9]{8}$/.test(String(code ?? ""))) throw new Error("A valid Telegram link code is required.");
+  if (!/^[a-f0-9]{32}$/i.test(String(statusToken ?? ""))) throw new Error("A valid private status token is required.");
   return Object.freeze({
     schema: "cofferhouse.telegram.pending-link.v1",
     walletAddress: walletAddress.toLowerCase(),
     code,
+    statusToken,
     preferences: normalizeAlertPreferences(preferences),
     expiresAt: new Date(expiresAt).toISOString()
   });
