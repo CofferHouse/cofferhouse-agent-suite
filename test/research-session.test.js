@@ -15,6 +15,7 @@ test("Agent Hub coordinates the lending research chain without execution authori
   assert.equal(session.stages.at(-1).status, "READY_AFTER_APPROVAL");
   assert.deepEqual(session.execution, { prepared: false, signed: false, submitted: false });
   assert.equal(session.summary.marketsObserved, demoMarkets.length);
+  assert.equal(Number.isInteger(session.summary.marketsWatchlist), true);
 });
 
 test("Agent Hub seals concrete Action and Guardian handoffs without execution authority", () => {
