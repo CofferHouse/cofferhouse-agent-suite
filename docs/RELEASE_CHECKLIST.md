@@ -17,7 +17,7 @@
 - [ ] Upload the near-final source to the default GitHub branch.
 - [ ] Confirm Vercel deploys that exact commit.
 - [ ] Configure `CRON_SECRET`, Upstash credentials, `SCOUT_OPERATOR_TOKEN`, and `ARC_RPC_URL`.
-- [ ] Optionally configure the alert webhook and Gemini.
+- [ ] Optionally configure Telegram (`TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`) or the generic alert webhook, and Gemini.
 - [ ] Add matching `SCOUT_AGENT_URL` and `CRON_SECRET` GitHub Actions secrets.
 - [ ] Run one manual GitHub Actions cycle.
 - [ ] Confirm `/api/health` reports unattended readiness.
