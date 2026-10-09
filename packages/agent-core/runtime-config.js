@@ -20,7 +20,7 @@ export function deploymentCapabilities(environment = {}) {
     durableMemory: configuredHttpsEndpoint(environment.UPSTASH_REDIS_REST_URL) && configuredSecret(environment.UPSTASH_REDIS_REST_TOKEN),
     protectedScheduler: configuredSecret(environment.CRON_SECRET),
     arcRpcVerification: configuredHttpsEndpoint(environment.ARC_RPC_URL),
-    outboundAlerts: (configuredSecret(environment.TELEGRAM_BOT_TOKEN) && configuredSecret(environment.TELEGRAM_CHAT_ID, 1))
+    outboundAlerts: configuredSecret(environment.TELEGRAM_BOT_TOKEN)
       || configuredHttpsEndpoint(environment.SCOUT_ALERT_WEBHOOK_URL),
     boundedIntelligence: configuredSecret(environment.GEMINI_API_KEY, 8),
     humanAcknowledgment: configuredSecret(environment.SCOUT_OPERATOR_TOKEN),
