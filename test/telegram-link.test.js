@@ -20,7 +20,7 @@ test("normalizes user alert categories without enabling unknown fields", () => {
 });
 
 test("converts one temporary code into one wallet-scoped Telegram subscription", () => {
-  const pendingLink = createPendingTelegramLink({ walletAddress, code: "A1B2C3D4", preferences: { apyChange: true }, expiresAt: "2026-10-09T01:00:00.000Z" });
+  const pendingLink = createPendingTelegramLink({ walletAddress, code: "A1B2C3D4", statusToken: "a".repeat(32), preferences: { apyChange: true }, expiresAt: "2026-10-09T01:00:00.000Z" });
   const subscription = createTelegramSubscription({ pendingLink, chatId: "-100123456789", telegramUserId: "42", linkedAt: new Date("2026-10-09T00:50:00.000Z") });
   assert.equal(subscription.walletAddress, walletAddress);
   assert.equal(subscription.chatId, "-100123456789");
@@ -32,7 +32,7 @@ test("converts one temporary code into one wallet-scoped Telegram subscription",
 
 test("rejects malformed wallet, code and Telegram identifiers", () => {
   assert.throws(() => createTelegramLinkChallenge({ walletAddress: "not-a-wallet", nonce: "12345678-1234-1234", expiresAt: new Date() }), /wallet/i);
-  assert.throws(() => createPendingTelegramLink({ walletAddress, code: "short", expiresAt: new Date() }), /code/i);
-  const pendingLink = createPendingTelegramLink({ walletAddress, code: "A1B2C3D4", expiresAt: new Date() });
+  assert.throws(() => createPendingTelegramLink({ walletAddress, code: "short", statusToken: "a".repeat(32), expiresAt: new Date() }), /code/i);
+  const pendingLink = createPendingTelegramLink({ walletAddress, code: "A1B2C3D4", statusToken: "a".repeat(32), expiresAt: new Date() });
   assert.throws(() => createTelegramSubscription({ pendingLink, chatId: "chat-name" }), /chat/i);
 });
