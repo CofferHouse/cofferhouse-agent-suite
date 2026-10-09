@@ -33,6 +33,7 @@ export default async function handler(request, response) {
     const subscription = createTelegramSubscription({ pendingLink, chatId: message.chat.id, telegramUserId: message.from?.id });
     await setJson(walletKey(subscription.walletAddress), subscription);
     await setJson(chatKey(subscription.chatId), { walletAddress: subscription.walletAddress, linkedAt: subscription.linkedAt });
+    await setJson(`cofferhouse:alerts:telegram:status:${pendingLink.statusToken}`, { status: "CONNECTED", linkedAt: subscription.linkedAt });
     await deleteJson(pendingKey(code));
     await sendTelegramMessage({ chatId: subscription.chatId, text: "CofferHouse alerts connected. You will receive only the categories enabled in Holder Center. No transaction or custody permission was granted." });
     return response.status(200).json({ ok: true, linked: true });
