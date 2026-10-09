@@ -84,7 +84,8 @@ Cada ejecución toma un bloqueo durable atómico con vencimiento automático. Si
 
 ## Opcionales posteriores
 
-- `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`: canal nativo recomendado para alertas materiales deduplicadas.
+- `TELEGRAM_BOT_TOKEN`: credencial del único bot oficial de CofferHouse; no es un destinatario personal.
+- `TELEGRAM_BOT_USERNAME` + `TELEGRAM_WEBHOOK_SECRET`: vinculación temporal de cada holder con su propio chat, almacenado en Upstash.
 - `SCOUT_ALERT_WEBHOOK_URL`: canal webhook genérico alternativo.
 - `UNISWAP_API_KEY`: cotizaciones oficiales read-only.
 - `GEMINI_API_KEY`: explicación acotada; no cambia decisiones.
