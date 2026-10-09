@@ -17,8 +17,9 @@ Import this repository into Vercel and keep the default build command (`npm run 
 | `SCOUT_OPERATOR_TOKEN` | Yes | Authorizes human incident acknowledgment and durable Guardian watch registration/removal. |
 | `ARC_RPC_URL` | Recommended | Confirms market bytecode and powers the bounded, read-only CCTP V2 Interop Observer. |
 | `SCOUT_ALERT_WEBHOOK_URL` | Optional | Receives deduplicated material alerts. |
-| `TELEGRAM_BOT_TOKEN` | Optional | Telegram bot token used for native material alerts. Configure together with `TELEGRAM_CHAT_ID`. |
-| `TELEGRAM_CHAT_ID` | Optional | Destination chat, group or channel ID for Telegram alerts. |
+| `TELEGRAM_BOT_TOKEN` | Optional | Token for the single official CofferHouse bot. User chat IDs are linked individually and stored in Upstash. |
+| `TELEGRAM_BOT_USERNAME` | Optional | Public bot username used to build each holder's temporary connection link. |
+| `TELEGRAM_WEBHOOK_SECRET` | Optional | Secret Telegram presents to the protected linking webhook. |
 | `GEMINI_API_KEY` | Optional | Produces bounded incident briefings; deterministic fallback remains active without it. |
 | `GEMINI_MODEL` | Optional | Overrides the documented default model. |
 | `UNISWAP_API_KEY` | Recommended for DEX research | Enables protected official read-only quotes for Arc chain ID `5042`. The key remains server-side. |
@@ -77,7 +78,7 @@ The public health response and Scout deployment panel expose only boolean capabi
 
 ## 5. Optional alert and intelligence services
 
-For Telegram, configure both `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`; native Telegram delivery takes precedence. `SCOUT_ALERT_WEBHOOK_URL` remains available as a generic fallback. Configure `GEMINI_API_KEY` only if a structured operator briefing is desired. None of these services can alter the deterministic policy result or execute a transaction.
+Telegram uses one official CofferHouse bot, but no global recipient. Each holder proves wallet control, receives a short-lived link code and connects an individual chat stored in Upstash. `SCOUT_ALERT_WEBHOOK_URL` remains available for operator infrastructure alerts. Configure `GEMINI_API_KEY` only if a structured operator briefing is desired. None of these services can alter the deterministic policy result or execute a transaction.
 
 Configure `UNISWAP_API_KEY` to enable the `GET UNISWAP QUOTE` controls in DEX Pool Scanner. Scout sends an exact-input Arc USDC quote request with the selected slippage tolerance. It does not request approval, create a swap, sign or submit anything. Without the key, pool discovery and deterministic DEX screening continue to work and the quote control reports that official quotes are not configured.
 
