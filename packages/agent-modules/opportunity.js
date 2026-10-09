@@ -56,6 +56,10 @@ function researchScore(market, report, preferences) {
 
 export function analyzeOpportunities(markets, activePolicy, rawPreferences = {}, evaluator = evaluateMarket) {
   const preferences = normalizeOpportunityPreferences(rawPreferences);
+  const watchlistFloorUsd = Math.min(
+    preferences.minLiquidityUsd,
+    Math.max(preferences.capitalUsd, preferences.minLiquidityUsd * 0.1)
+  );
   const opportunities = markets.map((market) => {
     const report = evaluator(market, activePolicy);
     const blockers = [];
@@ -72,6 +76,15 @@ export function analyzeOpportunities(markets, activePolicy, rawPreferences = {},
     const impactBound = Number.isFinite(market.liquidityUsd) ? market.liquidityUsd * (preferences.maxMarketImpactPct / 100) : 0;
     const maxResearchAmountUsd = Math.max(0, Math.min(preferences.capitalUsd, impactBound));
     const eligible = blockers.length === 0;
+    const watchlist = !eligible
+      && Number.isFinite(market.liquidityUsd)
+      && market.liquidityUsd > 0
+      && market.liquidityUsd >= watchlistFloorUsd
+      && Number.isFinite(market.utilizationPct)
+      && market.utilizationPct >= 0
+      && market.utilizationPct <= 100
+      && Number.isFinite(market.apyPct);
+    const classification = eligible ? "ELIGIBLE" : watchlist ? "HIGH_RISK_WATCHLIST" : "BLOCKED";
     const score = researchScore(market, report, preferences);
     const warnings = report.warnings.map((warning) => warning.detail);
     if (maxResearchAmountUsd < preferences.capitalUsd && maxResearchAmountUsd > 0) {
@@ -83,7 +96,9 @@ export function analyzeOpportunities(markets, activePolicy, rawPreferences = {},
       marketName: market.name,
       selectedMarketId: market.id,
       eligible,
-      decision: eligible ? "ELIGIBLE_FOR_RESEARCH" : "BLOCKED_BY_LIMITS",
+      watchlist,
+      classification,
+      decision: eligible ? "ELIGIBLE_FOR_RESEARCH" : watchlist ? "WATCH_FOR_IMPROVEMENT" : "BLOCKED_BY_LIMITS",
       researchScore: score,
       scoutStatus: report.status,
       scoutScore: report.score,
@@ -93,12 +108,17 @@ export function analyzeOpportunities(markets, activePolicy, rawPreferences = {},
       maxResearchAmountUsd,
       blockers,
       warnings,
-      reason: eligible ? "Clears your opportunity limits; human research is still required." : blockers[0],
+      reason: eligible
+        ? "Clears your opportunity limits; human research is still required."
+        : watchlist
+          ? `High-risk watchlist only: ${blockers[0]}`
+          : blockers[0],
       observedAt: market.observedAt,
       dataMode: market.dataMode
     };
   }).sort((a, b) =>
     Number(b.eligible) - Number(a.eligible)
+    || Number(b.watchlist) - Number(a.watchlist)
     || b.researchScore - a.researchScore
     || (b.supplyApyPct ?? -1) - (a.supplyApyPct ?? -1)
     || (b.liquidityUsd ?? -1) - (a.liquidityUsd ?? -1)
@@ -114,7 +134,8 @@ export function analyzeOpportunities(markets, activePolicy, rawPreferences = {},
     summary: {
       total: opportunities.length,
       eligible: opportunities.filter((item) => item.eligible).length,
-      blocked: opportunities.filter((item) => !item.eligible).length
+      watchlist: opportunities.filter((item) => item.watchlist).length,
+      blocked: opportunities.filter((item) => item.classification === "BLOCKED").length
     },
     opportunities
   };
