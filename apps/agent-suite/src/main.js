@@ -4,7 +4,7 @@ import { evaluateMarket, loadAlertLimits, policyProfiles, saveAlertLimits } from
 import { addResearchSessionReceipt, clearOperatorWorkspace, clearResearchSessionHistory, compareResearchSessions, createActionReceipt, createAutomationReceipt, createBorrowPreviewReceipt, createDexOpportunityReceipt, createDexReceipt, createDexStrategyReceipt, createEarnOpportunityReceipt, createEarnStrategyReceipt, createGuardianReceipt, createInteropReceipt, createOpportunityReceipt, createResearchSessionReceipt, createScoutReceipt, createSimulationReceipt, createStrategyReceipt, downloadScoutReceipt, loadOperatorWorkspace, loadResearchSessionHistory, researchSessionFromReceipt, saveOperatorWorkspace, saveResearchSessionHistory, verifyReceiptDocument } from "../../../packages/evidence/index.js";
 import { addMonitorObservation, clearMonitorHistory, escapeHtml as h, loadMonitorHistory, safeExternalUrl, saveMonitorHistory } from "../../../packages/shared/index.js";
 import { SERVER_STATUS_REFRESH_MS, advanceAgentState, agentCatalog, agentDecision, buildMissionControl, compareMarketSnapshots, createAgentRuntimeState, runtimeConnectionLabel, scanMarkets, shouldRefreshRuntimeStatus } from "../../../packages/agent-core/index.js";
-import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeEarnOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildEarnStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultEarnOpportunityPreferences, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcBorrowMarkets, fetchArcEarnVaults, fetchArcPoolsForToken, fetchOnrampReadiness, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadEarnOpportunityPreferences, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestBorrowPreview, requestOnrampSession, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveEarnOpportunityPreferences, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
+import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeEarnOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildEarnStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultAlertPreferences, defaultEarnOpportunityPreferences, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcBorrowMarkets, fetchArcEarnVaults, fetchArcPoolsForToken, fetchOnrampReadiness, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadEarnOpportunityPreferences, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestBorrowPreview, requestOnrampSession, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveEarnOpportunityPreferences, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
 import { productLinks } from "../../../packages/product-config/index.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -58,6 +58,7 @@ let activeSuiteView = "holder";
 let holderPreferences = loadHolderPreferences(window.localStorage);
 let holderIdentity = disconnectedHolderIdentity(Boolean(window.ethereum));
 let holderIdentityBusy = false;
+let telegramAlertState = { mode: "checking", message: "Checking the official CofferHouse alert channel…", readiness: null, preferences: { ...defaultAlertPreferences }, telegramUrl: null, code: null, statusToken: null, expiresAt: null };
 const demoHolderLevel = "member";
 let researchSessionHistory = loadResearchSessionHistory(window.localStorage);
 let researchSession = researchSessionHistory[0] ? researchSessionFromReceipt(researchSessionHistory[0]) : null;
@@ -223,6 +224,22 @@ function render() {
           <div class="holder-connection ${holderIdentity.isArc ? "connected" : ""}"><span>WALLET STATUS</span><b>${h(holderIdentity.status.replaceAll("_", " "))}</b><small>${h(holderIdentity.message)}</small>${holderIdentity.address ? `<code title="${h(holderIdentity.address)}">${h(shortId(holderIdentity.address))} · ${holderIdentity.isArc ? "ARC MAINNET" : `CHAIN ${holderIdentity.chainId ?? "?"}`}</code>` : ""}<button class="holder-connect-wallet" type="button" ${holderIdentityBusy || !window.ethereum ? "disabled" : ""}>${holderIdentityBusy ? "CONNECTING…" : holderIdentity.address ? "REFRESH READ-ONLY IDENTITY" : window.ethereum ? "CONNECT READ-ONLY WALLET" : "INSTALL A BROWSER WALLET"}</button></div>
         </header>
         <div class="holder-demo-note"><b>REPRESENTATIVE PREVIEW</b><span>This screen demonstrates the holder experience. It does not claim NFT ownership, token balances, rewards or financial execution.</span></div>
+        <section class="holder-alert-center ${h(telegramAlertState.mode)}" aria-labelledby="holder-alert-title">
+          <div class="holder-alert-copy"><span>PERSONAL ALERT CHANNEL · TELEGRAM</span><h2 id="holder-alert-title">Your markets. Your preferences. Your alerts.</h2><p>Link one Telegram chat to the connected wallet and choose what deserves your attention. The signature only proves wallet control; it cannot move funds or approve tokens.</p><div class="holder-alert-status"><b>${telegramAlertState.mode === "connected" ? "CONNECTED ✓" : telegramAlertState.readiness?.configured ? telegramAlertState.mode.toUpperCase() : telegramAlertState.mode === "checking" ? "CHECKING" : "BOT ACTIVATION PENDING"}</b><small>${h(telegramAlertState.message)}</small></div></div>
+          <form class="holder-alert-form">
+            <fieldset ${!telegramAlertState.readiness?.configured || telegramAlertState.mode === "signing" || telegramAlertState.mode === "connected" ? "disabled" : ""}><legend>ALERT CATEGORIES</legend>
+              <label><input type="checkbox" name="opportunityEligible" ${telegramAlertState.preferences.opportunityEligible ? "checked" : ""}> Market becomes eligible</label>
+              <label><input type="checkbox" name="opportunityWatchlist" ${telegramAlertState.preferences.opportunityWatchlist ? "checked" : ""}> High-risk watchlist changes</label>
+              <label><input type="checkbox" name="liquidityDeterioration" ${telegramAlertState.preferences.liquidityDeterioration ? "checked" : ""}> Liquidity deterioration</label>
+              <label><input type="checkbox" name="utilizationRisk" ${telegramAlertState.preferences.utilizationRisk ? "checked" : ""}> Utilization risk</label>
+              <label><input type="checkbox" name="apyChange" ${telegramAlertState.preferences.apyChange ? "checked" : ""}> Material APY changes</label>
+              <label><input type="checkbox" name="guardianAttention" ${telegramAlertState.preferences.guardianAttention ? "checked" : ""}> Guardian requires attention</label>
+            </fieldset>
+            <button type="submit" ${!telegramAlertState.readiness?.configured || !holderIdentity.isArc || telegramAlertState.mode === "signing" || telegramAlertState.mode === "connected" ? "disabled" : ""}>${telegramAlertState.mode === "signing" ? "WAITING FOR SIGNATURE…" : telegramAlertState.mode === "connected" ? "TELEGRAM CONNECTED" : !telegramAlertState.readiness?.configured ? "AVAILABLE AFTER BOT ACTIVATION" : !holderIdentity.isArc ? "CONNECT ARC WALLET FIRST" : "CONNECT TELEGRAM"}</button>
+            ${telegramAlertState.telegramUrl ? `<div class="holder-alert-link"><b>CONNECTION CODE · ${h(telegramAlertState.code)}</b><small>Expires ${h(new Date(telegramAlertState.expiresAt).toLocaleTimeString())}</small><a href="${h(safeExternalUrl(telegramAlertState.telegramUrl))}" target="_blank" rel="noreferrer">OPEN COFFERHOUSE BOT ↗</a><button class="holder-alert-check" type="button">CHECK CONNECTION</button></div>` : ""}
+          </form>
+          <footer><span>ONE WALLET · ONE INDIVIDUAL SUBSCRIPTION</span><span>NO SEED PHRASE · NO TRANSACTION · NO CUSTODY</span></footer>
+        </section>
         <section class="onramp-center ${h(onrampState.mode)}" aria-labelledby="onramp-title">
           <div class="onramp-copy"><span>OFFICIAL ARC APP KIT · USER-CONTROLLED FUNDING</span><h2 id="onramp-title">Fund the connected Arc wallet with USDC.</h2><p>${h(onrampKit.capability)} CofferHouse creates only a short-lived hosted session; Circle's widget handles eligibility, payment and settlement.</p><a href="${h(onrampKit.docs)}" target="_blank" rel="noreferrer">OFFICIAL DOCS ↗</a></div>
           <div class="onramp-gates"><b>${onrampState.mode === "checking" ? "CHECKING DEPLOYMENT" : onrampState.readiness?.configured ? "OPERATOR-GATED DEMO READY" : "SETUP REQUIRED"}</b><span>${h(onrampState.message)}</span><ul><li class="${onrampState.readiness?.circleConfigured ? "ready" : "missing"}">Circle server key</li><li class="${onrampState.readiness?.operatorGateConfigured ? "ready" : "missing"}">Protected session gate</li><li class="${holderIdentity.isArc ? "ready" : "missing"}">Connected Arc destination</li><li class="${onrampState.readiness?.referrerConfigured ? "ready" : "review"}">Approved referrer domain</li></ul></div>
@@ -751,6 +768,8 @@ function render() {
     holderPreferences = saveHolderPreferences(window.localStorage, { rewardMode: new FormData(event.currentTarget).get("rewardMode") });
     event.currentTarget.querySelector("output").textContent = "Preference saved in this browser ✓";
   });
+  document.querySelector(".holder-alert-form")?.addEventListener("submit", connectTelegramAlerts);
+  document.querySelector(".holder-alert-check")?.addEventListener("click", checkTelegramConnection);
   document.querySelector(".onramp-session-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const values = new FormData(event.currentTarget);
@@ -1250,6 +1269,60 @@ async function loadOnrampReadiness() {
   render();
 }
 
+async function loadTelegramAlertReadiness() {
+  try {
+    const response = await fetch("/api/alerts/telegram/challenge", { headers: { Accept: "application/json" } });
+    const readiness = await response.json();
+    if (!response.ok) throw new Error(readiness.error ?? `Telegram readiness failed (${response.status}).`);
+    telegramAlertState = {
+      ...telegramAlertState,
+      mode: readiness.configured ? "ready" : "setup",
+      message: readiness.configured ? "Official alert channel is ready for individual holder connections." : "The interface is ready. The official CofferHouse bot will be activated later by the project owner.",
+      readiness
+    };
+  } catch (error) {
+    telegramAlertState = { ...telegramAlertState, mode: "error", message: error.message ?? "Telegram readiness is unavailable.", readiness: null };
+  }
+  render();
+}
+
+async function connectTelegramAlerts(event) {
+  event.preventDefault();
+  if (!holderIdentity.isArc || !holderIdentity.address || !telegramAlertState.readiness?.configured) return;
+  const values = new FormData(event.currentTarget);
+  const preferences = Object.fromEntries(Object.keys(defaultAlertPreferences).map((key) => [key, values.has(key)]));
+  telegramAlertState = { ...telegramAlertState, mode: "signing", message: "Review the alerts-only message in your wallet. No transaction will be requested.", preferences, telegramUrl: null, code: null, statusToken: null, expiresAt: null };
+  render();
+  try {
+    const challengeResponse = await fetch("/api/alerts/telegram/challenge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ walletAddress: holderIdentity.address }) });
+    const challengePayload = await challengeResponse.json();
+    if (!challengeResponse.ok) throw new Error(challengePayload.error ?? "Could not prepare the Telegram connection challenge.");
+    const signature = await window.ethereum.request({ method: "personal_sign", params: [challengePayload.challenge.message, holderIdentity.address] });
+    const linkResponse = await fetch("/api/alerts/telegram/link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ walletAddress: holderIdentity.address, signature, preferences }) });
+    const linkPayload = await linkResponse.json();
+    if (!linkResponse.ok) throw new Error(linkPayload.error ?? "Could not create the Telegram connection link.");
+    telegramAlertState = { ...telegramAlertState, mode: "pending", message: "Open the official bot and confirm the temporary code, then check the connection here.", telegramUrl: linkPayload.telegramUrl, code: linkPayload.code, statusToken: linkPayload.statusToken, expiresAt: linkPayload.expiresAt };
+  } catch (error) {
+    telegramAlertState = { ...telegramAlertState, mode: "error", message: error?.message ?? "Telegram connection was cancelled or failed.", telegramUrl: null, code: null, statusToken: null, expiresAt: null };
+  }
+  render();
+}
+
+async function checkTelegramConnection() {
+  if (!telegramAlertState.statusToken) return;
+  try {
+    const response = await fetch(`/api/alerts/telegram/status?token=${encodeURIComponent(telegramAlertState.statusToken)}`, { headers: { Accept: "application/json" } });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error ?? "Connection status is unavailable.");
+    telegramAlertState = payload.status === "CONNECTED"
+      ? { ...telegramAlertState, mode: "connected", message: "This wallet is connected to its individual Telegram alert channel.", telegramUrl: null, code: null, expiresAt: null }
+      : { ...telegramAlertState, mode: payload.status === "EXPIRED" ? "ready" : "pending", message: payload.status === "EXPIRED" ? "The temporary code expired. Start a new connection when ready." : "The bot has not confirmed the code yet. Open Telegram and finish the connection." };
+  } catch (error) {
+    telegramAlertState = { ...telegramAlertState, mode: "error", message: error.message ?? "Connection status is unavailable." };
+  }
+  render();
+}
+
 async function loadBorrowKitMarkets() {
   borrowKitState = { mode: "loading", message: "Discovering official cirBTC/USDC markets…", data: null, preview: null };
   render();
@@ -1300,6 +1373,7 @@ render();
 refreshMarkets();
 loadEarnKitVaults();
 loadOnrampReadiness();
+loadTelegramAlertReadiness();
 loadBorrowKitMarkets();
 loadServerRuntimeStatus();
 scheduleServerRuntimeRefresh();
