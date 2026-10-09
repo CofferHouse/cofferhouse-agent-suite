@@ -9,9 +9,9 @@ const alert = {
   fingerprint: "alert-123"
 };
 
-test("detects Telegram only when both bot token and chat id exist", () => {
-  assert.equal(telegramConfigured({ TELEGRAM_BOT_TOKEN: "token", TELEGRAM_CHAT_ID: "123" }), true);
-  assert.equal(telegramConfigured({ TELEGRAM_BOT_TOKEN: "token" }), false);
+test("detects the project Telegram bot independently from user recipients", () => {
+  assert.equal(telegramConfigured({ TELEGRAM_BOT_TOKEN: "token" }), true);
+  assert.equal(telegramConfigured({}), false);
   assert.equal(notificationConfigured({}), false);
 });
 
@@ -22,9 +22,8 @@ test("delivers a native Telegram alert and identifies the channel", async () => 
     return { ok: true };
   };
   const result = await deliverAlert(alert, {
-    TELEGRAM_BOT_TOKEN: "123:telegram-token",
-    TELEGRAM_CHAT_ID: "-100987654321"
-  }, fetcher);
+    TELEGRAM_BOT_TOKEN: "123:telegram-token"
+  }, fetcher, { chatId: "-100987654321" });
   assert.equal(result.delivered, true);
   assert.equal(result.channel, "telegram");
   assert.match(request.url, /api\.telegram\.org\/bot123:telegram-token\/sendMessage$/);
