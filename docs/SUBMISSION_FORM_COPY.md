@@ -27,11 +27,13 @@ https://x.com/TheCofferHouse
 
 ## Tameion Agents Hackathon
 
+**Fit gate:** This copy describes the current research-only product, not a qualifying USDC payment workflow. The current official event brief calls for genuine business usage, USDC payments on Arc and Circle Agent Stack. Do not submit this positioning as proof of payments or execution. Reassess after the Microgrants submission.
+
 **One-line pitch**  
 CofferHouse Scout is a bounded Arc micro-agent that continuously observes mainnet markets, applies visible policy, remembers material changes and escalates only when human attention is required.
 
 **What we built**  
-CofferHouse Scout runs an explicit observe, verify, evaluate, compare, decide and record loop over Arc market evidence. It normalizes Morpho-listed markets, applies versioned deterministic policy, explains the first condition requiring attention and seals tamper-evident receipts. A protected scheduler and durable-memory adapter allow the same bounded loop to run without a browser once deployment credentials are enabled. Agent Hub shows how Scout hands evidence to Opportunity, Strategy, Action Center and Guardian without gaining custody, signing or transaction authority.
+CofferHouse Scout runs an explicit observe, verify, evaluate, compare, decide and record loop over Arc market evidence. It normalizes Morpho-listed markets, applies versioned deterministic policy, explains the first condition requiring attention and seals tamper-evident receipts. A protected scheduler and durable-memory adapter allow the same bounded loop to run without a browser with durable production memory and the protected scheduler now enabled. Agent Hub shows how Scout hands evidence to Opportunity, Strategy, Action Center and Guardian without gaining custody, signing or transaction authority.
 
 **Why it is an agent**  
 Scout has a goal, a repeated observation loop, explicit state transitions, durable comparison, bounded decisions and escalation behavior. It can autonomously decide to watch, review or escalate, but it cannot silently expand its permissions. Optional AI may summarize an incident; deterministic policy remains authoritative.
@@ -54,10 +56,10 @@ CofferHouse Agent Suite is a working, read-only prototype deployed for Arc. Scou
 The deployed application consumes Morpho-listed lending markets on Arc mainnet and normalizes liquidity, utilization, yield, contract and oracle identities into a documented schema. Its protected runtime supports Arc JSON-RPC bytecode checks and bounded CCTP V2 event observation. Research sizing and simulation are USDC-denominated, and official Circle App Kit boundaries are represented for Earn, Onramp and Borrow without overstating execution.
 
 **Current traction / proof**  
-The source is public, the product is deployed, 181 automated tests pass, the production build is reproducible and the browser flow issues independently verifiable JSON receipts. The October 7 rehearsal completed the full bounded chain and correctly returned no allocation when none of the eight observed markets cleared policy.
+The source is public, the product is deployed, 195 automated tests pass (local verification, October 9, 2026, Mexico City), the production build is reproducible and the browser flow issues independently verifiable JSON receipts. The October 7 rehearsal completed the full bounded chain and correctly returned no allocation when none of the eight observed markets cleared policy.
 
 **Roadmap**  
-Activate durable production memory and protected scheduling, complete independent security review, add stronger price and volatility evidence, expand Arc DEX coverage and then test narrowly permissioned execution behind explicit holder and human controls.
+Complete personal alert delivery and independent security review, add stronger price and volatility evidence, expand Arc DEX coverage and then test narrowly permissioned execution behind explicit holder and human controls.
 
 **Requested support**  
 The microgrant would support production monitoring, independent security review, stronger Arc data adapters and continued testing of the bounded permission layer.
