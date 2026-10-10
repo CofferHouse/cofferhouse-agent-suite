@@ -13,7 +13,7 @@ const report = {
   readyForUnattendedCycles: health.readyForUnattendedCycles === true,
   lastRunAt: status.lastRunAt ?? status.status?.ranAt ?? null,
   decision: status.decision ?? status.status?.decision?.action ?? null,
-  historyCount: status.summaryCounts?.history ?? 0,
+  historyCount: status.summaryCounts?.cycles ?? 0,
   required: health.deployment?.required ?? [],
   recommended: health.deployment?.recommended ?? []
 };

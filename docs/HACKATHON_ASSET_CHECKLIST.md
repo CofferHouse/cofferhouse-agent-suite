@@ -65,3 +65,5 @@ Telegram activation, NFT contracts, the main marketing website/domain and a full
 ### Vercel deployment repair
 
 The API handlers now live in `server/` and are dispatched by one Vercel function (`api/index.js`). Public endpoint URLs, handler authorization, and the scheduled-run path remain unchanged. This avoids the Hobby plan limit of 12 functions. Router regression tests cover rewritten health routing, unknown endpoints, and scheduler authorization.
+
+Production repair verified on October 9, 2026 (Mexico City): Vercel deployed commit `f0d5cb9`; `/api/health` reports OPERATIONAL with durable memory and protected scheduler ready. Browser rehearsal loaded eight live markets, completed Scout → Opportunity → Strategy and downloaded a live JSON session receipt. No market cleared policy; no allocation was invented. Final application has not been sent.
