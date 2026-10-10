@@ -56,4 +56,19 @@ export async function listJson(key, limit = 10) {
   const values = await command(["LRANGE", key, "0", String(limit - 1)]);
   return (values ?? []).map((value) => JSON.parse(value));
 }
+
+export async function addSetMember(key, ...members) {
+  if (!members.length) return 0;
+  return Number(await command(["SADD", key, ...members.map(String)]));
+}
+
+export async function removeSetMember(key, ...members) {
+  if (!members.length) return 0;
+  return Number(await command(["SREM", key, ...members.map(String)]));
+}
+
+export async function setMembers(key, limit = 500) {
+  const members = await command(["SMEMBERS", key]);
+  return (members ?? []).slice(0, limit);
+}
 import { configuredHttpsEndpoint, configuredSecret } from "../packages/agent-core/index.js";

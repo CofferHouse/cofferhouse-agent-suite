@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createPendingTelegramLink, createTelegramLinkChallenge, createTelegramSubscription, defaultAlertPreferences, normalizeAlertPreferences } from "../packages/agent-modules/index.js";
+import { createPendingTelegramLink, createTelegramLinkChallenge, createTelegramSubscription, defaultAlertPreferences, normalizeAlertPreferences, telegramAlertCategories, telegramSubscriptionWantsAlert } from "../packages/agent-modules/index.js";
 
 const walletAddress = "0x1111111111111111111111111111111111111111";
 
@@ -35,4 +35,22 @@ test("rejects malformed wallet, code and Telegram identifiers", () => {
   assert.throws(() => createPendingTelegramLink({ walletAddress, code: "short", statusToken: "a".repeat(32), expiresAt: new Date() }), /code/i);
   const pendingLink = createPendingTelegramLink({ walletAddress, code: "A1B2C3D4", statusToken: "a".repeat(32), expiresAt: new Date() });
   assert.throws(() => createTelegramSubscription({ pendingLink, chatId: "chat-name" }), /chat/i);
+});
+
+test("maps Scout and Guardian evidence to holder preference categories", () => {
+  const scoutAlert = { schema: "cofferhouse.scout.agent-alert.v1", changes: [
+    { type: "liquidity", level: "review", message: "Available liquidity fell 8.0%." },
+    { type: "utilization", level: "info", message: "Utilization fell 3.0 points." },
+    { type: "status", level: "review", message: "Policy result changed from REVIEW to PASS." }
+  ] };
+  assert.deepEqual(telegramAlertCategories(scoutAlert), ["liquidityDeterioration", "opportunityEligible"]);
+  assert.deepEqual(telegramAlertCategories({ schema: "cofferhouse.guardian.agent-alert.v1" }), ["guardianAttention"]);
+});
+
+test("isolates delivery using each holder's preferences", () => {
+  const pendingLink = createPendingTelegramLink({ walletAddress, code: "A1B2C3D4", statusToken: "a".repeat(32), preferences: { liquidityDeterioration: false, utilizationRisk: true }, expiresAt: new Date() });
+  const subscription = createTelegramSubscription({ pendingLink, chatId: "42" });
+  assert.equal(telegramSubscriptionWantsAlert(subscription, { schema: "cofferhouse.scout.agent-alert.v1", changes: [{ type: "liquidity", level: "review" }] }), false);
+  assert.equal(telegramSubscriptionWantsAlert(subscription, { schema: "cofferhouse.scout.agent-alert.v1", changes: [{ type: "utilization", level: "review" }] }), true);
+  assert.equal(telegramSubscriptionWantsAlert({ ...subscription, active: false }, { schema: "cofferhouse.guardian.agent-alert.v1" }), false);
 });

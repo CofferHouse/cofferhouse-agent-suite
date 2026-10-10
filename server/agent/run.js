@@ -5,6 +5,7 @@ import { policyProfiles } from "../../packages/policies/index.js";
 import { createAgentAlert, createGuardianAlert, runAgentCycle } from "../../packages/agent-core/index.js";
 import { compareArcCctpObservations, evaluateDurableGuardianPortfolio, fetchArcCctpObservation, runResearchSession } from "../../packages/agent-modules/index.js";
 import { deliverAlert, notificationConfigured } from "../_notify.js";
+import { deliverSubscriberAlert } from "../_subscriber-alerts.js";
 import { analyzeAgentCycle } from "../_gemini.js";
 import { createInteropReceipt, createResearchSessionReceipt, sealDocument } from "../../packages/evidence/index.js";
 import { withRetry } from "../../packages/shared/index.js";
@@ -99,6 +100,7 @@ export default async function handler(request, response) {
         notification = { configured: notificationConfigured(), delivered: false, reason: "duplicate", fingerprint: alert.fingerprint };
       }
     }
+    const subscriberNotification = alert ? await deliverSubscriberAlert(alert) : { configured: false, eligible: 0, delivered: 0, failed: 0, categories: [], reason: "no-material-alert" };
     const guardianAlerts = guardianReceipts.map(createGuardianAlert).filter(Boolean);
     const priorGuardianAlerts = asList(await getJson(GUARDIAN_ALERT_KEY));
     const deliveredGuardianAlerts = [...priorGuardianAlerts];
@@ -112,6 +114,8 @@ export default async function handler(request, response) {
         guardianNotifications.push({ configured: notificationConfigured(), delivered: false, reason: "duplicate", fingerprint: guardianAlert.fingerprint });
       }
     }
+    const guardianSubscriberNotifications = [];
+    for (const guardianAlert of guardianAlerts) guardianSubscriberNotifications.push(await deliverSubscriberAlert(guardianAlert));
     if (deliveredGuardianAlerts.length !== priorGuardianAlerts.length) await setJson(GUARDIAN_ALERT_KEY, deliveredGuardianAlerts.slice(0, 100));
     const { markets: _privateMarkets, ...cycleWithoutMarkets } = cycle;
     const verificationTrace = {
@@ -129,8 +133,8 @@ export default async function handler(request, response) {
       ...cycle.trace.slice(1),
       { phase: "RECORD", status: "READY", detail: "Sealed cycle prepared for durable storage.", at: cycle.ranAt }
     ];
-    const guardian = guardianReceipts.length ? { active: true, watchCount: guardianReceipts.length, decisions: guardianReceipts.map((receipt) => ({ receiptId: receipt.receiptId, target: receipt.watch.target, decision: receipt.observation.decision, requiresHumanAttention: receipt.observation.requiresHumanAttention })), alerts: guardianAlerts, notifications: guardianNotifications } : { active: false, watchCount: 0, decisions: [], alerts: [], notifications: [] };
-    const publicCycle = sealDocument({ ...cycleWithoutMarkets, trace, verification, interop: { configured: interop.configured, status: interop.status, receiptId: interop.receipt?.receiptId ?? null, counts: interop.receipt?.observation.counts ?? null, error: interop.error }, intelligence, alert, notification, guardian }, "cycle");
+    const guardian = guardianReceipts.length ? { active: true, watchCount: guardianReceipts.length, decisions: guardianReceipts.map((receipt) => ({ receiptId: receipt.receiptId, target: receipt.watch.target, decision: receipt.observation.decision, requiresHumanAttention: receipt.observation.requiresHumanAttention })), alerts: guardianAlerts, notifications: guardianNotifications, subscriberNotifications: guardianSubscriberNotifications } : { active: false, watchCount: 0, decisions: [], alerts: [], notifications: [], subscriberNotifications: [] };
+    const publicCycle = sealDocument({ ...cycleWithoutMarkets, trace, verification, interop: { configured: interop.configured, status: interop.status, receiptId: interop.receipt?.receiptId ?? null, counts: interop.receipt?.observation.counts ?? null, error: interop.error }, intelligence, alert, notification, subscriberNotification, guardian }, "cycle");
     await recordAttempt("COMMIT_DURABLE_EVIDENCE", { cycleRanAt: cycle.ranAt });
     await setJson(SNAPSHOT_KEY, currentMarkets);
     await setJson(STATUS_KEY, publicCycle);

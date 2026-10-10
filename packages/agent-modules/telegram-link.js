@@ -59,3 +59,23 @@ export function createTelegramSubscription({ pendingLink, chatId, telegramUserId
     active: true
   });
 }
+
+export function telegramAlertCategories(alert) {
+  if (alert?.schema === "cofferhouse.guardian.agent-alert.v1") return ["guardianAttention"];
+  if (alert?.schema !== "cofferhouse.scout.agent-alert.v1") return [];
+  const categories = new Set();
+  for (const change of alert.changes ?? []) {
+    if (change.type === "liquidity" && change.level !== "info") categories.add("liquidityDeterioration");
+    if (change.type === "utilization" && change.level !== "info") categories.add("utilizationRisk");
+    if (change.type === "apy") categories.add("apyChange");
+    if (change.type === "status" && /to PASS\.$/i.test(change.message ?? "")) categories.add("opportunityEligible");
+    if (["new", "removed"].includes(change.type) || (change.type === "status" && !/to PASS\.$/i.test(change.message ?? ""))) categories.add("opportunityWatchlist");
+  }
+  return [...categories];
+}
+
+export function telegramSubscriptionWantsAlert(subscription, alert) {
+  if (subscription?.schema !== "cofferhouse.telegram.subscription.v1" || !subscription.active || !subscription.chatId) return false;
+  const preferences = normalizeAlertPreferences(subscription.preferences);
+  return telegramAlertCategories(alert).some((category) => preferences[category]);
+}

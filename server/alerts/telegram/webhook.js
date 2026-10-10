@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { deleteJson, durableStoreConfigured, getJson, setJson } from "../../_redis.js";
 import { sendTelegramMessage, telegramConfigured } from "../../_notify.js";
 import { createTelegramSubscription } from "../../../packages/agent-modules/index.js";
+import { registerTelegramSubscriber } from "../../_subscriber-alerts.js";
 
 const pendingKey = (code) => `cofferhouse:alerts:telegram:pending:${code}`;
 const walletKey = (walletAddress) => `cofferhouse:alerts:telegram:wallet:${walletAddress.toLowerCase()}`;
@@ -32,8 +33,9 @@ export default async function handler(request, response) {
     }
     const subscription = createTelegramSubscription({ pendingLink, chatId: message.chat.id, telegramUserId: message.from?.id });
     await setJson(walletKey(subscription.walletAddress), subscription);
+    await registerTelegramSubscriber(subscription.walletAddress);
     await setJson(chatKey(subscription.chatId), { walletAddress: subscription.walletAddress, linkedAt: subscription.linkedAt });
-    await setJson(`cofferhouse:alerts:telegram:status:${pendingLink.statusToken}`, { status: "CONNECTED", linkedAt: subscription.linkedAt });
+    await setJson(`cofferhouse:alerts:telegram:status:${pendingLink.statusToken}`, { status: "CONNECTED", walletAddress: subscription.walletAddress, linkedAt: subscription.linkedAt });
     await deleteJson(pendingKey(code));
     await sendTelegramMessage({ chatId: subscription.chatId, text: "CofferHouse alerts connected. You will receive only the categories enabled in Holder Center. No transaction or custody permission was granted." });
     return response.status(200).json({ ok: true, linked: true });
