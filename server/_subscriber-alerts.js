@@ -1,4 +1,4 @@
-import { addSetMember, deleteJson, getJson, pushJson, setJsonIfAbsent, setMembers } from "./_redis.js";
+import { addSetMember, deleteJson, getJson, pushJson, removeSetMember, setJsonIfAbsent, setMembers } from "./_redis.js";
 import { sendTelegramMessage, telegramConfigured } from "./_notify.js";
 import { telegramAlertCategories, telegramSubscriptionWantsAlert } from "../packages/agent-modules/index.js";
 
@@ -9,6 +9,10 @@ const deliveryKey = (walletAddress, fingerprint) => `cofferhouse:alerts:telegram
 
 export async function registerTelegramSubscriber(walletAddress) {
   return addSetMember(TELEGRAM_SUBSCRIBER_INDEX_KEY, walletAddress.toLowerCase());
+}
+
+export async function unregisterTelegramSubscriber(walletAddress) {
+  return removeSetMember(TELEGRAM_SUBSCRIBER_INDEX_KEY, walletAddress.toLowerCase());
 }
 
 export async function loadTelegramSubscriptions() {

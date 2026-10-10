@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { deleteJson, durableStoreConfigured, getJson, setJson } from "../../_redis.js";
 import { sendTelegramMessage, telegramConfigured } from "../../_notify.js";
 import { createTelegramSubscription } from "../../../packages/agent-modules/index.js";
-import { registerTelegramSubscriber } from "../../_subscriber-alerts.js";
+import { registerTelegramSubscriber, unregisterTelegramSubscriber } from "../../_subscriber-alerts.js";
 
 const pendingKey = (code) => `cofferhouse:alerts:telegram:pending:${code}`;
 const walletKey = (walletAddress) => `cofferhouse:alerts:telegram:wallet:${walletAddress.toLowerCase()}`;
@@ -32,6 +32,13 @@ export default async function handler(request, response) {
       return response.status(200).json({ ok: true, linked: false, reason: "expired-or-invalid-code" });
     }
     const subscription = createTelegramSubscription({ pendingLink, chatId: message.chat.id, telegramUserId: message.from?.id });
+    const existingWalletSubscription = await getJson(walletKey(subscription.walletAddress));
+    if (existingWalletSubscription?.chatId && existingWalletSubscription.chatId !== subscription.chatId) await deleteJson(chatKey(existingWalletSubscription.chatId));
+    const existingChatOwner = await getJson(chatKey(subscription.chatId));
+    if (existingChatOwner?.walletAddress && existingChatOwner.walletAddress !== subscription.walletAddress) {
+      await deleteJson(walletKey(existingChatOwner.walletAddress));
+      await unregisterTelegramSubscriber(existingChatOwner.walletAddress);
+    }
     await setJson(walletKey(subscription.walletAddress), subscription);
     await registerTelegramSubscriber(subscription.walletAddress);
     await setJson(chatKey(subscription.chatId), { walletAddress: subscription.walletAddress, linkedAt: subscription.linkedAt });

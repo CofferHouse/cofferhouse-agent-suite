@@ -6,5 +6,5 @@ export default async function handler(request, response) {
   const token = String(request.query?.token ?? "");
   if (!/^[a-f0-9]{32}$/i.test(token)) return response.status(400).json({ ok: false, error: "A valid private status token is required." });
   const state = await getJson(`cofferhouse:alerts:telegram:status:${token}`);
-  return response.status(200).json({ ok: true, status: state?.status ?? "EXPIRED", linkedAt: state?.linkedAt ?? null });
+  return response.status(200).json({ ok: true, status: state?.status ?? "EXPIRED", linkedAt: state?.linkedAt ?? null, preferences: state?.preferences ?? null });
 }

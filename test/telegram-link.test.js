@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createPendingTelegramLink, createTelegramLinkChallenge, createTelegramSubscription, defaultAlertPreferences, normalizeAlertPreferences, telegramAlertCategories, telegramSubscriptionWantsAlert } from "../packages/agent-modules/index.js";
+import { createPendingTelegramLink, createTelegramLinkChallenge, createTelegramSubscription, defaultAlertPreferences, normalizeAlertPreferences, telegramAlertCategories, telegramSubscriptionWantsAlert, updateTelegramSubscription } from "../packages/agent-modules/index.js";
 
 const walletAddress = "0x1111111111111111111111111111111111111111";
 
@@ -53,4 +53,15 @@ test("isolates delivery using each holder's preferences", () => {
   assert.equal(telegramSubscriptionWantsAlert(subscription, { schema: "cofferhouse.scout.agent-alert.v1", changes: [{ type: "liquidity", level: "review" }] }), false);
   assert.equal(telegramSubscriptionWantsAlert(subscription, { schema: "cofferhouse.scout.agent-alert.v1", changes: [{ type: "utilization", level: "review" }] }), true);
   assert.equal(telegramSubscriptionWantsAlert({ ...subscription, active: false }, { schema: "cofferhouse.guardian.agent-alert.v1" }), false);
+});
+
+test("updates only normalized preferences on an active subscription", () => {
+  const pendingLink = createPendingTelegramLink({ walletAddress, code: "A1B2C3D4", statusToken: "a".repeat(32), preferences: {}, expiresAt: new Date() });
+  const subscription = createTelegramSubscription({ pendingLink, chatId: "42" });
+  const updated = updateTelegramSubscription(subscription, { guardianAttention: false, apyChange: true, unknown: true }, new Date("2026-10-10T20:00:00.000Z"));
+  assert.equal(updated.preferences.guardianAttention, false);
+  assert.equal(updated.preferences.apyChange, true);
+  assert.equal("unknown" in updated.preferences, false);
+  assert.equal(updated.updatedAt, "2026-10-10T20:00:00.000Z");
+  assert.throws(() => updateTelegramSubscription({ ...subscription, active: false }, {}), /active/i);
 });

@@ -79,3 +79,8 @@ export function telegramSubscriptionWantsAlert(subscription, alert) {
   const preferences = normalizeAlertPreferences(subscription.preferences);
   return telegramAlertCategories(alert).some((category) => preferences[category]);
 }
+
+export function updateTelegramSubscription(subscription, preferences, updatedAt = new Date()) {
+  if (subscription?.schema !== "cofferhouse.telegram.subscription.v1" || !subscription.active) throw new Error("An active Telegram subscription is required.");
+  return Object.freeze({ ...subscription, preferences: normalizeAlertPreferences(preferences), updatedAt: new Date(updatedAt).toISOString() });
+}

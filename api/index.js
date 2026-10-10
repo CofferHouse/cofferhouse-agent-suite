@@ -5,6 +5,7 @@ import handler3 from "../server/alerts/telegram/challenge.js";
 import handler4 from "../server/alerts/telegram/link.js";
 import handler5 from "../server/alerts/telegram/status.js";
 import handler6 from "../server/alerts/telegram/webhook.js";
+import handler16 from "../server/alerts/telegram/manage.js";
 import handler7 from "../server/app-kits/borrow.js";
 import handler8 from "../server/app-kits/earn.js";
 import handler9 from "../server/app-kits/onramp.js";
@@ -23,6 +24,7 @@ const routes = new Map([
   ["/api/alerts/telegram/link", handler4],
   ["/api/alerts/telegram/status", handler5],
   ["/api/alerts/telegram/webhook", handler6],
+  ["/api/alerts/telegram/manage", handler16],
   ["/api/app-kits/borrow", handler7],
   ["/api/app-kits/earn", handler8],
   ["/api/app-kits/onramp", handler9],
