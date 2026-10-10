@@ -56,7 +56,7 @@ CofferHouse Agent Suite is a working, read-only prototype deployed for Arc. Scou
 The deployed application consumes Morpho-listed lending markets on Arc mainnet and normalizes liquidity, utilization, yield, contract and oracle identities into a documented schema. Its protected runtime supports Arc JSON-RPC bytecode checks and bounded CCTP V2 event observation. Research sizing and simulation are USDC-denominated, and official Circle App Kit boundaries are represented for Earn, Onramp and Borrow without overstating execution.
 
 **Current traction / proof**  
-The source is public, the product is deployed, 195 automated tests pass (local verification, October 9, 2026, Mexico City), the production build is reproducible and the browser flow issues independently verifiable JSON receipts. The October 7 rehearsal completed the full bounded chain and correctly returned no allocation when none of the eight observed markets cleared policy.
+The source is public, the product is deployed, 197 automated tests pass (local verification, October 9, 2026, Mexico City), the production build is reproducible and the browser flow issues independently verifiable JSON receipts. The October 7 rehearsal completed the full bounded chain and correctly returned no allocation when none of the eight observed markets cleared policy.
 
 **Roadmap**  
 Complete personal alert delivery and independent security review, add stronger price and volatility evidence, expand Arc DEX coverage and then test narrowly permissioned execution behind explicit holder and human controls.

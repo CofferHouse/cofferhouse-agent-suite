@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { deleteJsonIfValue, setJsonIfAbsent } from "../api/_redis.js";
+import { deleteJsonIfValue, setJsonIfAbsent } from "../server/_redis.js";
 
 async function withRedisMock(results, callback) {
   const previousFetch = globalThis.fetch;

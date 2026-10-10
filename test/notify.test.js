@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { deliverAlert, notificationConfigured, telegramConfigured } from "../api/_notify.js";
+import { deliverAlert, notificationConfigured, telegramConfigured } from "../server/_notify.js";
 
 const alert = {
   title: "CofferHouse Scout alert",

@@ -61,3 +61,7 @@
 - [ ] Submit the Microgrant application; no submission has been recorded here.
 
 Telegram activation, NFT contracts, the main marketing website/domain and a full whitepaper are not release gates for the read-only Microgrants prototype. Screenshots and a video are supporting evidence, not mandatory Microgrants fields in the published Arc House brief.
+
+### Vercel deployment repair
+
+The API handlers now live in `server/` and are dispatched by one Vercel function (`api/index.js`). Public endpoint URLs, handler authorization, and the scheduled-run path remain unchanged. This avoids the Hobby plan limit of 12 functions. Router regression tests cover rewritten health routing, unknown endpoints, and scheduler authorization.
