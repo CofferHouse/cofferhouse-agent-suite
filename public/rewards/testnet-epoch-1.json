@@ -1,0 +1,42 @@
+{
+  "schema": "cofferhouse-rewards-v1",
+  "domain": {
+    "chainId": "5042002",
+    "distributor": "0x91c838c6c2f1d63900c3cbeb980b2012b747f9f4",
+    "membership": "0x9f439D557355674F22e8f2a8baBBf22a1122f24a",
+    "epoch": 1,
+    "token": "0xd554aa76030dc7f18db5c6fe1d798c89a1d596bf"
+  },
+  "snapshotBlock": 67077705,
+  "snapshotBlockHash": "0x5017ad635369ebdc4d1dc367d81e5c65e4d8b0337d083000a83c836081fd2c69",
+  "pointScale": 2,
+  "displayWeights": [
+    "0",
+    "1",
+    "2",
+    "3.5",
+    "5",
+    "8"
+  ],
+  "weights": [
+    "0",
+    "2",
+    "4",
+    "7",
+    "10",
+    "16"
+  ],
+  "root": "0x395039b774533712ba3560fbf437efc0aec520c152c16ec58673340555d8be25",
+  "budget": "1000000000000000000000",
+  "totalPoints": "11",
+  "allocated": "1000000000000000000000",
+  "unallocatedRounding": "0",
+  "claims": [
+    {
+      "account": "0x659012c655C2Af95CBB5d33671F479853A8be147",
+      "points": "11",
+      "amount": "1000000000000000000000",
+      "proof": []
+    }
+  ]
+}
