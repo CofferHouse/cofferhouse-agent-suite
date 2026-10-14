@@ -1,4 +1,5 @@
 import { createPublicClient, createWalletClient, custom, defineChain, encodeAbiParameters, formatUnits, http, keccak256, parseAbi, stringToHex } from "viem";
+import { validateRewardCatalog, selectRewardPeriod, validateRewardBinding } from "./reward-catalog.js";
 import { membershipWeights, sacrificePreview, rewardStatus } from "./membership-policy.js";
 import { escapeHtml as h } from "../shared/index.js";
 
@@ -10,7 +11,7 @@ const rewardsAbi = parseAbi(["function membership() view returns(address)", "fun
 const rpc = createPublicClient({ chain, transport: http() });
 const read = (address, abi, functionName, args = [], blockNumber) => rpc.readContract({ address, abi, functionName, args, ...(blockNumber === undefined ? {} : { blockNumber }) });
 const same = (a, b) => a.toLowerCase() === b.toLowerCase();
-let state = { account: null, memberships: [], balance: null, decimals: 18, costs: [], reward: null, busy: false, message: "Connect an Arc Testnet wallet to read your memberships. Mainnet actions are disabled." };
+let state = { account: null, memberships: [], balance: null, decimals: 18, costs: [], reward: null, periods: [], selectedEpoch: null, busy: false, message: "Connect an Arc Testnet wallet to read your memberships. Mainnet actions are disabled." };
 let generation = 0;
 let boundProvider;
 let actionLocked = false;
@@ -66,13 +67,23 @@ async function reload() {
     read(rehearsal.rewards, rewardsAbi, "membership", [], blockNumber), Promise.all([1,2,3,4,5].map(n => read(rehearsal.membership, nftAbi, "ascendCost", [BigInt(n)], blockNumber)))
   ]);
   if (!same(token, rehearsal.token) || !same(linked, rehearsal.membership)) throw Error("Contract configuration does not match this rehearsal.");
-  const response = await fetch("/rewards/testnet-epoch-1.json");
+  const catalogResponse = await fetch("/rewards/testnet-catalog.json", { cache: "no-store" });
+  if (!catalogResponse.ok) throw Error("Reward catalog is unavailable.");
+  const periods = validateRewardCatalog(await catalogResponse.json(), rehearsal);
+  const selected = selectRewardPeriod(periods, state.selectedEpoch);
+  if (!selected) {
+    if (revision !== generation) return;
+    state = { ...state, memberships, balance, decimals, enabled, costs, blockNumber, periods, selectedEpoch: null, reward: null, message: "Verified memberships. No reward periods are listed yet." };
+    return;
+  }
+  const response = await fetch(selected.manifest, { cache: "no-store" });
   if (!response.ok) throw Error("Reward proof is unavailable.");
   const bytes = await response.text(), manifest = JSON.parse(bytes), d = manifest.domain;
-  if (String(d.chainId) !== String(chain.id) || !same(d.distributor, rehearsal.rewards) || !same(d.membership, rehearsal.membership) || !same(d.token, rehearsal.token)) throw Error("Reward proof domain mismatch.");
+  validateRewardBinding(manifest, selected, rehearsal);
   const [values, claimed, paused] = await Promise.all([read(rehearsal.rewards, rewardsAbi, "epochs", [BigInt(d.epoch)], blockNumber), read(rehearsal.rewards, rewardsAbi, "claimed", [BigInt(d.epoch), account], blockNumber), read(rehearsal.rewards, rewardsAbi, "paused", [], blockNumber)]);
   const [epochToken, root, manifestHash, snapshotBlock, budget, paid, availableAt, totalPoints] = values;
   if (!same(epochToken, d.token) || root !== manifest.root || manifestHash !== keccak256(stringToHex(bytes)) || snapshotBlock !== BigInt(manifest.snapshotBlock) || budget !== BigInt(manifest.budget) || totalPoints !== BigInt(manifest.totalPoints)) throw Error("Published reward period does not match its proof.");
+  const rewardDecimals = Number(await read(selected.token, tokenAbi, "decimals", [], blockNumber));
   const claim = manifest.claims.find(c => same(c.account, account));
   if (claim) {
     let hash = keccak256(keccak256(encodeAbiParameters([{type:"uint256"},{type:"address"},{type:"address"},{type:"uint256"},{type:"address"},{type:"address"},{type:"uint256"}], [BigInt(chain.id), rehearsal.rewards, rehearsal.membership, BigInt(d.epoch), d.token, claim.account, BigInt(claim.points)])));
@@ -80,7 +91,7 @@ async function reload() {
     if (hash !== root) throw Error("Invalid reward proof.");
   }
   if (revision !== generation) return;
-  state = { ...state, memberships, balance, decimals, enabled, costs, blockNumber, reward: { manifest, claim, epoch: { availableAt, budget, paid, totalPoints }, claimed, paused }, message: "Verified on Arc Testnet. All transactions require your wallet confirmation." };
+  state = { ...state, memberships, balance, decimals, enabled, costs, blockNumber, periods, selectedEpoch: selected.epoch, reward: { manifest, claim, decimals: rewardDecimals, symbol: selected.symbol, epoch: { availableAt, budget, paid, totalPoints }, claimed, paused }, message: "Verified on Arc Testnet. All transactions require your wallet confirmation." };
 }
 async function connect() {
   await provider().request({ method: "eth_requestAccounts" });
@@ -144,10 +155,14 @@ function paint() {
     ${state.balance !== null ? `<div class="membership-summary"><p><b>${display(state.balance)}</b> TESTCOFFERS</p><p><b>${state.memberships.reduce((sum,x) => sum + membershipWeights[x.level],0)/2}</b> current reward weight</p><p>Verified at block ${h(String(state.blockNumber))}</p></div>` : ""}
     <div class="membership-cards">${state.memberships.map(x => `<article><h3>Membership #${h(x.id)}</h3><p>${x.level === 0 ? "Unactivated" : `Level ${x.level}`} · reward weight ${membershipWeights[x.level]/2}</p>${x.level < 5 ? `<p>Next step: ${display(state.costs[x.level])} TESTCOFFERS</p><button data-ascend="${h(x.id)}" ${state.busy || !state.enabled ? "disabled" : ""}>${x.level === 0 ? "ACTIVATE" : "ASCEND"}</button>` : "<p>Maximum level reached</p>"}</article>`).join("")}</div>
     ${state.memberships.length ? `<form id="membership-sacrifice"><h3>Ascend by sacrifice</h3><label>Membership to keep<select name="survivor">${state.memberships.filter(x=>x.level>0&&x.level<5).map(x=>`<option value="${h(x.id)}">#${h(x.id)} · Level ${x.level}</option>`).join("")}</select></label><fieldset><legend>Memberships to burn permanently</legend>${state.memberships.map(x=>`<label><input type="checkbox" name="burn" value="${h(x.id)}"> #${h(x.id)} · Level ${x.level}</label>`).join("")}</fieldset><button ${state.busy || !state.enabled ? "disabled" : ""}>REVIEW SACRIFICE</button></form>` : ""}
-    <article class="membership-reward"><h3>Published rewards</h3>${reward ? reward.claim ? `<p><b>${display(reward.epoch.budget * BigInt(reward.claim.points) / reward.epoch.totalPoints)} TESTCOFFERS</b> · ${h(status)}</p><p>This period uses ${h(reward.claim.points)} snapshot points. Later transfers or ascensions do not change it.</p><p>Available: ${h(new Date(Number(reward.epoch.availableAt)*1000).toLocaleString())}</p><p data-review-countdown></p><button id="membership-claim" ${state.busy || status !== "CLAIMABLE" ? "disabled" : ""}>${status === "CLAIMED" ? "REWARD CLAIMED" : "CLAIM TEST REWARD"}</button>` : "<p>No allocation for this wallet in period 1.</p>" : "<p>Connect to read verified rewards.</p>"}</article>`;
+    <article class="membership-reward"><h3>Published rewards</h3>${state.account && state.periods?.length ? `<label>Reward period<select id="membership-period" ${state.busy ? "disabled" : ""}>${state.periods.map(item => `<option value="${h(item.epoch)}" ${item.epoch === state.selectedEpoch ? "selected" : ""}>Period ${h(item.epoch)} · ${h(item.symbol)}</option>`).join("")}</select></label>` : ""}${reward ? reward.claim ? `<p><b>${h(formatUnits(reward.epoch.budget * BigInt(reward.claim.points) / reward.epoch.totalPoints, reward.decimals))} ${h(reward.symbol)}</b> · ${h(status)}</p><p>This period uses ${h(reward.claim.points)} snapshot points. Later transfers or ascensions do not change it.</p><p>Reward token: <code>${h(reward.manifest.domain.token)}</code></p><p>Available: ${h(new Date(Number(reward.epoch.availableAt)*1000).toLocaleString())}</p><p data-review-countdown></p><button id="membership-claim" ${state.busy || status !== "CLAIMABLE" ? "disabled" : ""}>${status === "CLAIMED" ? "REWARD CLAIMED" : "CLAIM TEST REWARD"}</button>` : `<p>No allocation for this wallet in period ${h(state.selectedEpoch)}.</p>` : state.account ? "<p>No verified reward period loaded.</p>" : "<p>Connect to read verified rewards.</p>"}</article>`;
   container.querySelector("#membership-connect").onclick = () => run(connect);
   container.querySelectorAll("[data-ascend]").forEach(button => button.onclick = () => run(() => ascend(button.dataset.ascend)));
   container.querySelector("#membership-sacrifice")?.addEventListener("submit", event => { event.preventDefault(); const data = new FormData(event.currentTarget); run(() => sacrifice(data.get("survivor"), data.getAll("burn"))); });
+  container.querySelector("#membership-period")?.addEventListener("change", event => {
+    const epoch = event.target.value;
+    run(async () => { state.selectedEpoch = epoch; state.reward = null; generation++; paint(); await reload(); });
+  });
   const claimButton = container.querySelector("#membership-claim"); if (claimButton) claimButton.onclick = () => run(claim);
   tick();
 }
