@@ -321,3 +321,16 @@ h1 em { color: #1755bc; font-style: normal; text-shadow: 4px 4px 0 #ffd735; }
 @media (max-width: 1000px) { .borrow-kit-form { grid-template-columns: 1fr 1fr; }.borrow-kit-form button { grid-column: 1/-1; }.borrow-kit-result { grid-template-columns: repeat(2,1fr); }.borrow-kit-warnings { grid-column: 1/-1; }.borrow-preview-download { margin: 14px; } }
 @media (max-width: 620px) { .borrow-kit-head,.borrow-kit-form,.borrow-kit-result { grid-template-columns: 1fr; }.borrow-kit-form button,.borrow-kit-warnings { grid-column: 1; }.borrow-kit-center > footer { flex-direction: column; } }
 @media (max-width: 680px) { .opportunity-summary { grid-template-columns: repeat(2,1fr) !important; } }
+
+.membership-rehearsal { padding:24px; border-bottom:2px solid var(--ink); background:#edf6ef; }
+.membership-rehearsal h2 { margin:10px 0; font:24px 'Archivo Black'; }
+.membership-rehearsal h3 { font:15px 'Archivo Black'; }
+.membership-rehearsal p,.membership-rehearsal label,.membership-rehearsal code,.membership-rehearsal legend { font:12px/1.6 'DM Mono'; overflow-wrap:anywhere; }
+.membership-rehearsal header>span { font:10px 'DM Mono'; color:#147b6d; }
+.membership-rehearsal button,.membership-rehearsal select { padding:12px; border:2px solid var(--ink); background:var(--yellow); font:11px 'DM Mono'; cursor:pointer; }
+.membership-rehearsal button:disabled { opacity:.5; cursor:default; }
+.membership-summary,.membership-cards { display:flex; flex-wrap:wrap; gap:16px; margin:20px 0; }
+.membership-cards article,.membership-reward { padding:18px; border:2px solid var(--ink); background:var(--paper); }
+.membership-rehearsal form { margin:20px 0; padding:18px; border:2px dashed var(--ink); }
+.membership-rehearsal fieldset { display:flex; flex-wrap:wrap; gap:18px; margin:14px 0; }
+.membership-rehearsal form select { display:block; margin-top:6px; }
