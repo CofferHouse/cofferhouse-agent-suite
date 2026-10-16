@@ -1,0 +1,14 @@
+{
+  "schema": "cofferhouse-reward-catalog-v1",
+  "chainId": "5042002",
+  "membership": "0x9f439d557355674f22e8f2a8babbf22a1122f24a",
+  "distributor": "0x91c838c6c2f1d63900c3cbeb980b2012b747f9f4",
+  "periods": [
+    {
+      "epoch": "1",
+      "token": "0xd554aa76030dc7f18db5c6fe1d798c89a1d596bf",
+      "symbol": "TESTCOFFERS",
+      "manifest": "/rewards/testnet-epoch-1.json"
+    }
+  ]
+}
