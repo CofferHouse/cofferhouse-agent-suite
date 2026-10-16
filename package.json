@@ -23,5 +23,10 @@
     "@circle-fin/borrow-kit": "^1.0.0",
     "@circle-fin/earn-kit": "^1.8.1",
     "viem": "^2.56.8"
+  },
+  "overrides": {
+    "@coral-xyz/anchor": {
+      "toml": "4.2.0"
+    }
   }
 }
