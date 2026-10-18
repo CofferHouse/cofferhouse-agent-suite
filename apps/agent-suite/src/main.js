@@ -88,16 +88,22 @@ function resetOperatorState(message) {
 
 const suiteTabs = Object.freeze([
   { id: "holder", label: "Holder Center", mark: "⌂" },
-  { id: "hub", label: "Agent Hub", mark: "00" },
+  { id: "bots", label: "Bots", mark: "01" },
+  { id: "hub", label: "Overview", mark: "00" },
   { id: "scout", label: "Scout", mark: "01" },
   { id: "opportunity", label: "Opportunities", mark: "02" },
   { id: "strategy", label: "Strategy", mark: "03" },
-  { id: "dex", label: "DEX", mark: "04" },
-  { id: "action", label: "Action Center", mark: "05" },
-  { id: "guardian", label: "Guardian", mark: "06" },
-  { id: "automation", label: "Automation", mark: "07" },
-  { id: "interop", label: "Interop", mark: "08" },
-  { id: "bots", label: "Bot Lab", mark: "09" }
+  { id: "guardian", label: "Guardian", mark: "04" },
+  { id: "dex", label: "DEX", mark: "01" },
+  { id: "action", label: "Action Center", mark: "02" },
+  { id: "automation", label: "Automation", mark: "03" },
+  { id: "interop", label: "Interop", mark: "04" }
+]);
+const suiteGroups = Object.freeze([
+  { label: "Holder Center", mark: "⌂", views: ["holder"] },
+  { label: "Bots", mark: "01", views: ["bots"] },
+  { label: "Agents", mark: "02", views: ["hub", "scout", "opportunity", "strategy", "guardian"] },
+  { label: "Tools", mark: "03", views: ["dex", "action", "automation", "interop"] }
 ]);
 
 const suiteViewTargets = Object.freeze({
@@ -219,8 +225,9 @@ function render() {
     </header>
     <nav class="suite-nav" aria-label="CofferHouse holder tools">
       <div class="suite-nav-inner">
-        ${suiteTabs.map((tab) => `<button class="suite-tab ${activeSuiteView === tab.id ? "active" : ""}" data-view="${tab.id}" type="button" aria-controls="${suiteViewTargets[tab.id]}" aria-current="${activeSuiteView === tab.id ? "page" : "false"}"><span>${tab.mark}</span>${tab.label}</button>`).join("")}
+        ${suiteGroups.map((group) => `<button class="suite-tab ${group.views.includes(activeSuiteView) ? "active" : ""}" data-view="${group.views[0]}" type="button" aria-controls="${suiteViewTargets[group.views[0]]}" aria-current="${group.views.includes(activeSuiteView) ? "page" : "false"}"><span>${group.mark}</span>${group.label}</button>`).join("")}
       </div>
+      ${suiteGroups.filter(group => group.views.length > 1 && group.views.includes(activeSuiteView)).map(group => `<div class="suite-subnav" aria-label="${group.label} sections">${group.views.map(id => { const tab = suiteTabs.find(item => item.id === id); return `<button class="suite-tab suite-subtab ${activeSuiteView === id ? "active" : ""}" data-view="${id}" type="button" aria-controls="${suiteViewTargets[tab.id]}" aria-current="${activeSuiteView === id ? "page" : "false"}">${tab.label}</button>`; }).join("")}</div>`).join("") }
     </nav>
     <main id="main-content" tabindex="-1">
       <section id="bot-lab" data-suite-view="bots" class="suite-view ${activeSuiteView === "bots" ? "is-active" : ""}">${botLabHtml()}</section>
