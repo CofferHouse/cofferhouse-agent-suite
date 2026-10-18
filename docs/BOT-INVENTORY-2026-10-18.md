@@ -110,3 +110,22 @@ capacidades originales y requieren revisión antes de cualquier uso real.
 Pendientes: reconciliación de estados terminales/parciales, dependencias fijadas,
 selección de versiones y separación de motores/estrategias. No es auditoría ni
 confirmación de rentabilidad o funcionamiento en vivo.
+
+
+## Segunda pasada — configuración y dependencias
+
+El usuario confirmó que las cuentas originales fueron eliminadas; no se requiere
+revocación adicional. Se normalizaron campos vacíos de credenciales en cinco
+fuentes a variables de entorno, sin valores incrustados. Se corrigió el main npm
+de RiseX (index.js inexistente) a risex_grid_bot.js, con comando check de sintaxis
+y sin autoinicio. No se instalaron paquetes ni se ejecutaron SDKs.
+
+El paquete limpio incluye inventario estático de imports locales/externos y
+nombres de variables para 149 rutas Python reconstruidas. Se conservaron las
+versiones diferentes y los SDK v1/v2 por separado: aún no hay evidencia para
+elegir una versión operativa o fijar dependencias compatibles.
+
+Validación de esta pasada: cinco pruebas Python y controles aislados en ambas
+variantes JS del grid; sintaxis de 132 Python y 7 JS canónicos; comparación
+contra los valores sensibles originales detectados sin coincidencias. Falta
+validar dependencias por familia y reconciliación real antes de habilitar grids.
