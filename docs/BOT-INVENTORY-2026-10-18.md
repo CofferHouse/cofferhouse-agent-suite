@@ -83,3 +83,30 @@ de Arc ni funcionan todos en USDC. Cada integración necesita verificar red,
 activo de liquidación, gas, permisos y fuente de datos. El runtime Scout existente
 sigue siendo investigación; su estado online no significa que estos ejecutores
 estén desplegados. Ningún cambio de este PR modifica la colección de membresías.
+
+
+## Primera copia saneada — 18 de octubre de 2026
+
+Se preparó un ZIP separado de los originales con 148 archivos únicos y un mapa de
+18 alias exactos para reconstruir las carpetas mediante una herramienta offline
+que rechaza sobrescrituras. Se conservaron variantes diferentes. Se retiraron
+10 valores sensibles detectados y salidas de diagnóstico de credenciales/JWT;
+se excluyeron dos estados privados y dos notas. No se publican fuentes originales
+ni secretos en este PR. Retirar valores no revoca las claves: falta rotarlas.
+
+Los grids quedan en simulación y con operación real bloqueada: cancelación y
+reposición real fallan conservando el estado local. Esto sustituye la inferencia
+insegura de que toda orden desaparecida se ejecutó; todavía no implementa la
+reconciliación completa contra el exchange. El arranque no registra signer; el
+auxiliar separado requiere una variable explícita de administración.
+
+Validación: sintaxis de 132 Python y 7 JavaScript canónicos; dos pruebas Python
+(bloqueo real/estado y reconstrucción de alias sin sobrescribir) y controles
+aisladamente ejecutados en las dos variantes JS del grid. Comparación final sin
+coincidencias con los valores sensibles originales detectados. No se importaron
+ni iniciaron bots/SDKs ni se enviaron órdenes. Los otros ejecutores conservan
+capacidades originales y requieren revisión antes de cualquier uso real.
+
+Pendientes: reconciliación de estados terminales/parciales, dependencias fijadas,
+selección de versiones y separación de motores/estrategias. No es auditoría ni
+confirmación de rentabilidad o funcionamiento en vivo.
