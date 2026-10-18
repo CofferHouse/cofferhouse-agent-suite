@@ -1,3 +1,4 @@
+import { botLabHtml, mountBotLab } from "../../../packages/agent-modules/bot-lab-view.js";
 import { mountMembershipRoom } from "../../../packages/agent-modules/membership-room.js";
 import "./styles.css";
 import { deploymentView } from "../../../packages/shared/deployment-view.js";
@@ -95,7 +96,8 @@ const suiteTabs = Object.freeze([
   { id: "action", label: "Action Center", mark: "05" },
   { id: "guardian", label: "Guardian", mark: "06" },
   { id: "automation", label: "Automation", mark: "07" },
-  { id: "interop", label: "Interop", mark: "08" }
+  { id: "interop", label: "Interop", mark: "08" },
+  { id: "bots", label: "Bot Lab", mark: "09" }
 ]);
 
 const suiteViewTargets = Object.freeze({
@@ -108,7 +110,8 @@ const suiteViewTargets = Object.freeze({
   action: "action-agent",
   guardian: "guardian-agent",
   automation: "automation-agent",
-  interop: "interop-agent"
+  interop: "interop-agent",
+  bots: "bot-lab"
 });
 
 const requestedRoute = window.location.hash;
@@ -220,6 +223,7 @@ function render() {
       </div>
     </nav>
     <main id="main-content" tabindex="-1">
+      <section id="bot-lab" data-suite-view="bots" class="suite-view ${activeSuiteView === "bots" ? "is-active" : ""}">${botLabHtml()}</section>
       <section class="holder-center suite-view ${activeSuiteView === "holder" ? "is-active" : ""}" data-suite-view="holder" id="holder-center" aria-labelledby="holder-center-title">
         <header class="holder-hero">
           <div><p class="eyebrow">YOUR KEY TO THE HOUSE · DEMO MODE</p><h1 id="holder-center-title">Holder Command Center.</h1><p>One place for membership, progression, rewards and the CofferHouse tools unlocked by your access key.</p></div>
@@ -749,6 +753,7 @@ function render() {
     <footer class="site-footer"><span>Research first. Execution later.</span><span>Experimental software · Not financial advice</span></footer>`;
 
   mountMembershipRoom();
+  mountBotLab();
   document.querySelectorAll(".suite-view").forEach((view) => {
     const isActive = view.classList.contains("is-active");
     view.toggleAttribute("inert", !isActive);
