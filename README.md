@@ -2,11 +2,11 @@
 
 **A connected room of bounded research agents built on Arc.**
 
-The suite connects Scout, Opportunity, Strategy, DEX, Action Center, Guardian, Automation and Interop Observer into one inspectable research flow. Scout includes both a session-scoped monitor and a protected server runtime with an explicit lifecycle: observe, independently verify, evaluate versioned policy, compare durable history, decide whether changes require attention, and record the result. The current public release has no custody, signing, or transaction authority.
+The suite connects Scout, Opportunity, Strategy, DEX, Action Center, Guardian, Automation and Interop Observer into one inspectable research flow. Scout includes both a session-scoped monitor and a protected server runtime with an explicit lifecycle: observe, independently verify, evaluate versioned policy, compare durable history, decide whether changes require attention, and record the result. The research agents have no custody, signing, or transaction authority. A separate, explicitly labelled Arc Testnet membership panel requests user-signed test transactions; production membership actions remain disabled.
 
 CofferHouse Agent Suite is a working room inside the larger CofferHouse product: a transparent research and risk layer that helps users inspect onchain markets, build bounded proposals and preserve evidence before any capital is routed.
 
-> **Status:** Public hackathon prototype · Live, read-only Arc market and interoperability intelligence.
+> **Status:** Active CofferHouse development · Arc research agents plus a separate wallet-signed membership rehearsal on Arc Testnet. See [current project status](docs/PROJECT-STATUS-2026-10-18.md).
 
 **Live demo:** [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/)
 
@@ -39,7 +39,7 @@ The suite currently:
 - observe Arc CCTP interoperability events, compare non-overlapping windows and seal an Interop receipt;
 - coordinate the complete evidence path from Agent Hub without merging agent responsibilities.
 
-This release is **read-only**. It does not custody funds, promise returns or execute autonomous strategies.
+The research layer is **read-only**. It does not custody funds, promise returns or execute autonomous strategies. Testnet membership actions require explicit wallet signatures and are separate from research.
 
 ## Why Arc
 
@@ -187,8 +187,12 @@ La [guía operativa en español](docs/GUIA_OPERATIVA_ES.md) explica cada apartad
 - Agent Suite (holder tool): [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/#agents)
 - CofferHouse website: [cofferhouse.cheesemachineco.chatgpt.site](https://cofferhouse.cheesemachineco.chatgpt.site/)
 - Public documentation: included in this repository
-- Contracts: not deployed
+- Membership/ascension and rewards: tracked in [CofferHouse Contracts](https://github.com/CofferHouse/cofferhouse-contracts); testnet deployment does not enable mainnet actions. The optional Scout receipt registry is a separate component.
 
 ## Important notice
 
 CofferHouse Agent Suite is experimental software under active development. It is not financial advice, does not guarantee the accuracy of third-party data and does not guarantee any return. Do not use unfinished software with funds you cannot afford to lose.
+
+## Project inventory and external bots
+
+See [project status and launch gaps](docs/PROJECT-STATUS-2026-10-18.md) and [bot/script intake](docs/BOT-SCRIPT-INTAKE.md). The owner's external bot scripts were received on October 18 and are under static review; see the [initial inventory](docs/BOT-INVENTORY-2026-10-18.md). They are not yet cleaned, integrated or deployed; the existing research runtime is not evidence of financial execution. Historical hackathon documents are retained for reference.
