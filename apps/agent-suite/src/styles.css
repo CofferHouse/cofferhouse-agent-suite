@@ -1,5 +1,5 @@
 @import url('../../../packages/ui/tokens.css');
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Mono:wght@400;500&family=Inter:wght@400;600;700&family=Luckiest+Guy&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Mono:wght@400;500&family=Inter:wght@400;600;700&family=Luckiest+Guy&family=Caveat:wght@500;600;700&display=swap');
 
 :root { color: var(--ink); background: var(--room-blue); font-family: Inter, sans-serif; font-synthesis: none; }
 * { box-sizing: border-box; }
@@ -334,3 +334,14 @@ h1 em { color: #1755bc; font-style: normal; text-shadow: 4px 4px 0 #ffd735; }
 .membership-rehearsal form { margin:20px 0; padding:18px; border:2px dashed var(--ink); }
 .membership-rehearsal fieldset { display:flex; flex-wrap:wrap; gap:18px; margin:14px 0; }
 .membership-rehearsal form select { display:block; margin-top:6px; }
+
+/* Shared notebook identity with the CofferHouse presentation website. */
+:root { --paper:#faf7ef; --paper-deep:#eee6d4; --cream:#f3e8cb; --blue:#164b91; }
+body { background-color:#101e35; background-image:radial-gradient(#ffffff0c 1px,transparent 1px); }
+.topbar,.suite-nav { background-color:var(--cream); }
+.topbar { border-bottom-color:var(--blue); }
+.suite-tab.active { background:#d7d7d2; box-shadow:4px 4px 0 var(--blue); }
+.suite-tab:hover { background:#e6e4dc; }
+.brand-name i { -webkit-text-stroke:.07em #1a1917; paint-order:stroke fill; }
+.hero h1 { font-family:'Luckiest Guy',cursive; }
+.hero > p { font-family:'Caveat',cursive; font-size:clamp(21px,2vw,27px); line-height:1.4; }
