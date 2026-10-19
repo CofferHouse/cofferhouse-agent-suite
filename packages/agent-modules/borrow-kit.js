@@ -1,9 +1,9 @@
-const pct = (ratio) => Number.isFinite(Number(ratio)) ? Number(ratio) * 100 : null;
-const amount = (value) => Number.isFinite(Number(value)) ? Number(value) : null;
+const amount = (value) => (typeof value === "number" || typeof value === "string" && value.trim() !== "") && Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : null;
+const pct = (ratio) => amount(ratio) === null ? null : amount(ratio) * 100;
 
 export function healthFactorBand(value) {
-  const health = Number(value);
-  if (!Number.isFinite(health)) return "UNAVAILABLE";
+  const health = amount(value);
+  if (health === null) return "UNAVAILABLE";
   if (health < 1) return "LIQUIDATABLE";
   if (health < 1.05) return "IMMINENT";
   if (health < 1.1) return "URGENT";
@@ -27,7 +27,7 @@ export function normalizeBorrowMarkets(payload = {}) {
 
 export function normalizeBorrowPreview(payload = {}) {
   const market = normalizeBorrowMarket(payload.market);
-  const healthFactor = Number(payload.quote?.resultingHealthFactor);
+  const healthFactor = amount(payload.quote?.resultingHealthFactor);
   const requiredCollateral = amount(payload.quote?.requiredCollateral?.amount);
   const liquidationPrice = amount(payload.quote?.liquidationPrice?.amount);
   return Object.freeze({
@@ -40,7 +40,8 @@ export function normalizeBorrowPreview(payload = {}) {
     liquidationPrice: Object.freeze({ token: String(payload.quote?.liquidationPrice?.token ?? "USD"), amount: liquidationPrice }),
     warnings: Object.freeze([
       ...(market.utilizationPct >= 95 ? ["Market utilization is at or above 95%; available liquidity and borrowing capacity may change quickly."] : []),
-      ...(healthFactor < 1.2 ? ["The modeled health factor is below Borrow Kit's SAFE band."] : []),
+      ...(healthFactor !== null && healthFactor < 1.2 ? ["The modeled health factor is below Borrow Kit's SAFE band."] : []),
+      ...(healthFactor === null ? ["Loan health is unavailable; do not treat this preview as a valid execution quote."] : []),
       "Borrow rates, collateral price and liquidation price can change before a wallet action."
     ]),
     execution: Object.freeze({ walletConnected: false, approvalPrepared: false, transactionPrepared: false, submitted: false }),

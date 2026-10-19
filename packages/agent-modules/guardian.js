@@ -1,4 +1,4 @@
-function numberOrNull(value) { return Number.isFinite(Number(value)) ? Number(value) : null; }
+function numberOrNull(value) { return (typeof value === "number" || typeof value === "string" && value.trim() !== "") && Number.isFinite(Number(value)) ? Number(value) : null; }
 
 export function guardianEvidenceFromLending(market, report) {
   if (!market || !report) return null;
@@ -22,6 +22,8 @@ export function createGuardianWatch({ preview, approval, evidence, now = () => n
 export function evaluateGuardian(watch, evidence, now = () => new Date()) {
   if (watch?.schema !== "cofferhouse.guardian.watch.v1") throw new Error("A valid Guardian watch is required.");
   const reasons = [];
+  const evaluatedAt = now();
+  if (!Number.isFinite(evaluatedAt.getTime())) throw new Error("A valid evaluation time is required.");
   let decision = "HOLD_RESEARCH";
   if (!evidence || evidence.targetId?.toLowerCase() !== watch.target.id?.toLowerCase()) {
     decision = "STOP_EXIT_RESEARCH";
@@ -40,6 +42,16 @@ export function evaluateGuardian(watch, evidence, now = () => new Date()) {
     if (evidence.priceChange24hPct !== null && Math.abs(evidence.priceChange24hPct) > watch.limits.maxAbsPriceChange24hPct) { decision = decision === "STOP_EXIT_RESEARCH" ? decision : "REVIEW"; reasons.push("24-hour price movement exceeds the Guardian limit."); }
     if (evidence.modeledImpactPct !== null && evidence.modeledImpactPct > watch.limits.maxModeledImpactPct) { decision = "STOP_EXIT_RESEARCH"; reasons.push("Modeled liquidity impact exceeds the Guardian limit."); }
   }
+  if (evidence) {
+    const age = evaluatedAt.getTime() - (evidence.observedAt ? Date.parse(evidence.observedAt) : NaN);
+    const invalid = !Number.isFinite(age) || age < -30_000 || age > 15 * 60_000 || evidence.source !== watch.source || !["PASS", "REVIEW", "REJECT"].includes(evidence.status)
+      || !Number.isFinite(evidence.liquidityUsd) || evidence.liquidityUsd < 0
+      || (watch.source === "LENDING" && (!Number.isFinite(evidence.utilizationPct) || evidence.utilizationPct < 0 || evidence.utilizationPct > 100));
+    if (invalid) {
+      if (decision !== "STOP_EXIT_RESEARCH") decision = "REVIEW";
+      reasons.push("Current evidence is stale, incomplete, future-dated or from the wrong source; a fresh observation is required.");
+    }
+  }
   if (!reasons.length) reasons.push("No monitored condition materially deteriorated from the recorded baseline.");
-  return { schema: "cofferhouse.guardian.observation.v1", observedAt: now().toISOString(), target: watch.target, intent: watch.intent, decision, reasons, baseline: watch.baseline, current: evidence ?? null, requiresHumanAttention: decision !== "HOLD_RESEARCH", notice: "Guardian proposes a research response only. It cannot rebalance, withdraw, swap or execute." };
+  return { schema: "cofferhouse.guardian.observation.v1", observedAt: evaluatedAt.toISOString(), target: watch.target, intent: watch.intent, decision, reasons, baseline: watch.baseline, current: evidence ?? null, requiresHumanAttention: decision !== "HOLD_RESEARCH", notice: "Guardian proposes a research response only. It cannot rebalance, withdraw, swap or execute." };
 }
