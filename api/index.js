@@ -18,7 +18,10 @@ import handler15 from "../server/receipt/verify.js";
 
 import loanHealthHandler from "../server/guardian/loan-health.js";
 
+import budgetHandler from "../server/bots/budget.js";
+
 const routes = new Map([
+  ["/api/bots/budget", budgetHandler],
   ["/api/guardian/loan-health", loanHealthHandler],
   ["/api/agent/acknowledge", handler0],
   ["/api/agent/run", handler1],

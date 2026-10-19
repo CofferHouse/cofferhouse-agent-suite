@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { deleteJsonIfValue, setJsonIfAbsent } from "../server/_redis.js";
+import { compareAndSetJson, deleteJsonIfValue, setJsonIfAbsent } from "../server/_redis.js";
 
 async function withRedisMock(results, callback) {
   const previousFetch = globalThis.fetch;
@@ -35,5 +35,18 @@ test("run lock release only deletes the lock owned by that run", async () => {
     assert.equal(await deleteJsonIfValue("lock", { runId: "other" }), false);
     assert.equal(commands[0][0], "EVAL");
     assert.equal(commands[0][2], "1");
+  });
+});
+
+
+test("budget compare-and-set uses one atomic Redis script and preserves exact JSON", async () => {
+  await withRedisMock([1, 0], async commands => {
+    assert.equal(await compareAndSetJson("budget", null, { reservedUnits: "9007199254740993" }), true);
+    assert.equal(await compareAndSetJson("budget", { version: 1 }, { version: 2 }), false);
+    assert.deepEqual(commands[0].slice(2), ["1", "budget", "absent", "", '{"reservedUnits":"9007199254740993"}']);
+    assert.equal(commands[1][4], "present");
+    assert.equal(commands[1][5], '{"version":1}');
+    assert.match(commands[0][1], /redis.call\('get'/);
+    assert.match(commands[0][1], /redis.call\('set'/);
   });
 });

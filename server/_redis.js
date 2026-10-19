@@ -72,3 +72,9 @@ export async function setMembers(key, limit = 500) {
   return (members ?? []).slice(0, limit);
 }
 import { configuredHttpsEndpoint, configuredSecret } from "../packages/agent-core/index.js";
+
+// Atomic JSON CAS. A null expected value means the key must not exist.
+export async function compareAndSetJson(key, expected, next) {
+  const script = "local current = redis.call('get', KEYS[1]); if (ARGV[1] == 'absent' and not current) or (ARGV[1] == 'present' and current == ARGV[2]) then redis.call('set', KEYS[1], ARGV[3]); return 1 else return 0 end";
+  return Number(await command(['EVAL', script, '1', key, expected === null ? 'absent' : 'present', expected === null ? '' : JSON.stringify(expected), JSON.stringify(next)])) === 1;
+}
