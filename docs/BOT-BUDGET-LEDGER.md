@@ -22,7 +22,7 @@ Example initialization body (illustrative amounts, not a project allocation):
 }
 ```
 
-`resume` and `pause` take the bot ID. `reserve` additionally takes a unique `operationId` and decimal-string `amountUsdc`. `release` takes the bot and operation ID and is only for plans that have never been submitted. The current release has no executor or submission path. Before enabling execution, introduce submission/settlement states and prevent release while the outcome is uncertain.
+`resume` and `pause` take the bot ID. `reserve` additionally takes a unique `operationId` and decimal-string `amountUsdc`. `release` takes the bot and operation ID and is only for plans that have never been submitted. The service has no executor or submission path. Its new `track` action records the hash and exact transfer intent before external broadcast; tracked operations cannot be manually released. See `TRANSFER-RECONCILIATION.md`.
 
 ## Atomicity and retries
 
@@ -34,7 +34,7 @@ At most 500 operation records are retained per ledger; exceeding this blocks fur
 
 ## Boundaries before execution
 
-Balances are operator-declared. This is not an onchain balance check, installed Circle wallet permission, cross-bot aggregate wallet limit, daily rolling spend meter or settled spending ledger. Real bot execution still needs wallet-bound funding verification, chain and contract allowlists, quote freshness/slippage checks, installed spending permissions, irreversible submission state and receipt reconciliation. This release deliberately exposes no settlement or transaction execution action.
+Balances are operator-declared. This is not an onchain balance check, installed Circle wallet permission, cross-bot aggregate wallet limit, daily rolling spend meter or settled spending ledger. Real bot execution still needs wallet-bound funding verification, chain and contract allowlists, quote freshness/slippage checks, installed spending permissions, irreversible submission state and receipt reconciliation. Direct USDC transfers now support RPC receipt reconciliation; transaction execution remains disabled.
 
 ## Validation
 
