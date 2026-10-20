@@ -13,10 +13,10 @@ const container=process.env.REDIS_TEST_CONTAINER;
 if(!/^[a-f0-9]{12,64}$/.test(container??''))throw Error('An explicit isolated Redis service container ID is required.');
 const execute=promisify(execFile),originalFetch=globalThis.fetch;
 const originalUrl=process.env.UPSTASH_REDIS_REST_URL,originalToken=process.env.UPSTASH_REDIS_REST_TOKEN;
-process.env.UPSTASH_REDIS_REST_URL='https://cofferhouse-redis-test.invalid';
-process.env.UPSTASH_REDIS_REST_TOKEN='isolated-ci-placeholder-not-a-credential';
+process.env.UPSTASH_REDIS_REST_URL='https://cofferhouse-test.upstash.io';
+process.env.UPSTASH_REDIS_REST_TOKEN='token-long-enough-for-tests';
 globalThis.fetch=async(url,options)=>{
-  assert.equal(url,'https://cofferhouse-redis-test.invalid');
+  assert.equal(url,'https://cofferhouse-test.upstash.io');
   const command=JSON.parse(options.body);
   const {stdout}=await execute('docker',['exec',container,'redis-cli','--json',...command.map(String)],{signal:options.signal,timeout:5000,maxBuffer:1024*1024});
   const result=JSON.parse(stdout);
