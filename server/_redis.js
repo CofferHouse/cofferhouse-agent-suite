@@ -9,6 +9,9 @@ async function command(parts) {
   if (!durableStoreConfigured()) throw new Error("Durable store is not configured.");
   const response = await fetch(redisUrl(), {
     method: "POST",
+    // Bound fetch and response-body reads. A timed-out write may still have
+    // committed remotely: never retry mutations automatically here.
+    signal: AbortSignal.timeout(3000),
     headers: { Authorization: `Bearer ${redisToken()}`, "Content-Type": "application/json" },
     body: JSON.stringify(parts)
   });
@@ -77,4 +80,11 @@ import { configuredHttpsEndpoint, configuredSecret } from "../packages/agent-cor
 export async function compareAndSetJson(key, expected, next) {
   const script = "local current = redis.call('get', KEYS[1]); if (ARGV[1] == 'absent' and not current) or (ARGV[1] == 'present' and current == ARGV[2]) then redis.call('set', KEYS[1], ARGV[3]); return 1 else return 0 end";
   return Number(await command(['EVAL', script, '1', key, expected === null ? 'absent' : 'present', expected === null ? '' : JSON.stringify(expected), JSON.stringify(next)])) === 1;
+}
+
+// Atomic fixed-window request budget, shared by all sessions for a wallet.
+// A lost HTTP response fails closed; retransmission can only consume extra quota.
+export async function consumeLoanWatchRequest(wallet) {
+  const script = "local n = redis.call('incr', KEYS[1]); if n == 1 then redis.call('expire', KEYS[1], 60) end; return n";
+  return Number(await command(['EVAL',script,'1','cofferhouse:guardian:watch-rate:'+wallet.toLowerCase()])) <= 20;
 }
