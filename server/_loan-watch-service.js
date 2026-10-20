@@ -57,8 +57,11 @@ export function createLoanWatchService({get,cas,getPosition,evaluate,send,id,now
         if (!watch) throw new LoanWatchError('Watch not found in the current session.',404);
         const previous = await get(stateKey(watch));
         const age = now().getTime() - Date.parse(previous?.observedAt);
-        if (previous?.delivery !== 'UNKNOWN' || !Number.isFinite(age) || age < 600_000 || previous.retryRequestedAt)
-          throw new LoanWatchError('Only an unresolved UNKNOWN delivery older than ten minutes can be retried once.',409);
+        // A crashed worker can leave CLAIMED without knowing whether Telegram
+        // received anything. Recover only through explicit duplicate consent,
+        // never through an automatic lease expiry or deletion of the state.
+        if (!['UNKNOWN','CLAIMED'].includes(previous?.delivery) || !Number.isFinite(age) || age < 600_000 || previous.retryRequestedAt)
+          throw new LoanWatchError('Only an unresolved UNKNOWN or CLAIMED delivery older than ten minutes can be retried once.',409);
         if (!await cas(stateKey(watch),previous,{...previous,delivery:'RETRY_REQUESTED',retryRequestedAt:now().toISOString()}))
           throw new LoanWatchError('Delivery changed; reload its status.',409);
         return {retryRequested:true,loanId:watch.loanId,possibleDuplicate:true};

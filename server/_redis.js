@@ -9,6 +9,9 @@ async function command(parts) {
   if (!durableStoreConfigured()) throw new Error("Durable store is not configured.");
   const response = await fetch(redisUrl(), {
     method: "POST",
+    // Bound fetch and response-body reads. A timed-out write may still have
+    // committed remotely: never retry mutations automatically here.
+    signal: AbortSignal.timeout(3000),
     headers: { Authorization: `Bearer ${redisToken()}`, "Content-Type": "application/json" },
     body: JSON.stringify(parts)
   });

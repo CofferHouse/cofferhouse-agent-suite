@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { compareAndSetJson, deleteJsonIfValue, setJsonIfAbsent } from "../server/_redis.js";
+import { compareAndSetJson, deleteJsonIfValue, setJsonIfAbsent, getJson } from "../server/_redis.js";
 
 async function withRedisMock(results, callback) {
   const previousFetch = globalThis.fetch;
@@ -49,4 +49,27 @@ test("budget compare-and-set uses one atomic Redis script and preserves exact JS
     assert.match(commands[0][1], /redis.call\('get'/);
     assert.match(commands[0][1], /redis.call\('set'/);
   });
+});
+
+test('Redis requests have a three-second abort deadline, including response-body reads',async()=>{
+  for(const phase of ['fetch','body']){
+    await withRedisMock([],async()=>{
+      const originalTimeout=AbortSignal.timeout;
+      let calls=0;
+      // Accelerate the actual deadline for the test without changing production's 3000ms.
+      AbortSignal.timeout=ms=>{assert.equal(ms,3000);return originalTimeout.call(AbortSignal,5);};
+      globalThis.fetch=async(_url,{signal})=>{
+        calls++;assert.ok(signal instanceof AbortSignal);
+        const wait=()=>new Promise((_resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}));
+        if(phase==='fetch')return wait();
+        return {ok:true,json:wait};
+      };
+      const keepAlive=setTimeout(()=>{},1000); // AbortSignal's timer itself is unref'ed.
+      try {
+        const request=phase==='fetch'?compareAndSetJson('test-key',null,{revision:1}):getJson('test-key');
+        await assert.rejects(request,error=>error.name==='TimeoutError');
+        assert.equal(calls,1); // Ambiguous writes must not be retried by the client.
+      } finally {clearTimeout(keepAlive);AbortSignal.timeout=originalTimeout;}
+    });
+  }
 });
