@@ -34,7 +34,7 @@ In addition to `BOT_CHAIN_ID`, `BOT_USDC_ADDRESS` and HTTPS `ARC_RPC_URL`, `BOT_
 - `pools`: reviewed PoolKey objects with currency0, currency1, fee, tickSpacing and zero hooks
 - `outputTokens`: exact reviewed output-token contract addresses
 
-The stored swap intent selects adapter `uniswap_v4_single`. Missing or invalid configuration fails closed. No production environment values were changed. A live COFFERS deployment/pool must be inspected before configuring it. If its pool uses hooks, this adapter intentionally rejects it.
+The stored swap intent selects adapter `uniswap_v4_single`. Runtime reconciliation additionally runs the deployment preflight documented in `V4-DEPLOYMENT-PREFLIGHT.md`; StateView and reviewed token hashes/decimals are now required. Missing or invalid configuration fails closed. No production environment values were changed. A live COFFERS deployment/pool must be inspected before configuring it. If its pool uses hooks, this adapter intentionally rejects it.
 
 ## Verification
 

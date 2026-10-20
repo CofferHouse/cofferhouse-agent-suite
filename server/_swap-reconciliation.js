@@ -1,5 +1,6 @@
 import { keccak256, decodeEventLog, parseAbi, createPublicClient, http } from 'viem';
 import { createUniswapV4Adapter } from './adapters/uniswap-v4.js';
+import { inspectV4Deployment } from './_v4-preflight.js';
 const transferAbi = parseAbi(['event Transfer(address indexed from, address indexed to, uint256 value)']);
 const address = x => typeof x === 'string' && /^0x[0-9a-f]{40}$/i.test(x) && !/^0x0{40}$/i.test(x);
 const same = (a,b) => typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase();
@@ -60,6 +61,8 @@ export async function reconcileConfiguredSwap(operation) {
     const chainId=Number(process.env.BOT_CHAIN_ID),usdc=process.env.BOT_USDC_ADDRESS,rpc=process.env.ARC_RPC_URL;
     if(!Number.isSafeInteger(chainId)||chainId<=0||!address(usdc)||!rpc?.startsWith('https://')||config.enabled!==true||!Array.isArray(config.outputTokens)||!config.outputTokens.length||!config.outputTokens.every(address))throw Error('Incomplete configuration');
     const client=createPublicClient({transport:http(rpc,{timeout:10_000,retryCount:0})});
+    const preflight=await inspectV4Deployment({client,config,chainId,usdc});
+    if(preflight.status!=='COMPATIBLE')return {state:'REVIEW',reason:'V4 deployment compatibility checks did not pass; funds remain reserved.'};
     const adapter=createUniswapV4Adapter({...config,client});
     return createSwapReconciler({client,chainId,usdc,routers:[config.router],outputTokens:config.outputTokens,adapters:{uniswap_v4_single:adapter}})(operation);
   }catch{return {state:'REVIEW',reason:'V4 configuration is invalid; reservation remains locked.'};}

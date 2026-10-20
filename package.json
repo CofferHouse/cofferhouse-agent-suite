@@ -12,7 +12,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "verify:production": "node scripts/verify-production.mjs",
     "test": "node --test",
-    "check": "npm test && npm run build"
+    "check": "npm test && npm run build",
+    "verify:v4": "node scripts/verify-v4-deployment.mjs"
   },
   "devDependencies": {
     "vite": "^7.1.7"
