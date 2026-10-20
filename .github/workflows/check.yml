@@ -18,3 +18,24 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+  redis-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      redis:
+        image: redis:7.4-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --test scripts/verify-loan-watch-redis.mjs
+        env:
+          REDIS_TEST_CONTAINER: ${{ job.services.redis.id }}

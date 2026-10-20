@@ -4,7 +4,7 @@
 
 Prepared on a review branch. The initial draft was checked only in an isolated JavaScript runtime. Arc Studio subsequently reported 265 passing Node tests and a successful build at 90216372 under Node 24. The current hardening adds Node tests for interrupted CLAIMED recovery, concurrent recovery requests, late original completion, revocation and Redis abort behavior. Real provider, Redis and Telegram integration remains unverified. Nothing is merged or activated by this draft.
 
-Hardening validation (20 October 2026): fresh npm ci and npm run check passed locally with Node 22.23.3/npm 10.9.9, matching the original GitHub runner versions. The suite passed 269 tests with no failures and Vite compiled successfully. This includes 15 injected loan-watch service tests and four Redis client tests; it does not exercise a live Redis or Telegram account. GitHub's independent run must still be checked after pushing.
+Hardening validation (20 October 2026): fresh npm ci and npm run check passed locally with Node 22.23.3/npm 10.9.9, matching the original GitHub runner versions. The suite passed 269 tests with no failures and Vite compiled successfully. This includes 15 injected loan-watch service tests and four Redis client tests; it does not exercise a live Redis or Telegram account. GitHub Actions subsequently passed both runs for e8504cd.
 
 ## Private registration
 
@@ -56,3 +56,9 @@ Run npm run check, including the new Node service tests. Verify route authentica
 The PR workflow installs the lockfile with npm ci, checks the installed Borrow Kit getPosition method without contacting a provider, and runs npm run check on Node 22. A green SDK shape check does not verify provider response semantics, onchain ownership or real Telegram/Redis behavior. Review the workflow result before merging; adding a workflow is not evidence it passed.
 
 The first CI failure at 90216372 was reproduced under Node 22/npm 10: npm ci rejected the lockfile because jayson's optional peer utf-8-validate@5.0.10 was absent. The GitHub job log (run 39467235572, job 118781685076) contains the same error. Regenerating the lockfile with npm 10 adds that nested entry without upgrading existing dependencies. Fresh npm ci must pass before checks are considered reproducible.
+
+## Isolated Redis integration in CI
+
+The redis-integration job starts its own Redis 7.4 service container and invokes scripts/verify-loan-watch-redis.mjs explicitly. The production _redis.js Lua commands are forwarded by an injected fetch adapter to redis-cli inside that container. This verifies actual Redis CAS, quota expiration setup and concurrent service transitions; it does not verify Upstash REST/TLS, production networking or durability across restarts. No production Redis account is used. Borrow Kit observations and Telegram delivery remain fixtures.
+
+The isolated checks cover one winner among competing CAS writes, the shared twenty-request quota and TTL, concurrent loan-watch delivery, competing CLAIMED recovery requests and watch removal. The normal suite also checks endpoint method/activation gates, malformed and oversized bodies, identity-field filtering, session/quota error codes and exception-detail suppression. These new CI checks must pass before their behavior is considered validated. The script requires an explicit test container ID and is not included in the default test discovery.
