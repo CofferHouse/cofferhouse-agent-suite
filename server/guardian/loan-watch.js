@@ -12,7 +12,7 @@ export function createLoanWatchHandler({service=loanWatchService,configured=dura
         return response.status(413).json({ok:false,error:'Request body too large'});
       const body=typeof request.body==='string'?JSON.parse(request.body):request.body;
       if (!body || typeof body!=='object' || Array.isArray(body)) return response.status(400).json({ok:false,error:'A watch request object is required.'});
-      const result=await service.manage({token:body.token,action:body.action,loanId:body.loanId,consent:body.consent});
+      const result=await service.manage({token:body.token,action:body.action,loanId:body.loanId,consent:body.consent,acceptDuplicate:body.acceptDuplicate});
       return response.status(200).json({ok:true,result});
     } catch(error) {
       if (error instanceof LoanWatchError) return response.status(error.status).json({ok:false,error:error.message});

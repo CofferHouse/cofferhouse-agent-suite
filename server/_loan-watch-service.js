@@ -9,7 +9,7 @@ export class LoanWatchError extends Error {
 }
 
 // Every side effect is injected; the default runtime is wired separately.
-export function createLoanWatchService({get,cas,getPosition,evaluate,send,id,now = () => new Date(), maxRunMs = 15_000}) {
+export function createLoanWatchService({get,cas,getPosition,evaluate,send,id,now = () => new Date(), consume = async () => true, maxRunMs = 15_000}) {
   async function subscription(wallet, linkedAt) {
     const sub = await get(walletKey(wallet));
     if (sub?.schema !== 'cofferhouse.telegram.subscription.v1' || !sub.active || !same(sub.walletAddress,wallet) || sub.linkedAt !== linkedAt) return null;
@@ -26,10 +26,11 @@ export function createLoanWatchService({get,cas,getPosition,evaluate,send,id,now
     if (!sub) throw new LoanWatchError('Reconnect alerts in a private Telegram chat.',401);
     return sub;
   }
-  async function manage({token, action = 'LIST', loanId, consent = false}) {
+  async function manage({token, action = 'LIST', loanId, consent = false, acceptDuplicate = false}) {
     const sub = await session(token);
-    if (!['LIST','ADD','REMOVE'].includes(action)) throw new LoanWatchError('Unsupported watch action.');
+    if (!['LIST','ADD','REMOVE','RETRY'].includes(action)) throw new LoanWatchError('Unsupported watch action.');
     const wallet = sub.walletAddress.toLowerCase();
+    if (!await consume(wallet)) throw new LoanWatchError('Too many watch requests; retry later.',429);
     if (action !== 'LIST' && !uuid(loanId)) throw new LoanWatchError('A complete loan UUID is required.');
     if (action === 'ADD') {
       if (consent !== true || sub.preferences?.guardianAttention === false) throw new LoanWatchError('Explicit loan-alert consent and enabled Guardian alerts are required.');
@@ -45,7 +46,23 @@ export function createLoanWatchService({get,cas,getPosition,evaluate,send,id,now
       if (stored !== null && !Array.isArray(stored)) throw new LoanWatchError('Watch registry requires review.',503);
       const watches = stored ?? [];
       const owned = watches.filter(w => same(w.walletAddress,wallet));
-      if (action === 'LIST') return owned.map(w => ({id:w.id,loanId:w.loanId,registeredAt:w.registeredAt,connectedSession:w.linkedAt===sub.linkedAt}));
+      if (action === 'LIST') return Promise.all(owned.map(async w => {
+        const state = await get(stateKey(w));
+        return {id:w.id,loanId:w.loanId,registeredAt:w.registeredAt,connectedSession:w.linkedAt===sub.linkedAt,
+          delivery:state?.delivery ?? 'NOT_OBSERVED',band:state?.band ?? null};
+      }));
+      if (action === 'RETRY') {
+        if (consent !== true || acceptDuplicate !== true) throw new LoanWatchError('Retry requires consent and acceptance of a possible duplicate.');
+        const watch = owned.find(w => same(w.loanId,loanId) && w.linkedAt === sub.linkedAt);
+        if (!watch) throw new LoanWatchError('Watch not found in the current session.',404);
+        const previous = await get(stateKey(watch));
+        const age = now().getTime() - Date.parse(previous?.observedAt);
+        if (previous?.delivery !== 'UNKNOWN' || !Number.isFinite(age) || age < 600_000 || previous.retryRequestedAt)
+          throw new LoanWatchError('Only an unresolved UNKNOWN delivery older than ten minutes can be retried once.',409);
+        if (!await cas(stateKey(watch),previous,{...previous,delivery:'RETRY_REQUESTED',retryRequestedAt:now().toISOString()}))
+          throw new LoanWatchError('Delivery changed; reload its status.',409);
+        return {retryRequested:true,loanId:watch.loanId,possibleDuplicate:true};
+      }
       const matching = w => same(w.walletAddress,wallet) && same(w.loanId,loanId);
       let next;
       if (action === 'REMOVE') next = watches.filter(w => !matching(w));
@@ -89,9 +106,9 @@ export function createLoanWatchService({get,cas,getPosition,evaluate,send,id,now
           }
         } catch { /* No healthy-position claim or foreign position data. */ }
         const previous = await get(stateKey(watch));
-        if (previous?.band === band) { summary.skipped++; continue; }
+        if (previous?.band === band && previous.delivery !== 'RETRY_REQUESTED') { summary.skipped++; continue; }
         const alerts = !['MONITOR','NO_DEBT'].includes(band);
-        const event = {band,revision:(previous?.revision ?? 0)+1,delivery:alerts?'CLAIMED':'NOT_REQUIRED',observedAt:now().toISOString()};
+        const event = {band,revision:(previous?.revision ?? 0)+1,delivery:alerts?'CLAIMED':'NOT_REQUIRED',observedAt:now().toISOString(),...(previous?.band === band && previous.retryRequestedAt ? {retryRequestedAt:previous.retryRequestedAt} : {})};
         if (!await cas(stateKey(watch),previous,event)) { summary.skipped++; continue; }
         if (!alerts) continue;
         // Check revocation and chat ownership again immediately before delivery.

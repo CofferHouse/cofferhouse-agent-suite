@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { BorrowKit } from '@circle-fin/borrow-kit';
-import { getJson, compareAndSetJson, durableStoreConfigured } from './_redis.js';
+import { getJson, compareAndSetJson, durableStoreConfigured, consumeLoanWatchRequest } from './_redis.js';
 import { sendTelegramMessage, telegramConfigured } from './_notify.js';
 import { evaluateLoanHealth } from '../packages/agent-modules/loan-health.js';
 import { createLoanWatchService } from './_loan-watch-service.js';
@@ -16,7 +16,7 @@ async function observe(params) {
   } finally { clearTimeout(timer); }
 }
 export const loanWatchService = createLoanWatchService({
-  get:getJson,cas:compareAndSetJson,getPosition:observe,evaluate:evaluateLoanHealth,id:randomUUID,
+  get:getJson,cas:compareAndSetJson,consume:consumeLoanWatchRequest,getPosition:observe,evaluate:evaluateLoanHealth,id:randomUUID,
   send:request => sendTelegramMessage(request,process.env,(url,options) => fetch(url,{...options,signal:AbortSignal.timeout(5000)}))
 });
 export async function runLoanWatchCycle() {
