@@ -2,7 +2,7 @@
 
 ## Scope
 
-This release adds immutable swap intents to the existing reservation ledger and an injectable, server-owned verification boundary for protocol adapters. It does NOT include a production Uniswap/Universal Router/v4 adapter. Production swap reconciliation returns REVIEW, keeping funds reserved. No DEX address, COFFERS contract, wallet permission or live execution was configured.
+This release adds immutable swap intents to the existing reservation ledger and an injectable, server-owned verification boundary for protocol adapters. A strict Universal Router v4 single-pool adapter is now included; see `UNISWAP-V4-ADAPTER.md`. Swap reconciliation still returns REVIEW by default until an explicitly reviewed deployment configuration is provided. No DEX address, COFFERS contract, wallet permission or live execution was configured.
 
 Direct transfer behavior remains supported. No new external endpoint is introduced; operator requests use the existing protected budget endpoint.
 

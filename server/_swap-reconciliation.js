@@ -1,4 +1,5 @@
-import { keccak256, decodeEventLog, parseAbi } from 'viem';
+import { keccak256, decodeEventLog, parseAbi, createPublicClient, http } from 'viem';
+import { createUniswapV4Adapter } from './adapters/uniswap-v4.js';
 const transferAbi = parseAbi(['event Transfer(address indexed from, address indexed to, uint256 value)']);
 const address = x => typeof x === 'string' && /^0x[0-9a-f]{40}$/i.test(x) && !/^0x0{40}$/i.test(x);
 const same = (a,b) => typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase();
@@ -51,8 +52,15 @@ export function createSwapReconciler({client, chainId, usdc, routers = [], outpu
   };
 }
 
-// Deliberately no production adapter until the actual DEX/router is selected
-// and its decoder has protocol-specific fixture coverage.
-export async function reconcileConfiguredSwap() {
-  return {state:'REVIEW',reason:'No production swap adapter is configured. Reservation remains locked.'};
+// Opt-in only: reviewed deployment/bytecode/pool configuration is mandatory.
+export async function reconcileConfiguredSwap(operation) {
+  if(!process.env.BOT_V4_CONFIG) return {state:'REVIEW',reason:'No reviewed V4 deployment is configured; reservation remains locked.'};
+  try {
+    const config=JSON.parse(process.env.BOT_V4_CONFIG);
+    const chainId=Number(process.env.BOT_CHAIN_ID),usdc=process.env.BOT_USDC_ADDRESS,rpc=process.env.ARC_RPC_URL;
+    if(!Number.isSafeInteger(chainId)||chainId<=0||!address(usdc)||!rpc?.startsWith('https://')||config.enabled!==true||!Array.isArray(config.outputTokens)||!config.outputTokens.length||!config.outputTokens.every(address))throw Error('Incomplete configuration');
+    const client=createPublicClient({transport:http(rpc,{timeout:10_000,retryCount:0})});
+    const adapter=createUniswapV4Adapter({...config,client});
+    return createSwapReconciler({client,chainId,usdc,routers:[config.router],outputTokens:config.outputTokens,adapters:{uniswap_v4_single:adapter}})(operation);
+  }catch{return {state:'REVIEW',reason:'V4 configuration is invalid; reservation remains locked.'};}
 }
