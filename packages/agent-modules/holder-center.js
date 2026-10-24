@@ -1,9 +1,9 @@
 export const holderLevels = Object.freeze([
-  { id: "member", label: "Member", cofferThreshold: 0 },
-  { id: "builder", label: "Builder", cofferThreshold: 20_000 },
-  { id: "steward", label: "Steward", cofferThreshold: 80_000 },
-  { id: "partner", label: "Partner", cofferThreshold: 320_000 },
-  { id: "keyholder", label: "Keyholder", cofferThreshold: 1_000_000 }
+  { id: "member", label: "Member", cofferThreshold: 20_000 },
+  { id: "builder", label: "Builder", cofferThreshold: 80_000 },
+  { id: "steward", label: "Steward", cofferThreshold: 320_000 },
+  { id: "partner", label: "Partner", cofferThreshold: 1_000_000 },
+  { id: "keyholder", label: "Keyholder", cofferThreshold: 2_000_000 }
 ]);
 
 export const holderServices = Object.freeze([

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { holderAccess, loadHolderPreferences, nextAscension, normalizeRewardMode, saveHolderPreferences } from "../packages/agent-modules/index.js";
+import { holderAccess, loadHolderPreferences, nextAscension, normalizeRewardMode, saveHolderPreferences } from "../packages/agent-modules/holder-center.js";
 
 test("holder access follows permanent progression levels", () => {
   const member = holderAccess("member");
@@ -10,7 +10,10 @@ test("holder access follows permanent progression levels", () => {
 });
 
 test("ascension reports the next token threshold", () => {
-  assert.deepEqual(nextAscension("builder"), { id: "steward", label: "Steward", cofferThreshold: 80_000 });
+  assert.deepEqual(nextAscension("member"), { id: "builder", label: "Builder", cofferThreshold: 80_000 });
+  assert.deepEqual(nextAscension("builder"), { id: "steward", label: "Steward", cofferThreshold: 320_000 });
+  assert.deepEqual(nextAscension("steward"), { id: "partner", label: "Partner", cofferThreshold: 1_000_000 });
+  assert.deepEqual(nextAscension("partner"), { id: "keyholder", label: "Keyholder", cofferThreshold: 2_000_000 });
   assert.equal(nextAscension("keyholder"), null);
 });
 
