@@ -8,7 +8,7 @@ test('Holder Center supports the five House languages with complete catalog rows
   for (const row of holderTranslations) {
     assert.equal(row.length, 5, row[0]);
     assert.ok(row.every(value => typeof value === 'string' && value.length > 0), row[0]);
-    for (const value of row) assert.equal((value.match(/\{n\}/g) || []).length, (row[0].match(/\{n\}/g) || []).length, row[0]);
+    for (const value of row) assert.deepEqual(value.match(/\{(?:n|name|path)\}/g) || [], row[0].match(/\{(?:n|name|path)\}/g) || [], row[0]);
   }
 });
 test('invalid language falls back to English and original text is preserved', () => {
@@ -33,5 +33,15 @@ test('translated ascension templates preserve amounts and token symbols exactly'
 test('contract addresses, protocol names and machine evidence remain unchanged', () => {
   for (const value of ['0x1234567890abcdef1234567890abcdef12345678','USDC','Morpho','Member','Builder','{"action":"DISCONNECT"}']) {
     for (const language of ['zh','ja','hi','es']) assert.equal(translateHolderText(value, language), value);
+  }
+});
+test('dynamic research amounts and source receipt identifiers survive translation', () => {
+  for (const language of ['zh','ja','hi','es']) {
+    const text = translateHolderText('$8,500 modeled · 3.588% observed weighted APY', language);
+    assert.ok(text.includes('$8,500'));
+    assert.ok(text.includes('3.588%'));
+    assert.ok(!text.includes('{n}'));
+    assert.ok(translateHolderText('PROPOSAL READY · earn-strategy-b99488934f93ba94', language).includes('earn-strategy-b99488934f93ba94'));
+    assert.notEqual(translateHolderText('Research score 67 · active · Modeled size is capped at 1% of available liquidity.', language), 'Research score 67 · active · Modeled size is capped at 1% of available liquidity.');
   }
 });

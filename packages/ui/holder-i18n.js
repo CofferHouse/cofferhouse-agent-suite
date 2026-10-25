@@ -82,7 +82,10 @@ export function createHolderI18n({ root, storage, document: doc = root.ownerDocu
       }
     }
     const picker = root.querySelector('#holder-language');
-    if (picker) picker.value = language;
+    if (picker) {
+      picker.value = language;
+      picker.setAttribute('aria-label', translateHolderText('Select language', language));
+    }
     observer.observe(root, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['aria-label','placeholder','title'] });
   }
   root.addEventListener('change', event => {
