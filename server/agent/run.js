@@ -10,6 +10,8 @@ import { analyzeAgentCycle } from "../_gemini.js";
 import { createInteropReceipt, createResearchSessionReceipt, sealDocument } from "../../packages/evidence/index.js";
 import { withRetry } from "../../packages/shared/index.js";
 
+import { runLoanWatchCycle } from "../_loan-watch-runtime.js";
+
 const SNAPSHOT_KEY = "cofferhouse:scout:latest-snapshot";
 const STATUS_KEY = "cofferhouse:scout:agent-status";
 const HISTORY_KEY = "cofferhouse:scout:agent-history";
@@ -47,6 +49,7 @@ export default async function handler(request, response) {
 
   try {
     await recordAttempt("LOAD_DURABLE_STATE");
+    const loanWatchSummary = await runLoanWatchCycle();
     const [previousMarkets, guardianRegistrationState, previousInteropReceipt] = await Promise.all([getJson(SNAPSHOT_KEY), getJson(GUARDIAN_WATCH_KEY), getJson(INTEROP_LATEST_KEY)]);
     const guardianRegistrations = asList(guardianRegistrationState).filter((item) => item?.schema === "cofferhouse.guardian.registration.v1" && item.watch?.source === "LENDING").slice(0, 20);
     await recordAttempt("OBSERVE_ARC_MARKETS");
@@ -134,7 +137,7 @@ export default async function handler(request, response) {
       { phase: "RECORD", status: "READY", detail: "Sealed cycle prepared for durable storage.", at: cycle.ranAt }
     ];
     const guardian = guardianReceipts.length ? { active: true, watchCount: guardianReceipts.length, decisions: guardianReceipts.map((receipt) => ({ receiptId: receipt.receiptId, target: receipt.watch.target, decision: receipt.observation.decision, requiresHumanAttention: receipt.observation.requiresHumanAttention })), alerts: guardianAlerts, notifications: guardianNotifications, subscriberNotifications: guardianSubscriberNotifications } : { active: false, watchCount: 0, decisions: [], alerts: [], notifications: [], subscriberNotifications: [] };
-    const publicCycle = sealDocument({ ...cycleWithoutMarkets, trace, verification, interop: { configured: interop.configured, status: interop.status, receiptId: interop.receipt?.receiptId ?? null, counts: interop.receipt?.observation.counts ?? null, error: interop.error }, intelligence, alert, notification, subscriberNotification, guardian }, "cycle");
+    const publicCycle = sealDocument({ ...cycleWithoutMarkets, trace, verification, loanWatch: loanWatchSummary, interop: { configured: interop.configured, status: interop.status, receiptId: interop.receipt?.receiptId ?? null, counts: interop.receipt?.observation.counts ?? null, error: interop.error }, intelligence, alert, notification, subscriberNotification, guardian }, "cycle");
     await recordAttempt("COMMIT_DURABLE_EVIDENCE", { cycleRanAt: cycle.ranAt });
     await setJson(SNAPSHOT_KEY, currentMarkets);
     await setJson(STATUS_KEY, publicCycle);

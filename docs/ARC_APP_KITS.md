@@ -1,5 +1,8 @@
 # Arc App Kits in CofferHouse
 
+> Implementation status (20 October 2026): Agent execution and the CofferHouse Big Coffer vault are roadmap features. No CofferHouse vault implementation or custody/execution authority is provided by this repository. Budget reservations in Redis are accounting controls, not wallet-enforced spending permissions. Earn Kit discovers third-party vaults; these are not The Big Coffer. Individual loan alerts remain in disabled draft PR #6 pending full verification. Historical submission copy below is not a current activation checklist.
+
+
 CofferHouse uses Circle's official Arc App Kit SDK as an integration layer rather than recreating protocol-specific flows.
 
 ## Earn Kit — Opportunities

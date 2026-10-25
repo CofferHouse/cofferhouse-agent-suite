@@ -20,7 +20,10 @@ import loanHealthHandler from "../server/guardian/loan-health.js";
 
 import budgetHandler from "../server/bots/budget.js";
 
+import loanWatchHandler from "../server/guardian/loan-watch.js";
+
 const routes = new Map([
+  ["/api/guardian/loan-watch", loanWatchHandler],
   ["/api/bots/budget", budgetHandler],
   ["/api/guardian/loan-health", loanHealthHandler],
   ["/api/agent/acknowledge", handler0],
