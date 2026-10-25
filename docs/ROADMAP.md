@@ -6,7 +6,7 @@ CofferHouse uses readiness checks instead of artificial dates. The following pha
 
 - Public repository and product specification
 - CofferHouse website and public documentation
-- Arc House and builder-program participation
+- Arc ecosystem documentation and community feedback (hackathon submissions are not a current launch requirement)
 - Final asset and collection review
 - Security and disclosure framework
 
@@ -82,3 +82,7 @@ CofferHouse uses readiness checks instead of artificial dates. The following pha
 ## Separate ecosystem milestones
 
 Membership collection, ascension, `$COFFERS`, rewards and distribution rules will be documented separately. None of them are required for the Scout MVP.
+
+## Current implementation inventory
+
+The [October 18 project status](PROJECT-STATUS-2026-10-18.md) separates verified runtime operation, testnet membership/rewards, external bots not yet received, and production launch requirements. The roadmap above describes intended capabilities, not proof that execution bots are operating.
