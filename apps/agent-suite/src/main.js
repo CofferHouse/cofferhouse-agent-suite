@@ -1,4 +1,5 @@
 import { botLabHtml, mountBotLab } from "../../../packages/agent-modules/bot-lab-view.js";
+import { createHolderI18n } from "../../../packages/ui/holder-i18n.js";
 import { mountMembershipRoom } from "../../../packages/agent-modules/membership-room.js";
 import "./styles.css";
 import { deploymentView } from "../../../packages/shared/deployment-view.js";
@@ -18,6 +19,7 @@ const explorerAddress = (address) => address ? `https://arc.etherscan.io/address
 const infoTip = (text) => `<span class="info-tip" tabindex="0" role="note" aria-label="${h(text)}">i<span class="info-card">${h(text)}</span></span>`;
 const identityValue = (label, value, url = null) => `<div><span>${h(label)}</span>${url ? `<a href="${h(safeExternalUrl(url))}" target="_blank" rel="noreferrer" title="${h(value)}">${h(shortId(value))} ↗</a>` : `<b title="${h(value || "")}">${h(shortId(value))}</b>`}</div>`;
 const app = document.querySelector("#app");
+const holderI18n = createHolderI18n({ root: app, storage: window.localStorage });
 const PRODUCT_LINKS = productLinks(import.meta.env);
 let markets = demoMarkets;
 let selectedId = markets[0].id;
@@ -221,7 +223,7 @@ function render() {
         <strong class="brand-name" aria-hidden="true"><i>C</i><i>O</i><i>F</i><i>F</i><i>E</i><i>R</i><i>H</i><i>O</i><i>U</i><i>S</i><i>E</i></strong>
         <span>HOLDER CENTER · BACK TO THE HOUSE ↗</span>
       </a>
-      <div class="network"><span></span> ARC MAINNET · READ ONLY</div>
+      <div class="holder-header-actions"><div class="network"><span></span> ARC MAINNET · READ ONLY</div>${holderI18n.picker()}</div>
     </header>
     <nav class="suite-nav" aria-label="CofferHouse holder tools">
       <div class="suite-nav-inner">
