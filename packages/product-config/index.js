@@ -1,5 +1,5 @@
 const defaults = Object.freeze({
-  house: "https://cofferhouse.cheesemachineco.chatgpt.site/",
+  house: "https://cofferhouse-website.vercel.app/",
   holderCenter: "https://cofferhouse-scout.vercel.app/#holders",
   agentSuite: "https://cofferhouse-scout.vercel.app/#agents",
   repository: "https://github.com/CofferHouse/cofferhouse-agent-suite"
