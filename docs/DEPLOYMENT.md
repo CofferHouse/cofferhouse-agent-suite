@@ -12,6 +12,7 @@ Import this repository into Vercel and keep the default build command (`npm run 
 | Variable | Required | Purpose |
 |---|---:|---|
 | `CRON_SECRET` | Yes | Authorizes `/api/agent/run` scheduled calls. Use a long random value. |
+| `QSTASH_CRON_SECRET` | Optional | Separate bearer credential for the QStash 15-minute schedule. Keeps the existing GitHub/Vercel credential unchanged; set only on the production server and the QStash Authorization header. |
 | `UPSTASH_REDIS_REST_URL` | Yes | Durable snapshot, status, history, alert, and acknowledgment storage. |
 | `UPSTASH_REDIS_REST_TOKEN` | Yes | Server-only Upstash credential. |
 | `SCOUT_OPERATOR_TOKEN` | Yes | Authorizes human incident acknowledgment and durable Guardian watch registration/removal. |

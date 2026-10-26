@@ -71,6 +71,10 @@ test("protected scheduler requires the exact shared bearer secret", () => {
   assert.equal(isScheduledRunAuthorized({ headers: {} }, "cron-secret"), false);
   assert.equal(isScheduledRunAuthorized({ headers: { authorization: "Bearer wrong" } }, "cron-secret"), false);
   assert.equal(isScheduledRunAuthorized({ headers: { authorization: "Bearer cron-secret" } }, "cron-secret"), true);
+  assert.equal(isScheduledRunAuthorized({ headers: { authorization: "Bearer qstash-only" } }, "cron-secret", "qstash-only"), true);
+  assert.equal(isScheduledRunAuthorized({ headers: { authorization: "Bearer cron-secret" } }, "cron-secret", "qstash-only"), true);
+  assert.equal(isScheduledRunAuthorized({ headers: { authorization: "Bearer undefined" } }, undefined, undefined), false);
+  assert.equal(isScheduledRunAuthorized({ headers: { authorization: "Bearer wrong" } }, "cron-secret", "qstash-only"), false);
 });
 
 test("receipt API verifies supported files and rejects altered content", async () => {

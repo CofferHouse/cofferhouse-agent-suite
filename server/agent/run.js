@@ -26,8 +26,8 @@ const RUN_LOCK_KEY = "cofferhouse:scout:run-lock";
 const RUN_ATTEMPT_KEY = "cofferhouse:scout:last-run-attempt";
 const FAILURE_HISTORY_KEY = "cofferhouse:scout:failure-history";
 
-export function isScheduledRunAuthorized(request, secret = process.env.CRON_SECRET) {
-  return Boolean(secret) && request.headers.authorization === `Bearer ${secret}`;
+export function isScheduledRunAuthorized(request, secret = process.env.CRON_SECRET, qstashSecret = process.env.QSTASH_CRON_SECRET) {
+  return [secret, qstashSecret].some(value => Boolean(value) && request.headers.authorization === `Bearer ${value}`);
 }
 
 const asList = (value) => Array.isArray(value) ? value : value ? [value] : [];
