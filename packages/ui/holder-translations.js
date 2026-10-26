@@ -681,4 +681,6 @@ export const holderTranslations = [
 ["Morpho API · Arc mainnet", "Morpho API · Arc 主网", "Morpho API · Arc メインネット", "Morpho API · Arc मेननेट", "Morpho API · Red principal de Arc"],
 ["APP KITS", "应用工具包", "アプリキット", "ऐप किट", "KITS DE APLICACIONES"],
 ["{name} Market", "{name} 市场", "{name} 市場", "{name} बाज़ार", "Mercado {name}"],
+
+['⌂ BACK TO THE HOUSE','⌂ 返回 HOUSE','⌂ HOUSE に戻る','⌂ HOUSE पर वापस','⌂ VOLVER A HOUSE'],
 ];

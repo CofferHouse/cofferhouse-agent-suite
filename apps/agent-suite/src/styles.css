@@ -363,3 +363,16 @@ html:is([lang='zh-CN'],[lang='ja'],[lang='hi']) :is(h1,h2,h3,h4,.holder-language
 
 /* Hand-lettered room subnavigation, marked with three uneven pen strokes. */
 .suite-subnav{gap:clamp(10px,2vw,28px);padding:5px 20px 17px;align-items:center}.suite-subnav>.suite-subtab,.suite-subnav>.suite-subtab:first-child,.suite-subnav>.suite-subtab.active{position:relative;isolation:isolate;flex:0 1 auto;min-height:48px;padding:6px 12px 11px;border:0;border-radius:0;background:transparent;box-shadow:none!important;color:#24201c;font:400 23px/1.2 "Patrick Hand",cursive;letter-spacing:.015em;transform:none}.suite-subnav>.suite-subtab:hover{background:transparent;color:#1755bc}.suite-subnav>.suite-subtab.active{color:#171411}.suite-subnav>.suite-subtab::after,.suite-subnav>.suite-subtab::before{content:"";position:absolute;pointer-events:none;opacity:0;left:5%;right:4%;bottom:2px;height:8px;z-index:-1;background:#e63435;transform:rotate(-2deg);clip-path:polygon(3% 18%,33% 0,68% 16%,96% 3%,100% 67%,70% 80%,39% 63%,0 100%)}.suite-subnav>.suite-subtab::before{bottom:-2px;left:10%;right:1%;height:5px;transform:rotate(-4deg);background:#ed5250;clip-path:polygon(0 50%,36% 2%,71% 17%,98% 0,100% 50%,62% 87%,6% 100%)}.suite-subnav>.suite-subtab.active::before,.suite-subnav>.suite-subtab.active::after{opacity:1}.suite-subnav>.suite-subtab:focus-visible{outline:3px solid #1755bc;outline-offset:5px;box-shadow:0 0 0 6px #fff3bd!important}@media(max-width:700px){.suite-subnav{gap:5px 10px;padding:4px 12px 15px}.suite-subnav>.suite-subtab,.suite-subnav>.suite-subtab:first-child,.suite-subnav>.suite-subtab.active{font-size:20px;padding:6px 8px 11px}}
+
+/* House header identity, copied at the same scale as the official book header. */
+.topbar{height:68px;padding:0 clamp(14px,3vw,48px);background:rgba(243,234,213,.94);border-bottom:4px solid #1a1917}
+.topbar .header-home{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;flex-shrink:0;min-width:0;height:100%}
+.topbar .header-home .brand{height:29px;gap:5px}
+.topbar .header-home .brand-arch{width:28px;height:28px;object-fit:contain}
+.topbar .header-home .brand-name{font-size:16px}
+.topbar .brand-name i{-webkit-text-stroke:1.5px #1a1917}
+.topbar .header-house-back{display:inline-flex;align-items:center;min-height:24px;padding:2px 7px;background:#1547b7;color:white;border:2px solid #1a1917;box-shadow:2px 2px 0 #ffda32;font:.58rem/1.2 'Luckiest Guy',cursive;white-space:nowrap;text-decoration:none}
+.topbar .header-house-back:hover{background:#ffda32;color:#1a1917}
+.topbar .header-house-back:focus-visible{outline:3px solid #e84632;outline-offset:2px}
+@media(max-width:760px){.topbar .header-home{margin-right:auto;gap:0}.topbar .header-home .brand{height:25px}.topbar .header-home .brand-arch{width:24px;height:24px}.topbar .header-home .brand-name{font-size:12px}.topbar .header-house-back{font-size:.51rem;min-height:24px;padding:2px 4px}}
+@media(max-width:600px){.topbar{height:auto;min-height:68px;padding-block:6px;gap:8px}}

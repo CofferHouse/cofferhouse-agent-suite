@@ -218,11 +218,10 @@ function render() {
   app.innerHTML = `
     <a class="skip-link" href="#main-content">SKIP TO MAIN CONTENT</a>
     <header class="topbar">
-      <a class="brand house-home" href="${h(PRODUCT_LINKS.house)}" aria-label="Back to the CofferHouse">
+      <div class="header-home"><a class="brand" href="${h(PRODUCT_LINKS.house)}" aria-label="Back to the CofferHouse">
         <img class="brand-arch" src="/brand/cofferhouse-arch-official.png" alt="">
         <strong class="brand-name" aria-hidden="true"><i>C</i><i>O</i><i>F</i><i>F</i><i>E</i><i>R</i><i>H</i><i>O</i><i>U</i><i>S</i><i>E</i></strong>
-        <span>HOLDER CENTER · BACK TO THE HOUSE ↗</span>
-      </a>
+      </a><a class="header-house-back" href="${h(PRODUCT_LINKS.house)}" aria-label="Back to the CofferHouse">⌂ BACK TO THE HOUSE</a></div>
       <div class="holder-header-actions"><div class="network"><span></span> ARC MAINNET · READ ONLY</div>${holderI18n.picker()}</div>
     </header>
     <nav class="suite-nav" aria-label="CofferHouse holder tools">
