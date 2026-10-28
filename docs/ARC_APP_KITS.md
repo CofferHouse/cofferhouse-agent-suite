@@ -1,5 +1,14 @@
 # Arc App Kits in CofferHouse
 
+## Review of 28 October 2026
+
+[Arc ecosystem update requirements](ARC_ECOSYSTEM_UPDATES_2026-10-28.md) translate
+the new Morpho vault article, Gateway EURC/cirBTC update, Circle Grants FAQ and UAE
+chapter announcement into proposed work. Priorities are vault exposure research
+and read-only Gateway readiness. They are not yet implemented; current CCTP
+observations and Earn discovery do not establish Gateway integration or full
+underlying vault exposure. Grants and community demos are planning opportunities.
+
 CofferHouse uses Circle's official Arc App Kit SDK as an integration layer rather than recreating protocol-specific flows.
 
 ## Earn Kit — Opportunities
