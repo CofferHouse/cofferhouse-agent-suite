@@ -19,8 +19,10 @@ import handler15 from "../server/receipt/verify.js";
 import loanHealthHandler from "../server/guardian/loan-health.js";
 
 import budgetHandler from "../server/bots/budget.js";
+import vaultExposureHandler from "../server/app-kits/vault-exposure.js";
 
 const routes = new Map([
+  ["/api/app-kits/vault-exposure", vaultExposureHandler],
   ["/api/bots/budget", budgetHandler],
   ["/api/guardian/loan-health", loanHealthHandler],
   ["/api/agent/acknowledge", handler0],

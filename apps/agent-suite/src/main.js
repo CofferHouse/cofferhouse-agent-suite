@@ -10,6 +10,9 @@ import { addMonitorObservation, clearMonitorHistory, escapeHtml as h, loadMonito
 import { SERVER_STATUS_REFRESH_MS, advanceAgentState, agentCatalog, agentDecision, buildMissionControl, compareMarketSnapshots, createAgentRuntimeState, runtimeConnectionLabel, scanMarkets, shouldRefreshRuntimeStatus } from "../../../packages/agent-core/index.js";
 import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeEarnOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildEarnStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultAlertPreferences, defaultEarnOpportunityPreferences, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcBorrowMarkets, fetchArcEarnVaults, fetchArcPoolsForToken, fetchOnrampReadiness, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadEarnOpportunityPreferences, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestBorrowPreview, requestOnrampSession, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveEarnOpportunityPreferences, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
 import { productLinks } from "../../../packages/product-config/index.js";
+import { compareVaultExposure } from "../../../packages/arc-data/vault-exposure.js";
+import { vaultExposureHtml } from "../../../packages/agent-modules/vault-exposure-view.js";
+import { createVaultExposureReceipt } from "../../../packages/evidence/vault-exposure-receipt.js";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const formatMoney = (value) => value === null || value === undefined ? "Unavailable" : money.format(value);
@@ -69,6 +72,8 @@ let researchSessionHistory = loadResearchSessionHistory(window.localStorage);
 let researchSession = researchSessionHistory[0] ? researchSessionFromReceipt(researchSessionHistory[0]) : null;
 let interopState = { mode: "idle", message: "Run an observation to inspect recent Arc CCTP V2 activity.", observation: null };
 let earnKitState = { mode: "loading", message: "Discovering official Arc Earn vaults…", data: null };
+let vaultExposureState = null;
+const previousVaultExposures = new Map();
 let earnOpportunityPreferences = loadEarnOpportunityPreferences(window.localStorage);
 let onrampState = { mode: "checking", message: "Checking protected Onramp readiness…", readiness: null, session: null };
 let borrowKitState = { mode: "loading", message: "Discovering official cirBTC/USDC markets…", data: null, preview: null };
@@ -447,9 +452,10 @@ function render() {
         <section class="earn-kit-panel ${h(earnKitState.mode)}">
           <div class="app-kit-panel-head"><div><span>OFFICIAL ARC APP KIT · READ ONLY</span><h3>${h(earnKit.label)} opportunity research.</h3><p>${h(earnKit.capability)}</p></div><div><b>${earnKitState.mode === "ready" ? `${earnAnalysis.summary.eligible} OF ${earnAnalysis.summary.total} ELIGIBLE` : earnKitState.mode === "loading" ? "CONNECTING" : "UNAVAILABLE"}</b><small>${h(earnKitState.message)}</small><div class="earn-kit-actions">${earnReceipt ? `<button class="earn-receipt-download" type="button">DOWNLOAD EARN RECEIPT</button>` : ""}<a href="${h(earnKit.docs)}" target="_blank" rel="noreferrer">OFFICIAL DOCS ↗</a></div></div></div>
           <form class="earn-preferences"><label>CAPITAL · USD<input name="capitalUsd" type="number" min="1" step="1" value="${earnOpportunityPreferences.capitalUsd}"></label><label>ASSET<select name="asset"><option value="ANY" ${earnOpportunityPreferences.asset === "ANY" ? "selected" : ""}>ANY</option><option value="USDC" ${earnOpportunityPreferences.asset === "USDC" ? "selected" : ""}>USDC</option><option value="EURC" ${earnOpportunityPreferences.asset === "EURC" ? "selected" : ""}>EURC</option></select></label><label>MIN APY · %<input name="minApyPct" type="number" min="0" step="0.01" value="${earnOpportunityPreferences.minApyPct}"></label><label>MIN LIQUIDITY · USD<input name="minAvailableLiquidityUsd" type="number" min="0" step="1000" value="${earnOpportunityPreferences.minAvailableLiquidityUsd}"></label><label>MIN DEPOSITS · USD<input name="minTotalDepositsUsd" type="number" min="0" step="1000" value="${earnOpportunityPreferences.minTotalDepositsUsd}"></label><label>MAX LIQUIDITY SHARE · %<input name="maxLiquiditySharePct" type="number" min="0.01" max="10" step="0.01" value="${earnOpportunityPreferences.maxLiquiditySharePct}"></label><label class="earn-checkbox"><input name="includeLowLiquidity" type="checkbox" ${earnOpportunityPreferences.includeLowLiquidity ? "checked" : ""}> INCLUDE LOW LIQUIDITY</label><div><button type="submit">APPLY EARN LIMITS</button><button class="earn-preferences-reset" type="button">RESET</button></div></form>
-          ${earnAnalysis.opportunities.length ? `<div class="earn-vaults">${earnAnalysis.opportunities.slice(0, 10).map((vault, index) => `<article class="${vault.eligible ? "eligible" : "blocked"}"><span class="earn-rank">${String(index + 1).padStart(2, "0")}</span><div><span>${h(vault.asset)} · ${h(vault.protocol)}</span><h4>${h(vault.name)}</h4><small>${h(shortId(vault.vaultAddress))}</small><p>${h(vault.reason)}</p></div><div><span>RESEARCH SCORE</span><b>${vault.researchScore}</b></div><div><span>OBSERVED APY</span><b>${formatPct(vault.apyPct, 3)}</b></div><div><span>AVAILABLE LIQUIDITY</span><b>${formatMoney(vault.availableLiquidityUsd)}</b></div><div><span>MAX RESEARCH SIZE</span><b>${formatMoney(vault.maxResearchAmountUsd)}</b></div><em>${vault.eligible ? "RESEARCH" : "BLOCKED"}</em></article>`).join("")}</div>` : ""}
+          ${earnAnalysis.opportunities.length ? `<div class="earn-vaults">${earnAnalysis.opportunities.slice(0, 10).map((vault, index) => `<article class="${vault.eligible ? "eligible" : "blocked"}"><span class="earn-rank">${String(index + 1).padStart(2, "0")}</span><div><span>${h(vault.asset)} · ${h(vault.protocol)}</span><h4>${h(vault.name)}</h4><small>${h(shortId(vault.vaultAddress))}</small><p>${h(vault.reason)}</p>${/morpho/i.test(vault.protocol) ? `<button class="inspect-vault" type="button" data-vault="${h(vault.vaultAddress)}" ${vaultExposureState?.mode === "loading" ? "disabled" : ""}>INSPECT VAULT ALLOCATIONS</button>` : ""}</div><div><span>RESEARCH SCORE</span><b>${vault.researchScore}</b></div><div><span>OBSERVED APY</span><b>${formatPct(vault.apyPct, 3)}</b></div><div><span>AVAILABLE LIQUIDITY</span><b>${formatMoney(vault.availableLiquidityUsd)}</b></div><div><span>MAX RESEARCH SIZE</span><b>${formatMoney(vault.maxResearchAmountUsd)}</b></div><em>${vault.eligible ? "RESEARCH" : "BLOCKED"}</em></article>`).join("")}</div>` : ""}
           <footer><span>${h(earnKit.boundary)}</span><span>Discovery only · No deposit · No withdrawal</span></footer>
         </section>
+        ${vaultExposureHtml(vaultExposureState)}
         <div class="opportunity-summary">
           <div><span>MARKETS ANALYZED</span><b>${opportunityAnalysis.summary.total}</b></div>
           <div class="eligible"><span>ELIGIBLE FOR RESEARCH</span><b>${opportunityAnalysis.summary.eligible}</b></div>
@@ -801,6 +807,28 @@ function render() {
       onrampState = { ...onrampState, mode: "error", message: error.message ?? "Onramp session could not be created.", session: null };
     }
     render();
+  });
+  document.querySelectorAll(".inspect-vault").forEach(button => button.addEventListener("click", async () => {
+    const vault = button.dataset.vault;
+    if (!/^0x[0-9a-f]{40}$/i.test(vault) || vaultExposureState?.mode === "loading") return;
+    vaultExposureState = { mode: "loading" };
+    render();
+    try {
+      const response = await fetch(`/api/app-kits/vault-exposure?vault=${encodeURIComponent(vault)}`, { headers: { Accept: "application/json" } });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error("Vault observation unavailable.");
+      const observation = payload.observation;
+      if (observation?.schema !== "cofferhouse.morpho.vault-exposure.v1" || observation.vaultAddress !== vault.toLowerCase() || observation.chainId !== 5042) throw new Error("Vault observation identity mismatch.");
+      const comparison = compareVaultExposure(previousVaultExposures.get(observation.vaultAddress), observation);
+      vaultExposureState = { mode: "ready", observation, comparison };
+      if (observation.status === "INDEXED_OBSERVATION") previousVaultExposures.set(observation.vaultAddress, observation);
+    } catch {
+      vaultExposureState = { mode: "error" };
+    }
+    render();
+  }));
+  document.querySelector(".vault-exposure-download")?.addEventListener("click", () => {
+    if (vaultExposureState?.mode === "ready") downloadScoutReceipt(createVaultExposureReceipt(vaultExposureState.observation, vaultExposureState.comparison));
   });
   document.querySelector(".interop-scan")?.addEventListener("click", observeInterop);
   document.querySelector(".interop-download")?.addEventListener("click", () => downloadScoutReceipt(interopReceipt));

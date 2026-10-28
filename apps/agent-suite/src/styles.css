@@ -376,3 +376,10 @@ html:is([lang='zh-CN'],[lang='ja'],[lang='hi']) :is(h1,h2,h3,h4,.holder-language
 .topbar .header-house-back:focus-visible{outline:3px solid #e84632;outline-offset:2px}
 @media(max-width:760px){.topbar .header-home{margin-right:auto;gap:0}.topbar .header-home .brand{height:25px}.topbar .header-home .brand-arch{width:24px;height:24px}.topbar .header-home .brand-name{font-size:12px}.topbar .header-house-back{font-size:.51rem;min-height:24px;padding:2px 4px}}
 @media(max-width:600px){.topbar{height:auto;min-height:68px;padding-block:6px;gap:8px}}
+.vault-exposure-panel { border: 2px solid #263d49; border-radius: 12px; padding: 20px; margin: 16px 0; background: #fffdf5; overflow-wrap: anywhere; }
+.vault-exposure-panel dl { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(0, 3fr); gap: 8px 16px; }
+.vault-exposure-panel dd { margin: 0; }
+.vault-exposure-scroll { overflow-x: auto; }
+.vault-exposure-panel table { width: 100%; text-align: left; border-collapse: collapse; }
+.vault-exposure-panel td, .vault-exposure-panel th { padding: 10px; border-bottom: 1px solid #ccc; }
+.vault-exposure-panel code { font-size: 0.8rem; }
