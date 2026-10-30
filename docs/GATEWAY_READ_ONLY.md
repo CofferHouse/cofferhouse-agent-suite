@@ -60,7 +60,8 @@ mismatched identities, mainnet isolation, partial service failures, fixed API
 paths, endpoint caching and receipt integrity. User-facing controls and notices
 are translated into the existing five languages.
 
-Browser acceptance and deployment remain pending. Future funding execution needs
+[Mocked browser acceptance](BROWSER_ACCEPTANCE_2026-10-30.md) now passes on desktop
+and mobile. Deployment and real-wallet validation remain pending. Future funding execution needs
 current token/contract verification, source/destination selection, a fresh fee
 estimate, wallet authorization and result reconciliation. Current docs differ on
 EURC forwarding support between the raw Gateway API and App Kit overview; no
