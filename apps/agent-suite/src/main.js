@@ -10,6 +10,8 @@ import { addMonitorObservation, clearMonitorHistory, escapeHtml as h, loadMonito
 import { SERVER_STATUS_REFRESH_MS, advanceAgentState, agentCatalog, agentDecision, buildMissionControl, compareMarketSnapshots, createAgentRuntimeState, runtimeConnectionLabel, scanMarkets, shouldRefreshRuntimeStatus } from "../../../packages/agent-core/index.js";
 import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeEarnOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildEarnStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultAlertPreferences, defaultEarnOpportunityPreferences, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcBorrowMarkets, fetchArcEarnVaults, fetchArcPoolsForToken, fetchOnrampReadiness, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadEarnOpportunityPreferences, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestBorrowPreview, requestOnrampSession, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveEarnOpportunityPreferences, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
 import { productLinks } from "../../../packages/product-config/index.js";
+import { gatewayHtml } from "../../../packages/agent-modules/gateway-view.js";
+import { createGatewayReceipt } from "../../../packages/evidence/gateway-receipt.js";
 import { compareVaultExposure } from "../../../packages/arc-data/vault-exposure.js";
 import { vaultExposureHtml } from "../../../packages/agent-modules/vault-exposure-view.js";
 import { createVaultExposureReceipt } from "../../../packages/evidence/vault-exposure-receipt.js";
@@ -66,6 +68,8 @@ let activeSuiteView = "holder";
 let holderPreferences = loadHolderPreferences(window.localStorage);
 let holderIdentity = disconnectedHolderIdentity(Boolean(window.ethereum));
 let holderIdentityBusy = false;
+let gatewayState = { mode: "idle", observation: null };
+let gatewayGeneration = 0;
 let telegramAlertState = { mode: "checking", message: "Checking the official CofferHouse alert channel…", readiness: null, preferences: { ...defaultAlertPreferences }, telegramUrl: null, code: null, statusToken: null, expiresAt: null };
 const demoHolderLevel = "member";
 let researchSessionHistory = loadResearchSessionHistory(window.localStorage);
@@ -291,6 +295,7 @@ function render() {
           </article>
         </div>
         <section class="holder-tools" aria-labelledby="holder-tools-title"><div class="holder-tools-head"><div><p class="eyebrow">YOUR HOUSE TOOLS</p><h2 id="holder-tools-title">Services by level.</h2></div><p>Research previews may open now. Financial services remain locked until their contracts, controls and eligibility checks are live.</p></div><div class="holder-tool-grid">${holderEntitlements.map((service) => `<article class="${service.unlocked ? "unlocked" : "locked"}"><span>${h(service.status.toUpperCase())} · ${h(holderLevels.find((level) => level.id === service.level)?.label ?? service.level)}</span><h3>${h(service.label)}</h3><p>${h(service.description)}</p>${service.view && service.unlocked ? `<button class="holder-open-tool" data-view="${h(service.view)}" type="button">OPEN ${h(service.label.toUpperCase())} →</button>` : `<button type="button" disabled>${service.unlocked ? "ROADMAP" : `UNLOCKS AT ${h(service.level.toUpperCase())}`}</button>`}</article>`).join("")}</div></section>
+        ${gatewayHtml(gatewayState, holderIdentity.address)}
         <footer class="holder-boundary"><b>MEMBERSHIP VIEW, NOT A WALLET</b><span>Demo · Read only · No custody · No execution</span></footer>
       </section>
       <section class="hero suite-view ${activeSuiteView === "hub" ? "is-active" : ""}" data-suite-view="hub">
@@ -807,6 +812,11 @@ function render() {
       onrampState = { ...onrampState, mode: "error", message: error.message ?? "Onramp session could not be created.", session: null };
     }
     render();
+  });
+  document.querySelector(".gateway-refresh")?.addEventListener("click", () => loadGatewayObservation(false));
+  document.querySelector(".gateway-balances")?.addEventListener("click", () => loadGatewayObservation(true));
+  document.querySelector(".gateway-download")?.addEventListener("click", () => {
+    if (gatewayState.mode === "ready" && gatewayState.observation) downloadScoutReceipt(createGatewayReceipt(gatewayState.observation));
   });
   document.querySelectorAll(".inspect-vault").forEach(button => button.addEventListener("click", async () => {
     const vault = button.dataset.vault;
@@ -1405,6 +1415,39 @@ async function loadBorrowKitMarkets() {
   render();
 }
 
+async function loadGatewayObservation(withBalances) {
+  if (gatewayState.mode === "loading") return;
+  const requestedAddress = withBalances ? holderIdentity.address : null;
+  if (withBalances && !requestedAddress) return;
+  const generation = gatewayGeneration;
+  gatewayState = { mode: "loading", observation: null };
+  render();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
+  try {
+    // Read the provider's current account, without opening a connection prompt.
+    if (withBalances) {
+      const accounts = await window.ethereum?.request({ method: "eth_accounts" });
+      if (accounts?.[0]?.toLowerCase() !== requestedAddress.toLowerCase()) throw new Error("Wallet changed.");
+    }
+    const query = requestedAddress ? `?depositor=${encodeURIComponent(requestedAddress)}` : "";
+    const response = await fetch(`/api/app-kits/gateway${query}`, { headers: { Accept: "application/json" }, signal: controller.signal });
+    const payload = await response.json();
+    const observation = payload.observation;
+    if (!response.ok || !payload.ok || observation?.schema !== "cofferhouse.gateway.observation.v1" || observation.network !== "mainnet" || observation.depositor !== (requestedAddress?.toLowerCase() ?? null)) throw new Error("Gateway observation unavailable.");
+    if (withBalances) {
+      const accounts = await window.ethereum?.request({ method: "eth_accounts" });
+      if (accounts?.[0]?.toLowerCase() !== requestedAddress.toLowerCase() || holderIdentity.address?.toLowerCase() !== requestedAddress.toLowerCase()) throw new Error("Wallet changed.");
+    }
+    if (generation === gatewayGeneration) gatewayState = { mode: "ready", observation };
+  } catch {
+    if (generation === gatewayGeneration) gatewayState = { mode: "error", observation: null };
+  } finally {
+    clearTimeout(timeout);
+    render();
+  }
+}
+
 async function loadServerRuntimeStatus({ showProgress = false } = {}) {
   if (serverRuntimeLoading) return;
   serverRuntimeLoading = true;
@@ -1438,6 +1481,14 @@ function scheduleServerRuntimeRefresh() {
 document.addEventListener("visibilitychange", () => {
   if (shouldRefreshRuntimeStatus({ lastCheckedAt: serverRuntime.lastCheckedAt, visibilityState: document.visibilityState })) loadServerRuntimeStatus({ showProgress: true });
 });
+
+for (const event of ["accountsChanged", "chainChanged", "disconnect"]) {
+  window.ethereum?.on?.(event, () => {
+    gatewayGeneration += 1;
+    gatewayState = { mode: "idle", observation: null };
+    render();
+  });
+}
 
 render();
 refreshMarkets();
