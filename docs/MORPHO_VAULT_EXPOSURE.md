@@ -56,7 +56,8 @@ not substitute another chain or a sample observation.
 `npm run check` passed 278 tests and the production build. Cases cover V1/V2,
 overlapping caps, unknown amounts, unscoped caps, mixed blocks, missing metadata,
 duplicate identities, role/liquidity comparisons, receipt tampering, escaping and
-unavailable upstream sources. Frontend wallet/browser acceptance remains pending.
+unavailable upstream sources. [Mocked browser acceptance](BROWSER_ACCEPTANCE_2026-10-30.md)
+now passes on desktop and mobile; real-wallet and deployed-site validation remain pending.
 
 Next: obtain independently block-pinned exposure evidence, add allocator and
 collateral/oracle look-through, and integrate an explicitly approved baseline into
