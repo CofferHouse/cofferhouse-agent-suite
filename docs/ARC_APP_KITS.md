@@ -1,5 +1,12 @@
 # Arc App Kits in CofferHouse
 
+## Gateway — Holder Center
+
+[Gateway coverage and balance research](GATEWAY_READ_ONLY.md) queries the mainnet
+API for supported source networks and confirmed deposits per asset. USDC, EURC
+and cirBTC remain separate. No funding action is enabled and the CCTP observer is
+unchanged. This uses direct Gateway API reads, not a new SDK execution adapter.
+
 CofferHouse uses Circle's official Arc App Kit SDK as an integration layer rather than recreating protocol-specific flows.
 
 ## Earn Kit — Opportunities

@@ -6,6 +6,7 @@ export const receiptSchemas = Object.freeze([
   "cofferhouse.dex.strategy-receipt.v1", "cofferhouse.action.receipt.v1",
   "cofferhouse.guardian.receipt.v1", "cofferhouse.automation.receipt.v1",
   "cofferhouse.agent-hub.session-receipt.v1", "cofferhouse.interop.receipt.v1",
+  "cofferhouse.gateway.receipt.v1",
   "cofferhouse.morpho.vault-exposure-receipt.v1"
 ]);
 const supported = new Set(receiptSchemas);
