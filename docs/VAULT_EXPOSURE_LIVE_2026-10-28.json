@@ -1,0 +1,100 @@
+{
+  "schema": "cofferhouse.morpho.vault-exposure-receipt.v1",
+  "generatedAt": "2026-10-28T22:51:33.590Z",
+  "observation": {
+    "schema": "cofferhouse.morpho.vault-exposure.v1",
+    "source": "Morpho public REST API",
+    "chainId": 5042,
+    "vaultAddress": "0x8e357432cc12ff425c36432f312968aeb16112af",
+    "version": 2,
+    "observedAt": "2026-10-28T22:51:33.590Z",
+    "sourceBlocks": {
+      "config": "28379490",
+      "state": "28379491",
+      "allocations": "28379491"
+    },
+    "aligned": false,
+    "reconciled": false,
+    "status": "PARTIAL_EVIDENCE",
+    "asset": {
+      "address": "0x3600000000000000000000000000000000000000",
+      "symbol": "USDC",
+      "decimals": 6
+    },
+    "roles": {
+      "owner": "0x032a292de0127fdef849eff31b5b4df7e5f069c0",
+      "curator": "0xec1a7a08b538c685f5d188d81e3545d69f1b4178",
+      "guardian": null,
+      "allocators": null
+    },
+    "totalAssetsUnits": "84958945111327",
+    "withdrawableAssetsUnits": "13049472567977",
+    "idleAssetsUnits": "0",
+    "allocatedAssetsUnits": null,
+    "withdrawalCoveragePct": null,
+    "largestPositionPct": null,
+    "positions": [
+      {
+        "kind": "ADAPTER",
+        "id": "0xee0080203a76690bca40670dfd0cd1c30fab7c2c",
+        "allocatedUnits": "84958687030704",
+        "absoluteCapUnits": "340282366920938463463374607431768211455",
+        "sharePct": null,
+        "riskCaps": [
+          {
+            "type": "market_v1",
+            "id": "0x4aeabde7795a273ef3f32edaf4a4f36609c9870530c270009553cce41a418af2",
+            "marketId": "0xc2db905f174e5defcce01d321b09f15f78856a36a21b90cc7e1abbc29225815d",
+            "allocatedUnits": "84958687030704",
+            "absoluteCapUnits": "340282366920938463463374607431768211455",
+            "relativeCapWad": "1000000000000000000",
+            "exceedsAbsoluteCap": false,
+            "exceedsRelativeCap": null
+          },
+          {
+            "type": "adapter",
+            "id": "0xc4b3a1af59dbbe8bfc6f6082320273e5af05ffb400b9d39d479aa613ba5866ac",
+            "marketId": null,
+            "allocatedUnits": "84958687030704",
+            "absoluteCapUnits": "340282366920938463463374607431768211455",
+            "relativeCapWad": "1000000000000000000",
+            "exceedsAbsoluteCap": false,
+            "exceedsRelativeCap": null
+          }
+        ],
+        "underlyingVault": null,
+        "exceedsAbsoluteCap": false
+      }
+    ],
+    "unscopedCaps": [
+      {
+        "type": "collateral",
+        "id": "0xac86c9a641ca7b15e10190aa9e1f4204c5a4b195d8c9167d6432d0bff8359b74",
+        "marketId": null,
+        "allocatedUnits": "84958687030704",
+        "absoluteCapUnits": "340282366920938463463374607431768211455",
+        "relativeCapWad": "1000000000000000000",
+        "exceedsAbsoluteCap": false,
+        "exceedsRelativeCap": null
+      }
+    ],
+    "warnings": [
+      "Indexed API evidence; not an independent onchain verification.",
+      "Source blocks differ or are missing; totals and concentration are not reconciled.",
+      "Allocation totals are incomplete or do not reconcile with total assets.",
+      "Adapter exposure is one level deep; nested vaults and overlapping risk caps are not additional balances."
+    ],
+    "limitations": [
+      "Allocator lists, collateral and oracle look-through are not supplied by this adapter.",
+      "No market allocation is added to portfolio capital; this is a breakdown of existing vault exposure.",
+      "No deposit, withdrawal, signature or transaction is prepared."
+    ]
+  },
+  "comparison": null,
+  "receiptId": "vault-exposure-5bafd43c2c57e395",
+  "integrity": {
+    "algorithm": "SHA-256",
+    "canonicalization": "cofferhouse-canonical-json-v1",
+    "contentHash": "5bafd43c2c57e3954a51b1f5483e7d4c723e91b860c2a7a0b26807d4e1d50902"
+  }
+}

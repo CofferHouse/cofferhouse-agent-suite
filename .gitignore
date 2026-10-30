@@ -9,6 +9,7 @@ node_modules/
 dist/
 build/
 coverage/
+browser-artifacts/
 
 # Tooling
 .cache/

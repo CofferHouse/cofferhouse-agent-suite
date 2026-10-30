@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { isSupportedReceiptSchema, receiptSchemas, sealDocument, verifyReceiptDocument } from "../packages/evidence/index.js";
 test("publishes one receipt registry for every implemented agent artifact", () => {
-  assert.equal(receiptSchemas.length, 15); assert.equal(new Set(receiptSchemas).size, receiptSchemas.length);
+  assert.equal(receiptSchemas.length, 17); assert.equal(new Set(receiptSchemas).size, receiptSchemas.length);
+  assert.equal(isSupportedReceiptSchema("cofferhouse.gateway.receipt.v1"), true);
+  assert.equal(isSupportedReceiptSchema("cofferhouse.morpho.vault-exposure-receipt.v1"), true);
   assert.equal(isSupportedReceiptSchema("cofferhouse.guardian.receipt.v1"), true);
   assert.equal(isSupportedReceiptSchema("cofferhouse.arc-app-kits.earn-receipt.v1"), true);
 });
