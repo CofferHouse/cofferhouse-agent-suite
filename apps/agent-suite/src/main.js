@@ -10,6 +10,7 @@ import { addMonitorObservation, clearMonitorHistory, escapeHtml as h, loadMonito
 import { SERVER_STATUS_REFRESH_MS, advanceAgentState, agentCatalog, agentDecision, buildMissionControl, compareMarketSnapshots, createAgentRuntimeState, runtimeConnectionLabel, scanMarkets, shouldRefreshRuntimeStatus } from "../../../packages/agent-core/index.js";
 import { ARC_CCTP_CONTRACTS, ARC_USDC, analyzeDexOpportunities, analyzeEarnOpportunities, analyzeOpportunities, arcAppKitCatalog, buildDexStrategy, buildEarnStrategy, buildStrategy, createActionApproval, createActionPreview, createGuardianWatch, createPermissionPolicy, defaultAlertPreferences, defaultEarnOpportunityPreferences, defaultOpportunityPreferences, defaultStrategyPreferences, disconnectedHolderIdentity, evaluateDexPool, evaluateGuardian, evaluatePermissionRequest, fetchArcBorrowMarkets, fetchArcEarnVaults, fetchArcPoolsForToken, fetchOnrampReadiness, guardianEvidenceFromDex, guardianEvidenceFromLending, holderAccess, holderLevels, interopCapabilityRegistry, isActionApprovalFresh, isEvmAddress, loadDexOpportunityPreferences, loadDexStrategyPreferences, loadDexWatchlist, loadEarnOpportunityPreferences, loadHolderPreferences, loadOpportunityPreferences, loadStrategyPreferences, nextAscension, pausePermissionPolicy, readHolderIdentity, requestBorrowPreview, requestOnrampSession, requestUniswapQuote, revokePermissionPolicy, rewardModes, runResearchSession, saveDexOpportunityPreferences, saveDexStrategyPreferences, saveDexWatchlist, saveEarnOpportunityPreferences, saveHolderPreferences, saveOpportunityPreferences, saveStrategyPreferences, simulateBorrow, suggestedBorrowAmount } from "../../../packages/agent-modules/index.js";
 import { productLinks } from "../../../packages/product-config/index.js";
+import { watchWalletSession } from "../../../packages/agent-modules/wallet-session.js";
 import { gatewayHtml } from "../../../packages/agent-modules/gateway-view.js";
 import { createGatewayReceipt } from "../../../packages/evidence/gateway-receipt.js";
 import { compareVaultExposure } from "../../../packages/arc-data/vault-exposure.js";
@@ -68,6 +69,7 @@ let activeSuiteView = "holder";
 let holderPreferences = loadHolderPreferences(window.localStorage);
 let holderIdentity = disconnectedHolderIdentity(Boolean(window.ethereum));
 let holderIdentityBusy = false;
+let stopWalletSessionWatch = () => {};
 let gatewayState = { mode: "idle", observation: null };
 let gatewayGeneration = 0;
 let telegramAlertState = { mode: "checking", message: "Checking the official CofferHouse alert channel…", readiness: null, preferences: { ...defaultAlertPreferences }, telegramUrl: null, code: null, statusToken: null, expiresAt: null };
@@ -785,6 +787,12 @@ function render() {
     render();
     try {
       holderIdentity = await readHolderIdentity(window.ethereum);
+      stopWalletSessionWatch();
+      if (holderIdentity.address) {
+        // Reload discards in-flight requests and wallet-scoped UI credentials.
+        // Local preferences persist; wallet reconnection is explicit.
+        stopWalletSessionWatch = watchWalletSession(window.ethereum, () => window.location.reload());
+      }
     } catch {
       holderIdentity = Object.freeze({ ...disconnectedHolderIdentity(true), status: "DECLINED", message: "The wallet request was declined or unavailable. No signature or transaction was requested." });
     } finally {

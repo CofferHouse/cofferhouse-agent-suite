@@ -1,0 +1,42 @@
+{
+  "kind": "MOCKED_BROWSER_ACCEPTANCE",
+  "checkedAt": "2026-10-31T15:24:08.081Z",
+  "browser": "153.0.8010.0",
+  "results": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "gateway": "PASS",
+      "vaultExposure": "PASS",
+      "languages": 5,
+      "languagePersistence": "PASS",
+      "evidenceDownloads": "PASS",
+      "unavailableSources": "PASS",
+      "walletChangeDuringRequest": "PASS",
+      "walletAccountNetworkDisconnect": "PASS",
+      "horizontalOverflow": false
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "gateway": "PASS",
+      "vaultExposure": "PASS",
+      "languages": 5,
+      "languagePersistence": "PASS",
+      "evidenceDownloads": "PASS",
+      "unavailableSources": "PASS",
+      "walletChangeDuringRequest": "PASS",
+      "walletAccountNetworkDisconnect": "PASS",
+      "horizontalOverflow": false
+    }
+  ],
+  "pageErrors": [],
+  "limitations": [
+    "Backend responses and wallet provider are simulated.",
+    "No real-wallet, deployed-site or financial execution validation is claimed."
+  ]
+}

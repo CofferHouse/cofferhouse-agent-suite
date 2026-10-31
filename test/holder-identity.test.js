@@ -8,6 +8,30 @@ test("normalizes Arc chain identity", () => {
   assert.equal(normalizeChainId("bad"), null);
 });
 
+test("rejects malformed or unsafe chain identities instead of accepting a numeric prefix", () => {
+  for (const value of ["0x13b2junk", "5042abc", "5042.5", "-5042", -1, Infinity, Number.MAX_SAFE_INTEGER + 1]) assert.equal(normalizeChainId(value), null);
+  assert.equal(normalizeChainId(" 0X13B2 "), ARC_MAINNET_CHAIN_ID);
+});
+
+test("an empty account list never enables the Arc identity gate", async () => {
+  const identity = await readHolderIdentity({ request: async ({ method }) => method === "eth_requestAccounts" ? [] : "0x13b2" });
+  assert.equal(identity.status, "NO_ACCOUNT");
+  assert.equal(identity.isArc, false);
+});
+
+test("reads the network after account permission resolves", async () => {
+  let authorized = false;
+  const identity = await readHolderIdentity({ request: async ({ method }) => {
+    if (method === "eth_requestAccounts") {
+      await Promise.resolve(); authorized = true;
+      return ["0x1111111111111111111111111111111111111111"];
+    }
+    assert.equal(authorized, true);
+    return "0x13b2";
+  } });
+  assert.equal(identity.isArc, true);
+});
+
 test("reads an Arc wallet without requesting signatures", async () => {
   const methods = [];
   const identity = await readHolderIdentity({ request: async ({ method }) => {

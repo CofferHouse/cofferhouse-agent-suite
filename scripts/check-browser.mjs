@@ -45,20 +45,25 @@ try {
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
     const context = await browser.newContext({ viewport, acceptDownloads: true });
     await context.addInitScript(({ account }) => {
-      let activeAccount = account;
+      let activeAccount = sessionStorage.getItem("qa-wallet-account") ?? account;
+      let activeChain = sessionStorage.getItem("qa-wallet-chain") ?? "0x13b2";
       const handlers = new Map();
       window.__qaWalletCalls = [];
       window.ethereum = {
         request: async ({ method }) => {
           window.__qaWalletCalls.push(method);
           if (method === "eth_accounts" || method === "eth_requestAccounts") return activeAccount ? [activeAccount] : [];
-          if (method === "eth_chainId") return "0x13b2";
+          if (method === "eth_chainId") return activeChain;
           throw new Error(`Unexpected wallet method: ${method}`);
         },
         on(event, callback) { if (!handlers.has(event)) handlers.set(event, new Set()); handlers.get(event).add(callback); },
         removeListener(event, callback) { handlers.get(event)?.delete(callback); }
       };
-      window.__qaDisconnect = () => { activeAccount = null; for (const callback of handlers.get("accountsChanged") ?? []) callback([]); };
+      const emit = (event, payload) => { for (const callback of handlers.get(event) ?? []) callback(payload); };
+      window.__qaChangeAccount = next => { activeAccount = next; sessionStorage.setItem("qa-wallet-account", next ?? ""); emit("accountsChanged", next ? [next] : []); };
+      window.__qaChangeChain = next => { activeChain = next; sessionStorage.setItem("qa-wallet-chain", next); emit("chainChanged", next); };
+      window.__qaDisconnect = () => window.__qaChangeAccount(null);
+      window.__qaProviderDisconnect = () => { activeAccount = null; sessionStorage.setItem("qa-wallet-account", ""); emit("disconnect", { code: 4900, message: "Browser fixture disconnect" }); };
     }, { account });
     let failGateway = false;
     let failExposure = false;
@@ -123,15 +128,41 @@ try {
     let release;
     holdGateway = new Promise(resolve => { release = resolve; });
     const started = new Promise(resolve => { gatewayStarted = resolve; });
-    const returned = page.waitForResponse(response => response.url().includes("/api/app-kits/gateway"));
+    const reloaded = page.waitForEvent("domcontentloaded");
     await page.locator(".gateway-balances").click();
     await started;
     await page.evaluate(() => window.__qaDisconnect());
     release(); holdGateway = null;
-    await (await returned).finished();
-    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
-    await page.waitForFunction(() => !document.querySelector(".gateway-panel")?.textContent.includes("Checking Gateway"));
+    await reloaded;
+    await page.locator(".gateway-refresh").waitFor();
     assert.equal(await page.locator(".gateway-download").count(), 0);
+    assert.equal(await page.locator(".gateway-balances").isDisabled(), true);
+    assert.equal(await page.locator(".holder-connection code").count(), 0);
+    // Both account switches and network changes require a fresh explicit connection.
+    const nextAccount = `0x${"6".repeat(40)}`;
+    await page.evaluate(next => window.__qaChangeAccount(next), nextAccount);
+    await page.locator(".holder-connect-wallet").click();
+    await page.waitForFunction(() => Boolean(document.querySelector(".holder-connection code")));
+    assert.equal(await page.locator(".holder-connection code").getAttribute("title"), nextAccount);
+    const changedNetwork = page.waitForEvent("domcontentloaded");
+    await page.evaluate(() => window.__qaChangeChain("0x1"));
+    await changedNetwork;
+    await page.locator(".holder-connect-wallet").waitFor();
+    assert.equal(await page.locator(".holder-connection code").count(), 0);
+    assert.equal(await page.locator(".gateway-balances").isDisabled(), true);
+    await page.locator(".holder-connect-wallet").click();
+    await page.waitForFunction(() => document.querySelector(".holder-connection")?.textContent.includes("WRONG NETWORK"));
+    const restoredNetwork = page.waitForEvent("domcontentloaded");
+    await page.evaluate(() => window.__qaChangeChain("0x13b2"));
+    await restoredNetwork;
+    await page.locator(".holder-connect-wallet").click();
+    await page.waitForFunction(() => Boolean(document.querySelector(".holder-connection code")));
+    const disconnected = page.waitForEvent("domcontentloaded");
+    await page.evaluate(() => window.__qaProviderDisconnect());
+    await disconnected;
+    await page.locator(".gateway-refresh").waitFor();
+    assert.equal(await page.locator(".holder-connection code").count(), 0);
+    assert.equal(await page.locator(".gateway-balances").isDisabled(), true);
     await page.locator('.suite-tab[data-view="hub"]').click();
     await page.locator('.suite-tab[data-view="opportunity"]').click();
     await page.locator(".inspect-vault").click();
@@ -158,7 +189,7 @@ try {
     await page.reload();
     await page.waitForFunction(() => document.documentElement.lang === "es");
     assert.equal(await page.locator("#holder-language").inputValue(), "es");
-    results.push({ viewport, gateway: "PASS", vaultExposure: "PASS", languages: 5, languagePersistence: "PASS", evidenceDownloads: "PASS", unavailableSources: "PASS", walletChangeDuringRequest: "PASS", horizontalOverflow: false });
+    results.push({ viewport, gateway: "PASS", vaultExposure: "PASS", languages: 5, languagePersistence: "PASS", evidenceDownloads: "PASS", unavailableSources: "PASS", walletChangeDuringRequest: "PASS", walletAccountNetworkDisconnect: "PASS", horizontalOverflow: false });
     await context.close();
   }
   assert.deepEqual(errors, [], "Unexpected browser exceptions");
