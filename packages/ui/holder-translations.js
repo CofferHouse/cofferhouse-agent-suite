@@ -1,6 +1,7 @@
 // Columns: English, Simplified Chinese, Japanese, Hindi, Spanish.
 // Proper names, contract addresses, signed messages and exported evidence retain their original values.
 export const holderTranslations = [
+['The exact watched target could not be observed in the Arc index. This does not prove that the market disappeared; refresh its evidence before any action.','无法在 Arc 索引中观测到指定监控目标。这不能证明市场已消失；采取任何操作前请刷新证据。','Arcインデックスから監視対象を確認できませんでした。市場の消失を証明するものではありません。操作前に根拠を更新してください。','Arc इंडेक्स में सटीक निगरानी लक्ष्य नहीं देखा जा सका। इससे बाज़ार के गायब होने का प्रमाण नहीं मिलता; किसी भी कार्रवाई से पहले साक्ष्य ताज़ा करें।','No se pudo observar el objetivo exacto en el índice de Arc. Esto no demuestra que el mercado haya desaparecido; actualiza su evidencia antes de actuar.'],
 ['Gateway · balances by asset','Gateway · 按资产查看余额','Gateway · 資産別残高','Gateway · परिसंपत्ति के अनुसार शेष','Gateway · saldos por activo'],
 ['Check supported funding networks and confirmed Gateway deposits. Each asset keeps its own balance.','查看支持的资金网络和已确认的 Gateway 存款。每种资产单独记账。','対応ネットワークと確認済みGateway入金を確認します。残高は資産ごとに分かれます。','समर्थित नेटवर्क और पुष्टि किए Gateway जमा देखें। हर परिसंपत्ति का शेष अलग है।','Consulta las redes compatibles y los depósitos confirmados en Gateway. Cada activo mantiene su propio saldo.'],
 ['CHECK NETWORK SUPPORT','查看网络支持','ネットワーク対応を確認','नेटवर्क समर्थन जाँचें','CONSULTAR REDES COMPATIBLES'],

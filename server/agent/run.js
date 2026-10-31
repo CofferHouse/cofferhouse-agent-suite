@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { deleteJsonIfValue, getJson, pushJson, setJson, setJsonIfAbsent, durableStoreConfigured } from "../_redis.js";
-import { fetchMorphoArcMarkets, verifyArcMarketContracts } from "../../packages/arc-data/index.js";
+import { fetchMorphoArcMarkets, fetchMorphoArcTargets, verifyArcMarketContracts } from "../../packages/arc-data/index.js";
 import { policyProfiles } from "../../packages/policies/index.js";
 import { createAgentAlert, createGuardianAlert, runAgentCycle } from "../../packages/agent-core/index.js";
 import { compareArcCctpObservations, evaluateDurableGuardianPortfolio, fetchArcCctpObservation, runResearchSession } from "../../packages/agent-modules/index.js";
@@ -50,7 +50,10 @@ export default async function handler(request, response) {
     const [previousMarkets, guardianRegistrationState, previousInteropReceipt] = await Promise.all([getJson(SNAPSHOT_KEY), getJson(GUARDIAN_WATCH_KEY), getJson(INTEROP_LATEST_KEY)]);
     const guardianRegistrations = asList(guardianRegistrationState).filter((item) => item?.schema === "cofferhouse.guardian.registration.v1" && item.watch?.source === "LENDING").slice(0, 20);
     await recordAttempt("OBSERVE_ARC_MARKETS");
-    let currentMarkets = await withRetry(() => fetchMorphoArcMarkets(), { attempts: 3, delayMs: 500 });
+    let [currentMarkets, guardianTargetObservations] = await Promise.all([
+      withRetry(() => fetchMorphoArcMarkets(), { attempts: 3, delayMs: 500 }),
+      fetchMorphoArcTargets(guardianRegistrations.map(item => item.watch?.target?.id))
+    ]);
     let verification = { configured: Boolean(process.env.ARC_RPC_URL), status: "not-configured", source: "Arc JSON-RPC · eth_getCode" };
     if (process.env.ARC_RPC_URL) {
       try {
@@ -86,7 +89,7 @@ export default async function handler(request, response) {
       now: () => cycle.ranAt
     });
     const researchSessionReceipt = createResearchSessionReceipt(researchSession);
-    const guardianReceipts = evaluateDurableGuardianPortfolio({ registrations: guardianRegistrations, markets: currentMarkets, policy: policyProfiles.balanced, now: () => new Date(cycle.ranAt) });
+    const guardianReceipts = evaluateDurableGuardianPortfolio({ registrations: guardianRegistrations, markets: currentMarkets, targetObservations: guardianTargetObservations, policy: policyProfiles.balanced, now: () => new Date(cycle.ranAt) });
     const intelligence = await analyzeAgentCycle(cycle);
     const alert = createAgentAlert(cycle);
     let notification = { configured: notificationConfigured(), delivered: false, reason: alert ? "duplicate-or-pending" : "no-material-alert" };
