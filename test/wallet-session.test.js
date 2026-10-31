@@ -33,3 +33,10 @@ test("providers without event support remain usable", () => {
   const dispose = watchWalletSession({ request() {} }, () => assert.fail());
   dispose();
 });
+
+test("disposal also invalidates an already captured callback", () => {
+  let callback;
+  const dispose = watchWalletSession({ on(event, listener) { callback = listener; }, removeListener() {} }, () => assert.fail("Disposed session must not invalidate again"));
+  dispose();
+  callback();
+});

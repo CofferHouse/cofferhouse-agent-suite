@@ -4,6 +4,7 @@ export function watchWalletSession(provider, invalidate) {
   const events = ["accountsChanged", "chainChanged", "disconnect"];
   let invalidated = false;
   const dispose = () => {
+    invalidated = true;
     for (const event of events) provider.removeListener?.(event, changed);
   };
   const changed = () => {

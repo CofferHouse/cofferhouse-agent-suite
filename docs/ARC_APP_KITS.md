@@ -1,8 +1,19 @@
 # Arc App Kits in CofferHouse
 
+## Gateway — Holder Center
+
+[Gateway coverage and balance research](GATEWAY_READ_ONLY.md) queries the mainnet
+API for supported source networks and confirmed deposits per asset. USDC, EURC
+and cirBTC remain separate. No funding action is enabled and the CCTP observer is
+unchanged. This uses direct Gateway API reads, not a new SDK execution adapter.
+
 CofferHouse uses Circle's official Arc App Kit SDK as an integration layer rather than recreating protocol-specific flows.
 
 ## Earn Kit — Opportunities
+
+[Morpho allocation inspection](MORPHO_VAULT_EXPOSURE.md) adds a read-only detail
+panel and sealed evidence export. Mixed index blocks and unreconciled allocations
+are reported as partial; this does not implement recursive exposure or execution.
 
 Earn candidates that clear the visible Opportunity limits now feed a dedicated Strategy Lab branch. The branch uses the shared capital, reserve, diversification and concentration bounds, but it preserves Arc Earn vault evidence separately from direct Morpho market evidence. It never merges the two datasets or counts an apparent underlying exposure twice. Its sealed receipt records the official source, vault identity, modeled amount, observed APY, sizing cap, warnings and human-review conditions.
 

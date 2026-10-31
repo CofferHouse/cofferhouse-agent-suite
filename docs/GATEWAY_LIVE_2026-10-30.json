@@ -1,0 +1,674 @@
+{
+  "schema": "cofferhouse.gateway.receipt.v1",
+  "generatedAt": "2026-10-30T15:01:30.251Z",
+  "observation": {
+    "schema": "cofferhouse.gateway.observation.v1",
+    "source": "Circle Gateway mainnet API",
+    "observedAt": "2026-10-30T15:01:30.251Z",
+    "network": "mainnet",
+    "depositor": "0x0000000000000000000000000000000000000000",
+    "destination": {
+      "chain": "Arc",
+      "domain": 26
+    },
+    "domains": [
+      {
+        "domain": 0,
+        "chain": "Ethereum",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC",
+            "cirBTC",
+            "EURC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC",
+            "cirBTC",
+            "EURC"
+          ]
+        },
+        "processedHeight": "26306261",
+        "evm": true
+      },
+      {
+        "domain": 6,
+        "chain": "Base",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC",
+            "EURC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC",
+            "EURC"
+          ]
+        },
+        "processedHeight": "53291128",
+        "evm": true
+      },
+      {
+        "domain": 1,
+        "chain": "Avalanche",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC",
+            "EURC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC",
+            "EURC"
+          ]
+        },
+        "processedHeight": "98964065",
+        "evm": true
+      },
+      {
+        "domain": 3,
+        "chain": "Arbitrum",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "processedHeight": "519707600",
+        "evm": true
+      },
+      {
+        "domain": 2,
+        "chain": "Optimism",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "processedHeight": "158886310",
+        "evm": true
+      },
+      {
+        "domain": 7,
+        "chain": "Polygon",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "processedHeight": "96444683",
+        "evm": true
+      },
+      {
+        "domain": 10,
+        "chain": "Unichain",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "processedHeight": "62622835",
+        "evm": true
+      },
+      {
+        "domain": 13,
+        "chain": "Sonic",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "processedHeight": "81859309",
+        "evm": true
+      },
+      {
+        "domain": 14,
+        "chain": "Worldchain",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC",
+            "EURC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC",
+            "EURC"
+          ]
+        },
+        "processedHeight": "37017847",
+        "evm": true
+      },
+      {
+        "domain": 16,
+        "chain": "Sei",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "processedHeight": "240554482",
+        "evm": true
+      },
+      {
+        "domain": 19,
+        "chain": "HyperEVM",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC"
+          ]
+        },
+        "processedHeight": "49934352",
+        "evm": true
+      },
+      {
+        "domain": 5,
+        "chain": "Solana",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "GATEwy4YxeiEbRJLwB6dXgg7q61e6zBPrMzYj5h1pRXQ",
+          "tokens": [
+            "USDC",
+            "EURC"
+          ]
+        },
+        "minter": {
+          "address": "GATEm5SoBJiSw1v2Pz1iPBgUYkXzCUJ27XSXhDfSyzVZ",
+          "tokens": [
+            "USDC",
+            "EURC"
+          ]
+        },
+        "processedHeight": "463328154",
+        "evm": false
+      },
+      {
+        "domain": 26,
+        "chain": "Arc",
+        "network": "Mainnet",
+        "wallet": {
+          "address": "0x77777777Dcc4d5A8B6E418Fd04D8997ef11000eE",
+          "tokens": [
+            "USDC",
+            "cirBTC",
+            "EURC"
+          ]
+        },
+        "minter": {
+          "address": "0x2222222d7164433c4C09B0b0D809a9b52C04C205",
+          "tokens": [
+            "USDC",
+            "cirBTC",
+            "EURC"
+          ]
+        },
+        "processedHeight": "28664700",
+        "evm": true
+      }
+    ],
+    "assets": [
+      {
+        "token": "USDC",
+        "decimals": 6,
+        "arcDestination": true,
+        "routes": [
+          {
+            "domain": 0,
+            "chain": "Ethereum",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 6,
+            "chain": "Base",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 1,
+            "chain": "Avalanche",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 3,
+            "chain": "Arbitrum",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 2,
+            "chain": "Optimism",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 7,
+            "chain": "Polygon",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 10,
+            "chain": "Unichain",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 13,
+            "chain": "Sonic",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 14,
+            "chain": "Worldchain",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 16,
+            "chain": "Sei",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 19,
+            "chain": "HyperEVM",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 26,
+            "chain": "Arc",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "ARC_BALANCE_SOURCE"
+          }
+        ],
+        "status": "OBSERVED",
+        "confirmedUnits": "0",
+        "balances": [
+          {
+            "domain": 0,
+            "chain": "Ethereum",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 6,
+            "chain": "Base",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 1,
+            "chain": "Avalanche",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 3,
+            "chain": "Arbitrum",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 2,
+            "chain": "Optimism",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 7,
+            "chain": "Polygon",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 10,
+            "chain": "Unichain",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 13,
+            "chain": "Sonic",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 14,
+            "chain": "Worldchain",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 16,
+            "chain": "Sei",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 19,
+            "chain": "HyperEVM",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 26,
+            "chain": "Arc",
+            "confirmedUnits": "0"
+          }
+        ]
+      },
+      {
+        "token": "EURC",
+        "decimals": 6,
+        "arcDestination": true,
+        "routes": [
+          {
+            "domain": 0,
+            "chain": "Ethereum",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 6,
+            "chain": "Base",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 1,
+            "chain": "Avalanche",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 3,
+            "chain": "Arbitrum",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 2,
+            "chain": "Optimism",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 7,
+            "chain": "Polygon",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 10,
+            "chain": "Unichain",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 13,
+            "chain": "Sonic",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 14,
+            "chain": "Worldchain",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 16,
+            "chain": "Sei",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 19,
+            "chain": "HyperEVM",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 26,
+            "chain": "Arc",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "ARC_BALANCE_SOURCE"
+          }
+        ],
+        "status": "OBSERVED",
+        "confirmedUnits": "0",
+        "balances": [
+          {
+            "domain": 0,
+            "chain": "Ethereum",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 6,
+            "chain": "Base",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 1,
+            "chain": "Avalanche",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 14,
+            "chain": "Worldchain",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 26,
+            "chain": "Arc",
+            "confirmedUnits": "0"
+          }
+        ]
+      },
+      {
+        "token": "cirBTC",
+        "decimals": 8,
+        "arcDestination": true,
+        "routes": [
+          {
+            "domain": 0,
+            "chain": "Ethereum",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "SUPPORTED_BY_API"
+          },
+          {
+            "domain": 6,
+            "chain": "Base",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 1,
+            "chain": "Avalanche",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 3,
+            "chain": "Arbitrum",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 2,
+            "chain": "Optimism",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 7,
+            "chain": "Polygon",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 10,
+            "chain": "Unichain",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 13,
+            "chain": "Sonic",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 14,
+            "chain": "Worldchain",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 16,
+            "chain": "Sei",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 19,
+            "chain": "HyperEVM",
+            "sourceSupported": false,
+            "destinationSupported": true,
+            "status": "NOT_SUPPORTED"
+          },
+          {
+            "domain": 26,
+            "chain": "Arc",
+            "sourceSupported": true,
+            "destinationSupported": true,
+            "status": "ARC_BALANCE_SOURCE"
+          }
+        ],
+        "status": "OBSERVED",
+        "confirmedUnits": "0",
+        "balances": [
+          {
+            "domain": 0,
+            "chain": "Ethereum",
+            "confirmedUnits": "0"
+          },
+          {
+            "domain": 26,
+            "chain": "Arc",
+            "confirmedUnits": "0"
+          }
+        ]
+      }
+    ],
+    "limitations": [
+      "API-reported coverage is not a transfer quote or independent contract verification.",
+      "Balances cover the same EVM address across reported EVM domains; Solana is excluded.",
+      "These are confirmed Gateway deposits, not wallet balances. Pending deposits are not included.",
+      "Assets remain separate. No exchange, USD total or treasury allocation is calculated."
+    ]
+  },
+  "receiptId": "gateway-f4701c34814afdcd",
+  "integrity": {
+    "algorithm": "SHA-256",
+    "canonicalization": "cofferhouse-canonical-json-v1",
+    "contentHash": "f4701c34814afdcd15ad7cce85367f446010bb885f7a0bb4673de6f666fe37cc"
+  }
+}

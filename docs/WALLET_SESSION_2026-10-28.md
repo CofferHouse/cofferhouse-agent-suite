@@ -1,5 +1,8 @@
 # Holder Center wallet session — 28 October 2026
 
+The [31 October release validation](WALLET_SESSION_RELEASE_2026-10-31.md) updates
+this work against the current Morpho/Gateway implementation.
+
 After an injected browser wallet connects, changing accounts or networks, or
 disconnecting the provider, reloads Holder Center and requires explicit
 reconnection. This clears the page's wallet identity, Telegram subscription
