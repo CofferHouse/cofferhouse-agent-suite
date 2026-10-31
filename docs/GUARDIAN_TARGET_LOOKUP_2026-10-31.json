@@ -1,0 +1,48 @@
+{
+  "kind": "READ_ONLY_ARC_INDEX_LOOKUP",
+  "observations": [
+    {
+      "targetId": "0xc2db905f174e5defcce01d321b09f15f78856a36a21b90cc7e1abbc29225815d",
+      "status": "FOUND",
+      "code": null,
+      "observedAt": "2026-10-31T15:34:42.706Z",
+      "market": {
+        "id": "morpho-0xc2db905f174e5defcce01d321b09f15f78856a36a21b90cc7e1abbc29225815d",
+        "symbol": "USDC",
+        "name": "USDC / cirBTC Market",
+        "category": "Crypto collateral",
+        "protocol": "Morpho Blue",
+        "network": "Arc",
+        "chainId": 5042,
+        "marketId": "0xc2db905f174e5defcce01d321b09f15f78856a36a21b90cc7e1abbc29225815d",
+        "lltvPct": 86,
+        "loanAssetAddress": "0x3600000000000000000000000000000000000000",
+        "loanAssetDecimals": 6,
+        "collateralAssetAddress": "0x171A4217b86A807A64eB94757Db6849fb4bDbAA0",
+        "collateralAssetDecimals": 8,
+        "liquidityUsd": 19600330.193865392,
+        "suppliedUsd": 183325186.44647533,
+        "borrowedUsd": 163724856.25260997,
+        "utilizationPct": 89.30843569626587,
+        "apyPct": 2.123906621483945,
+        "borrowApyPct": 2.3811749759835545,
+        "collateralVolatilityPct": null,
+        "oracleCount": 1,
+        "oracleAddress": "0x2AA87fF48933Ce6aBA240BEE916Fc2e6Ec1e51Ab",
+        "contractStatus": "listed",
+        "ageMinutes": 0,
+        "completenessPct": 100,
+        "source": "Morpho API · Arc mainnet",
+        "sourceUrl": "https://arc.etherscan.io/address/0x2AA87fF48933Ce6aBA240BEE916Fc2e6Ec1e51Ab",
+        "address": "0xc2db905f174e5defcce01d321b09f15f78856a36a21b90cc7e1abbc29225815d",
+        "observedAt": "2026-10-31T15:34:42.706Z",
+        "note": "Live market observation. Listing is not a CofferHouse approval or recommendation.",
+        "dataMode": "live"
+      }
+    }
+  ],
+  "limitations": [
+    "No durable registration, scheduled run, notification or transaction was invoked.",
+    "API evidence is not independent onchain verification."
+  ]
+}

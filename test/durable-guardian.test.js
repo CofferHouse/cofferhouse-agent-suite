@@ -51,3 +51,38 @@ test("durable Guardian portfolio rejects duplicate identities and excess watches
   assert.throws(() => evaluateDurableGuardianPortfolio({ registrations: [registration, registration], markets: [], policy: policyProfiles.balanced }), /unique/);
   assert.throws(() => evaluateDurableGuardianPortfolio({ registrations: [registration, registration], markets: [], policy: policyProfiles.balanced, maxWatches: 1 }), /up to 1/);
 });
+
+test("exact observations keep a watched target visible outside Scout's ranking", () => {
+  const { market, registration } = registrationFixture();
+  const targetObservation = { targetId: market.marketId, status: "FOUND", market: { ...market, chainId: 5042 } };
+  const receipt = evaluateDurableGuardianRegistration({ registration, markets: [], targetObservation, policy: policyProfiles.balanced, now: () => new Date("2026-09-24T12:05:00Z") });
+  assert.equal(receipt.observation.decision, "HOLD_RESEARCH");
+  assert.equal(receipt.observation.sourceDiagnostic.status, "FOUND");
+  assert.equal(verifyReceiptDocument(receipt).valid, true);
+});
+
+test("index absence and source errors require review, not a disappearance or healthy claim", () => {
+  const { market, registration } = registrationFixture();
+  for (const status of ["NOT_INDEXED", "UNAVAILABLE"]) {
+    const receipt = evaluateDurableGuardianRegistration({ registration, markets: [market], targetObservation: { targetId: market.marketId, status, code: "SOURCE_UNAVAILABLE", market: null }, policy: policyProfiles.balanced, now: () => new Date("2026-09-24T12:05:00Z") });
+    assert.equal(receipt.observation.decision, "REVIEW");
+    assert.equal(receipt.observation.requiresHumanAttention, true);
+    assert.equal(receipt.observation.current, null);
+    assert.match(receipt.observation.reasons[0], /does not prove/);
+  }
+});
+
+test("a missing or mismatched exact observation cannot fall back to the ranked feed", () => {
+  const { market, registration } = registrationFixture();
+  const receipts = evaluateDurableGuardianPortfolio({ registrations: [registration], markets: [market], targetObservations: [], policy: policyProfiles.balanced });
+  assert.equal(receipts[0].observation.decision, "REVIEW");
+  const mismatch = evaluateDurableGuardianRegistration({ registration, markets: [market], targetObservation: { targetId: market.marketId, status: "FOUND", market: { ...market, chainId: 1 } }, policy: policyProfiles.balanced });
+  assert.equal(mismatch.observation.decision, "REVIEW");
+  assert.equal(mismatch.observation.sourceDiagnostic.code, "IDENTITY_MISMATCH");
+});
+
+test("portfolio rejects duplicated exact observations", () => {
+  const { registration } = registrationFixture();
+  const observation = { targetId: registration.watch.target.id, status: "NOT_INDEXED" };
+  assert.throws(() => evaluateDurableGuardianPortfolio({ registrations: [registration], markets: [], targetObservations: [observation, observation], policy: policyProfiles.balanced }), /unique/);
+});
