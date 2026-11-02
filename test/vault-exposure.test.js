@@ -156,3 +156,53 @@ test("public endpoint rejects writes and invalid addresses before fetching", asy
   await handler({ method: "POST" }, response); assert.equal(response.code, 405);
   await handler({ method: "GET", url: "/api/app-kits/vault-exposure?vault=bad" }, response); assert.equal(response.code, 400);
 });
+
+function nextBlock(data) {
+  for (const value of Object.values(data)) value.last_indexed_block = "124";
+  return data;
+}
+
+test("allocation replacement is reviewed even when concentration and liquidity are unchanged", () => {
+  const before = normalize(fixture());
+  const data = nextBlock(fixture());
+  data.allocations.allocations[0].market_id = `0x${"5".repeat(64)}`;
+  const result = compareVaultExposure(before, normalize(data));
+  assert.equal(result.status, "REVIEW");
+  assert.deepEqual(result.changes.map(item => item.kind), ["ALLOCATION_REMOVED", "ALLOCATION_ADDED"]);
+  assert.equal(result.changes[0].targetId, market);
+  assert.match(vaultExposureHtml({ mode: "ready", observation: normalize(data), comparison: result }), new RegExp(market));
+});
+
+test("proportional deposits do not report reallocation but a cap change does", () => {
+  const before = normalize(fixture());
+  const data = nextBlock(fixture());
+  data.state.total_assets = "200000000";
+  data.state.withdrawable_assets = "40000000";
+  data.allocations.allocations[0].supply_assets = "200000000";
+  assert.equal(compareVaultExposure(before, normalize(data)).status, "NO_OBSERVED_CHANGE");
+  data.allocations.allocations[0].supply_cap = "300000000";
+  assert.deepEqual(compareVaultExposure(before, normalize(data)).changes, [{ kind: "ALLOCATION_CAP_CHANGED", targetId: market, before: "200000000", after: "300000000" }]);
+});
+
+test("reallocation between existing markets is visible despite unchanged largest share", () => {
+  const data = fixture();
+  data.allocations.allocations[0].supply_assets = "60000000";
+  data.allocations.allocations.push({ market_id: `0x${"5".repeat(64)}`, supply_assets: "40000000", supply_cap: "200000000" });
+  const before = normalize(data);
+  nextBlock(data);
+  data.allocations.allocations[0].supply_assets = "40000000";
+  data.allocations.allocations[1].supply_assets = "60000000";
+  const result = compareVaultExposure(before, normalize(data));
+  assert.deepEqual(result.changes.map(item => item.kind), ["ALLOCATION_SHARE_CHANGED", "ALLOCATION_SHARE_CHANGED"]);
+});
+
+test("V2 adapter replacement is reviewed without summing overlapping risk caps", () => {
+  const before = normalize(fixture(2), 2);
+  const data = nextBlock(fixture(2));
+  data.allocations.allocations[0].adapter_address = `0x${"6".repeat(40)}`;
+  const after = normalize(data, 2);
+  assert.equal(after.allocatedAssetsUnits, before.allocatedAssetsUnits);
+  assert.deepEqual(compareVaultExposure(before, after).changes.map(item => item.kind), ["ALLOCATION_REMOVED", "ALLOCATION_ADDED"]);
+  after.status = "PARTIAL_EVIDENCE";
+  assert.equal(compareVaultExposure(before, after).status, "NOT_COMPARABLE");
+});
