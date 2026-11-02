@@ -113,6 +113,22 @@ export function compareVaultExposure(previous, current) {
   }
   if (previous.withdrawalCoveragePct !== null && current.withdrawalCoveragePct !== null && current.withdrawalCoveragePct < previous.withdrawalCoveragePct) changes.push({ kind: "LIQUIDITY_DECREASED", before: previous.withdrawalCoveragePct, after: current.withdrawalCoveragePct });
   if (previous.largestPositionPct !== null && current.largestPositionPct !== null && current.largestPositionPct > previous.largestPositionPct) changes.push({ kind: "CONCENTRATION_INCREASED", before: previous.largestPositionPct, after: current.largestPositionPct });
+  const beforePositions = new Map(previous.positions.map(item => [item.id, item]));
+  const afterPositions = new Map(current.positions.map(item => [item.id, item]));
+  for (const id of [...new Set([...beforePositions.keys(), ...afterPositions.keys()])].sort()) {
+    const before = beforePositions.get(id), after = afterPositions.get(id);
+    if (!before || !after) {
+      changes.push({ kind: before ? "ALLOCATION_REMOVED" : "ALLOCATION_ADDED", targetId: id, before: before?.allocatedUnits ?? null, after: after?.allocatedUnits ?? null });
+      continue;
+    }
+    // Compare proportions rather than balances: proportional deposits are not reallocations.
+    if (before.sharePct !== null && after.sharePct !== null && before.sharePct !== after.sharePct) {
+      changes.push({ kind: "ALLOCATION_SHARE_CHANGED", targetId: id, before: before.sharePct, after: after.sharePct });
+    }
+    if (before.absoluteCapUnits !== after.absoluteCapUnits) {
+      changes.push({ kind: "ALLOCATION_CAP_CHANGED", targetId: id, before: before.absoluteCapUnits, after: after.absoluteCapUnits });
+    }
+  }
   return { status: changes.length ? "REVIEW" : "NO_OBSERVED_CHANGE", changes };
 }
 

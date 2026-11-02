@@ -22,7 +22,13 @@ It also exports a sealed, registered evidence receipt.
   look-through are not implemented by this adapter. V1 idle assets remain unknown.
 - Comparing later, block-aligned and reconciled observations in the same browser
   session can flag owner/curator/guardian changes, lower withdrawal coverage and
-  increased concentration. This is manual research, not a durable Guardian watch,
+  increased concentration, added/removed markets or adapters, changed allocation
+  shares and changed top-level absolute caps. Allocation shares use the existing
+  0.01 percentage-point precision. Proportional deposits alone do not trigger
+  reallocation reports. Changes include the affected target identity; a removal
+  describes the indexed allocation list, not proof that a contract disappeared.
+  Comparisons still require increasing, aligned and reconciled blocks.
+  This is manual research, not a durable Guardian watch,
   Telegram alert or onchain Sentinel role.
 
 The endpoint is `GET /api/app-kits/vault-exposure?vault=0x...`. It always targets
@@ -72,3 +78,11 @@ Official API references checked 28 October 2026:
 - https://docs.morpho.org/api/vaults-v2/get-v2-vault/
 - https://docs.morpho.org/api/vaults-v2/get-v2-vault-state/
 - https://docs.morpho.org/api/vaults-v2/get-v2-vault-allocations/
+
+## Allocation comparison update — 2 November 2026
+
+`npm run check` passed 314 tests and the production build. Regression cases cover
+market replacement at unchanged concentration, reallocation between existing
+markets, proportional deposits, absolute-cap changes and V2 adapter replacement.
+Partial evidence remains non-comparable. Durable vault registration and outbound
+alert delivery are subsequent integration work.

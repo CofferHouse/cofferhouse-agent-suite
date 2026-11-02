@@ -21,7 +21,7 @@ export function vaultExposureHtml(state) {
     ${data.positions.map(item => `<tr><td><code>${h(item.id)}</code></td><td>${h(amount(item.allocatedUnits))} ${h(data.asset.symbol)}</td><td>${item.sharePct === null ? "—" : `${h(item.sharePct)}%`}</td></tr>`).join("")}
     </tbody></table></div>
     <p>${state.comparison?.status === "REVIEW" ? "Changes detected since the previous comparable observation." : state.comparison?.status === "NO_OBSERVED_CHANGE" ? "No monitored change detected between comparable observations." : "Comparison requires two reconciled observations from increasing blocks."}</p>
-    ${state.comparison?.changes?.length ? `<ul>${state.comparison.changes.map(change => `<li><code>${h(change.kind)}${change.role ? ` (${h(change.role)})` : ""}</code>: <code>${h(String(change.before))} → ${h(String(change.after))}</code></li>`).join("")}</ul>` : ""}
+    ${state.comparison?.changes?.length ? `<ul>${state.comparison.changes.map(change => `<li><code>${h(change.kind)}${change.role ? ` (${h(change.role)})` : ""}${change.targetId ? ` (${h(change.targetId)})` : ""}</code>: <code>${h(String(change.before))} → ${h(String(change.after))}</code></li>`).join("")}</ul>` : ""}
     <ul>${data.warnings.concat(data.limitations).map(warning => `<li>${h(warning)}</li>`).join("")}</ul>
     <button class="vault-exposure-download" type="button">DOWNLOAD VAULT EVIDENCE</button>
   </section>`;
