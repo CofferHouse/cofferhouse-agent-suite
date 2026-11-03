@@ -50,3 +50,22 @@ during implementation; no private account or trade was accessed.
 Official references checked during implementation:
 - https://docs.cdp.coinbase.com/api-reference/advanced-trade-api/rest-api/public/get-public-product
 - https://docs.cdp.coinbase.com/ai-agents/coinbase-for-agents/coinbase-mcp
+
+## Local authenticated balance check
+
+Create an ECDSA CDP API key with **View only** for the intended Coinbase Advanced
+portfolio. Leave Trade and Transfer disabled. Keep the downloaded key JSON outside
+the repository and never share it in chat or upload it to Vercel. Run locally:
+
+```sh
+node scripts/coinbase-readonly.mjs /path/to/local-key.json
+```
+
+The script first verifies the key's permissions directly with Coinbase and rejects
+any key with trade/transfer access or missing permission evidence. It then retrieves
+the selected key's accounts and prints available and held amounts by currency.
+No private balance is sent to Holder Center. This does not enumerate derivatives
+positions. No live account is verified until the owner runs the script with a key.
+
+- https://docs.cdp.coinbase.com/api-reference/advanced-trade-api/rest-api/data-api/get-api-key-permissions
+- https://docs.cdp.coinbase.com/api-reference/advanced-trade-api/rest-api/accounts/list-accounts
