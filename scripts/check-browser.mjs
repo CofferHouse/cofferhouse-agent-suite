@@ -1,3 +1,4 @@
+import { normalizeCoinbaseProduct } from '../packages/arc-data/coinbase.js';
 import assert from "node:assert/strict";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -65,6 +66,7 @@ try {
       window.__qaDisconnect = () => window.__qaChangeAccount(null);
       window.__qaProviderDisconnect = () => { activeAccount = null; sessionStorage.setItem("qa-wallet-account", ""); emit("disconnect", { code: 4900, message: "Browser fixture disconnect" }); };
     }, { account });
+    let failCoinbase = false;
     let failGateway = false;
     let failExposure = false;
     let holdGateway = null;
@@ -73,7 +75,11 @@ try {
       const url = new URL(route.request().url());
       let status = 200;
       let body;
-      if (url.pathname === "/api/app-kits/gateway") {
+      if (url.pathname === '/api/coinbase/market') {
+        status = failCoinbase ? 502 : 200;
+        const product = url.searchParams.get('product');
+        body = failCoinbase ? {ok:false} : {ok:true, observation:normalizeCoinbaseProduct({product_id:product, product_type:'SPOT', base_currency_id:product.split('-')[0],quote_currency_id:product.split('-')[1],price:'80000'},product,new Date().toISOString())};
+      } else if (url.pathname === "/api/app-kits/gateway") {
         if (holdGateway) { gatewayStarted(); await holdGateway; }
         status = failGateway ? 502 : 200;
         body = failGateway ? { ok: false } : { ok: true, observation: await gateway(url.searchParams.get("depositor")) };
@@ -96,6 +102,25 @@ try {
     page.setDefaultTimeout(10_000);
     await page.goto(server.resolvedUrls.local[0]);
     await page.locator(".gateway-refresh").waitFor();
+    await page.locator('.coinbase-market-form button').click();
+    await page.locator('.coinbase-paper-form').waitFor();
+    await page.locator('.coinbase-paper-form button').click();
+    assert.match(await page.locator('.coinbase-panel').innerText(), /0.00125 BTC/);
+    const coinbaseDownload = page.waitForEvent('download');
+    await page.locator('.coinbase-download').click();
+    const downloadedCoinbase = await coinbaseDownload;
+    const coinbaseReceipt = JSON.parse(await readFile(await downloadedCoinbase.path(), 'utf8'));
+    assert.equal(verifyReceiptDocument(coinbaseReceipt).valid, true);
+    assert.equal(coinbaseReceipt.preview.execution.submitted, false);
+    await page.locator('.coinbase-market-form select').selectOption('ETH-USDC');
+    await page.locator('.coinbase-market-form button').click();
+    await page.locator('.coinbase-paper-form').waitFor();
+    assert.match(await page.locator('.coinbase-panel').innerText(), /80000 USDC/);
+    assert.equal(await page.locator('.coinbase-panel').innerText().then(t=>t.includes('0.00125 BTC')), false);
+    failCoinbase = true;
+    await page.locator('.coinbase-market-form button').click();
+    await page.locator('.coinbase-panel [role="status"]').waitFor();
+    assert.equal(await page.locator('.coinbase-paper-form').count(), 0);
     assert.equal(await page.locator(".gateway-balances").isDisabled(), true);
     await page.locator(".gateway-refresh").click();
     await page.locator(".gateway-download").waitFor();
