@@ -1,6 +1,20 @@
 // Columns: English, Simplified Chinese, Japanese, Hindi, Spanish.
 // Proper names, contract addresses, signed messages and exported evidence retain their original values.
 export const holderTranslations = [
+["Coinbase · spot research", "Coinbase · 现货研究", "Coinbase · 現物調査", "Coinbase · स्पॉट अनुसंधान", "Coinbase · análisis de contado"],
+["Public market data. No Coinbase account is connected.", "公开市场数据。未连接 Coinbase 账户。", "公開市場データです。Coinbaseアカウントは未接続です。", "सार्वजनिक बाज़ार डेटा। कोई Coinbase खाता जुड़ा नहीं है।", "Datos públicos de mercado. No hay una cuenta de Coinbase conectada."],
+["Product", "产品", "商品", "उत्पाद", "Producto"],
+["CHECK COINBASE MARKET", "查询 Coinbase 市场", "Coinbase市場を確認", "Coinbase बाज़ार देखें", "CONSULTAR MERCADO EN COINBASE"],
+["Checking Coinbase…", "正在查询 Coinbase…", "Coinbaseを確認中…", "Coinbase की जाँच हो रही है…", "Consultando Coinbase…"],
+["Coinbase evidence is unavailable. Refresh before simulating.", "Coinbase 数据不可用。模拟前请刷新。", "Coinbaseの根拠を取得できません。試算前に更新してください。", "Coinbase साक्ष्य उपलब्ध नहीं हैं। अनुकरण से पहले ताज़ा करें।", "La evidencia de Coinbase no está disponible. Actualiza antes de simular."],
+["Reference price", "参考价格", "参考価格", "संदर्भ मूल्य", "Precio de referencia"],
+["Hypothetical amount in quote currency", "计价货币的假设金额", "建値通貨での仮定金額", "कोट मुद्रा में काल्पनिक राशि", "Importe hipotético en la moneda de cotización"],
+["CALCULATE PAPER ESTIMATE", "计算模拟估算", "仮想試算を計算", "काल्पनिक अनुमान की गणना करें", "CALCULAR ESTIMACIÓN HIPOTÉTICA"],
+["Refresh evidence and enter a valid amount.", "请刷新数据并输入有效金额。", "根拠を更新し、有効な金額を入力してください。", "साक्ष्य ताज़ा करें और मान्य राशि दर्ज करें।", "Actualiza la evidencia e ingresa un importe válido."],
+["Approximate base units before costs", "扣费前的估算基础资产数量", "費用控除前の概算数量", "लागत से पहले अनुमानित आधार इकाइयाँ", "Unidades aproximadas del activo antes de costos"],
+["DOWNLOAD COINBASE EVIDENCE", "下载 Coinbase 证据", "Coinbaseの根拠をダウンロード", "Coinbase साक्ष्य डाउनलोड करें", "DESCARGAR EVIDENCIA DE COINBASE"],
+["Paper estimate only. Fees, spread and slippage are excluded. No order is created.", "仅为模拟估算。不含费用、价差和滑点。不创建订单。", "仮想試算のみです。手数料・スプレッド・スリッページは含みません。注文は作成しません。", "केवल काल्पनिक अनुमान। शुल्क, स्प्रेड और स्लिपेज शामिल नहीं हैं। कोई ऑर्डर नहीं बनता।", "Solo estimación hipotética. Excluye comisiones, diferencial y deslizamiento. No se crea ninguna orden."],
+["Spot research does not establish eligibility for the derivatives competition.", "现货研究不能证明符合衍生品竞赛资格。", "現物調査はデリバティブ大会の参加資格を証明しません。", "स्पॉट अनुसंधान डेरिवेटिव प्रतियोगिता की पात्रता स्थापित नहीं करता।", "El análisis de contado no acredita elegibilidad para el concurso de derivados."],
 ['The exact watched target could not be observed in the Arc index. This does not prove that the market disappeared; refresh its evidence before any action.','无法在 Arc 索引中观测到指定监控目标。这不能证明市场已消失；采取任何操作前请刷新证据。','Arcインデックスから監視対象を確認できませんでした。市場の消失を証明するものではありません。操作前に根拠を更新してください。','Arc इंडेक्स में सटीक निगरानी लक्ष्य नहीं देखा जा सका। इससे बाज़ार के गायब होने का प्रमाण नहीं मिलता; किसी भी कार्रवाई से पहले साक्ष्य ताज़ा करें।','No se pudo observar el objetivo exacto en el índice de Arc. Esto no demuestra que el mercado haya desaparecido; actualiza su evidencia antes de actuar.'],
 ['Gateway · balances by asset','Gateway · 按资产查看余额','Gateway · 資産別残高','Gateway · परिसंपत्ति के अनुसार शेष','Gateway · saldos por activo'],
 ['Check supported funding networks and confirmed Gateway deposits. Each asset keeps its own balance.','查看支持的资金网络和已确认的 Gateway 存款。每种资产单独记账。','対応ネットワークと確認済みGateway入金を確認します。残高は資産ごとに分かれます。','समर्थित नेटवर्क और पुष्टि किए Gateway जमा देखें। हर परिसंपत्ति का शेष अलग है।','Consulta las redes compatibles y los depósitos confirmados en Gateway. Cada activo mantiene su propio saldo.'],

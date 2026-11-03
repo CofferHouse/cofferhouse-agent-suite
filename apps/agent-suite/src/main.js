@@ -1,3 +1,6 @@
+import { coinbaseHtml } from '../../../packages/agent-modules/coinbase-view.js';
+import { simulateCoinbasePurchase } from '../../../packages/arc-data/coinbase.js';
+import { sealDocument } from '../../../packages/evidence/integrity.js';
 import { botLabHtml, mountBotLab } from "../../../packages/agent-modules/bot-lab-view.js";
 import { createHolderI18n } from "../../../packages/ui/holder-i18n.js";
 import { mountMembershipRoom } from "../../../packages/agent-modules/membership-room.js";
@@ -70,6 +73,7 @@ let holderPreferences = loadHolderPreferences(window.localStorage);
 let holderIdentity = disconnectedHolderIdentity(Boolean(window.ethereum));
 let holderIdentityBusy = false;
 let stopWalletSessionWatch = () => {};
+let coinbaseState = { mode: 'idle', product: 'BTC-USD', observation: null, preview: null };
 let gatewayState = { mode: "idle", observation: null };
 let gatewayGeneration = 0;
 let telegramAlertState = { mode: "checking", message: "Checking the official CofferHouse alert channel…", readiness: null, preferences: { ...defaultAlertPreferences }, telegramUrl: null, code: null, statusToken: null, expiresAt: null };
@@ -298,6 +302,7 @@ function render() {
         </div>
         <section class="holder-tools" aria-labelledby="holder-tools-title"><div class="holder-tools-head"><div><p class="eyebrow">YOUR HOUSE TOOLS</p><h2 id="holder-tools-title">Services by level.</h2></div><p>Research previews may open now. Financial services remain locked until their contracts, controls and eligibility checks are live.</p></div><div class="holder-tool-grid">${holderEntitlements.map((service) => `<article class="${service.unlocked ? "unlocked" : "locked"}"><span>${h(service.status.toUpperCase())} · ${h(holderLevels.find((level) => level.id === service.level)?.label ?? service.level)}</span><h3>${h(service.label)}</h3><p>${h(service.description)}</p>${service.view && service.unlocked ? `<button class="holder-open-tool" data-view="${h(service.view)}" type="button">OPEN ${h(service.label.toUpperCase())} →</button>` : `<button type="button" disabled>${service.unlocked ? "ROADMAP" : `UNLOCKS AT ${h(service.level.toUpperCase())}`}</button>`}</article>`).join("")}</div></section>
         ${gatewayHtml(gatewayState, holderIdentity.address)}
+        ${coinbaseHtml(coinbaseState)}
         <footer class="holder-boundary"><b>MEMBERSHIP VIEW, NOT A WALLET</b><span>Demo · Read only · No custody · No execution</span></footer>
       </section>
       <section class="hero suite-view ${activeSuiteView === "hub" ? "is-active" : ""}" data-suite-view="hub">
@@ -820,6 +825,29 @@ function render() {
       onrampState = { ...onrampState, mode: "error", message: error.message ?? "Onramp session could not be created.", session: null };
     }
     render();
+  });
+  document.querySelector('.coinbase-market-form')?.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (coinbaseState.mode === 'loading') return;
+    const product = new FormData(event.currentTarget).get('product');
+    coinbaseState = { mode: 'loading', product, observation: null, preview: null };
+    render();
+    try {
+      const response = await fetch(`/api/coinbase/market?product=${encodeURIComponent(product)}`, { signal: AbortSignal.timeout(15000) });
+      const payload = await response.json();
+      if (!response.ok || !payload.ok || payload.observation?.schema !== 'cofferhouse.coinbase.market.v1' || payload.observation.productId !== product) throw new Error('Unavailable');
+      coinbaseState = { mode: 'ready', product, observation: payload.observation, preview: null };
+    } catch { coinbaseState = { mode: 'error', product, observation: null, preview: null }; }
+    render();
+  });
+  document.querySelector('.coinbase-paper-form')?.addEventListener('submit', event => {
+    event.preventDefault();
+    try { coinbaseState.preview = simulateCoinbasePurchase(coinbaseState.observation, new FormData(event.currentTarget).get('amount')); coinbaseState.previewError = false; }
+    catch { coinbaseState.preview = null; coinbaseState.previewError = true; }
+    render();
+  });
+  document.querySelector('.coinbase-download')?.addEventListener('click', () => {
+    if (coinbaseState.observation) downloadScoutReceipt(sealDocument({ schema: 'cofferhouse.coinbase.research-receipt.v1', generatedAt: new Date().toISOString(), observation: coinbaseState.observation, preview: coinbaseState.preview }, 'coinbase-research'));
   });
   document.querySelector(".gateway-refresh")?.addEventListener("click", () => loadGatewayObservation(false));
   document.querySelector(".gateway-balances")?.addEventListener("click", () => loadGatewayObservation(true));
