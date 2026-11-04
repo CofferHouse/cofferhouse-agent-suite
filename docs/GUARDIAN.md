@@ -26,3 +26,23 @@ Guardian returns one bounded decision:
 Default monitored conditions include a 10% liquidity decline, five-point utilization increase, 50% absolute 24-hour price movement and 2% modeled liquidity impact. The original deterministic policy status remains authoritative.
 
 Guardian cannot withdraw, rebalance, swap or execute. Any future response must create a new Action Center intent. Its receipt records the baseline, current observation, decision and `automatedAction: false`.
+
+## Vault watches (operator API)
+
+The existing scheduled runtime also checks up to three exact Morpho vault addresses
+on Arc. Vault watches are stored separately from lending watches. To approve the
+capture of a fresh baseline, send `POST /api/guardian/vault-watch` with the existing
+operator bearer token and JSON `{"vault":"0x…","approveBaseline":true}`. The server
+retrieves and stores its own aligned, reconciled baseline. Partial observations
+cannot register a watch. Re-registering replaces the baseline for that address.
+
+Authenticated `GET /api/guardian/vault-watch` returns the active watches and their
+latest sealed evidence. `DELETE /api/guardian/vault-watch?vault=0x…` removes the
+selected watch. The scheduler uses compare-and-set so an in-flight run cannot
+restore a removed watch or overwrite a new baseline.
+
+Every check compares a later observation against the approved baseline. A material
+difference is marked REVIEW, incomplete or mismatched data is not comparable,
+and source failure is unavailable. No vault alert, trade or transfer is sent in
+this stage. The Holder Center registration UI and outbound vault alerts are
+subsequent work.

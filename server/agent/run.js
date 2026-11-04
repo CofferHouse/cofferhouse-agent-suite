@@ -1,3 +1,4 @@
+import { runVaultWatches } from "../guardian/vault-watch.js";
 import { randomUUID } from "node:crypto";
 import { deleteJsonIfValue, getJson, pushJson, setJson, setJsonIfAbsent, durableStoreConfigured } from "../_redis.js";
 import { fetchMorphoArcMarkets, fetchMorphoArcTargets, verifyArcMarketContracts } from "../../packages/arc-data/index.js";
@@ -45,6 +46,7 @@ export default async function handler(request, response) {
   }
   const recordAttempt = (phase, extra = {}) => setJson(RUN_ATTEMPT_KEY, { schema: "cofferhouse.scout.run-attempt.v1", runId: lock.runId, startedAt, updatedAt: new Date().toISOString(), state: "RUNNING", phase, ...extra });
 
+  const vaultWatches = runVaultWatches().catch(() => ({ count: null, saved: false }));
   try {
     await recordAttempt("LOAD_DURABLE_STATE");
     const [previousMarkets, guardianRegistrationState, previousInteropReceipt] = await Promise.all([getJson(SNAPSHOT_KEY), getJson(GUARDIAN_WATCH_KEY), getJson(INTEROP_LATEST_KEY)]);
@@ -137,7 +139,7 @@ export default async function handler(request, response) {
       { phase: "RECORD", status: "READY", detail: "Sealed cycle prepared for durable storage.", at: cycle.ranAt }
     ];
     const guardian = guardianReceipts.length ? { active: true, watchCount: guardianReceipts.length, decisions: guardianReceipts.map((receipt) => ({ receiptId: receipt.receiptId, target: receipt.watch.target, decision: receipt.observation.decision, requiresHumanAttention: receipt.observation.requiresHumanAttention })), alerts: guardianAlerts, notifications: guardianNotifications, subscriberNotifications: guardianSubscriberNotifications } : { active: false, watchCount: 0, decisions: [], alerts: [], notifications: [], subscriberNotifications: [] };
-    const publicCycle = sealDocument({ ...cycleWithoutMarkets, trace, verification, interop: { configured: interop.configured, status: interop.status, receiptId: interop.receipt?.receiptId ?? null, counts: interop.receipt?.observation.counts ?? null, error: interop.error }, intelligence, alert, notification, subscriberNotification, guardian }, "cycle");
+    const publicCycle = sealDocument({ ...cycleWithoutMarkets, trace, verification, interop: { configured: interop.configured, status: interop.status, receiptId: interop.receipt?.receiptId ?? null, counts: interop.receipt?.observation.counts ?? null, error: interop.error }, intelligence, alert, notification, subscriberNotification, guardian, vaultWatches: await vaultWatches }, "cycle");
     await recordAttempt("COMMIT_DURABLE_EVIDENCE", { cycleRanAt: cycle.ranAt });
     await setJson(SNAPSHOT_KEY, currentMarkets);
     await setJson(STATUS_KEY, publicCycle);
@@ -167,6 +169,7 @@ export default async function handler(request, response) {
     } catch {}
     return response.status(500).json({ ok: false, runId: lock.runId, recoverable: true, preservedLastSuccessfulCycle: true, ...failure });
   } finally {
+    await vaultWatches;
     try { await deleteJsonIfValue(RUN_LOCK_KEY, lock); } catch {}
   }
 }
