@@ -1,3 +1,4 @@
+import scoutDiscoveryHandler from "../server/scout/discovery.js";
 import vaultWatchHandler from "../server/guardian/vault-watch.js";
 import coinbaseMarketHandler from '../server/coinbase/market.js';
 import handler0 from "../server/agent/acknowledge.js";
@@ -25,6 +26,7 @@ import gatewayHandler from "../server/app-kits/gateway.js";
 import vaultExposureHandler from "../server/app-kits/vault-exposure.js";
 
 const routes = new Map([
+  ["/api/scout/discovery", scoutDiscoveryHandler],
   ["/api/guardian/vault-watch", vaultWatchHandler],
   ["/api/coinbase/market", coinbaseMarketHandler],
   ["/api/app-kits/gateway", gatewayHandler],

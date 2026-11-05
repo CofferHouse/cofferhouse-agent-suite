@@ -75,7 +75,14 @@ try {
       const url = new URL(route.request().url());
       let status = 200;
       let body;
-      if (url.pathname === '/api/coinbase/market') {
+      if (url.pathname === "/api/scout/discovery") {
+        assert.equal(url.searchParams.get("chains"), "8453");
+        assert.equal(url.searchParams.get("asset"), "USDC");
+        body = {ok:true,networks:[{id:8453,name:"Base",status:"FOUND",scanned:1,observedAt:new Date().toISOString(),markets:[{
+          id:"eip155:8453:morpho-blue:" + market,asset:{symbol:"USDC",address:asset},collateral:null,
+          supplyApyPct:8,liquidityUsd:2000,utilizationPct:50
+        }]}]};
+      } else if (url.pathname === '/api/coinbase/market') {
         status = failCoinbase ? 502 : 200;
         const product = url.searchParams.get('product');
         body = failCoinbase ? {ok:false} : {ok:true, observation:normalizeCoinbaseProduct({product_id:product, product_type:'SPOT', base_currency_id:product.split('-')[0],quote_currency_id:product.split('-')[1],price:'80000'},product,new Date().toISOString())};
@@ -102,6 +109,14 @@ try {
     page.setDefaultTimeout(10_000);
     await page.goto(server.resolvedUrls.local[0]);
     await page.locator(".gateway-refresh").waitFor();
+    const scout = page.locator(".scout-discovery");
+    await scout.locator('input[value="5042"]').uncheck();
+    await scout.locator('input[value="1"]').uncheck();
+    await scout.locator('input[name="asset"]').fill("USDC");
+    await scout.locator("button").click();
+    await scout.locator("tbody tr").waitFor();
+    assert.match(await scout.locator("tbody tr").innerText(), /USDC.*8%/s);
+    assert.match(await scout.locator("details > summary").first().innerText(), /Base/);
     await page.locator('.coinbase-market-form button').click();
     await page.locator('.coinbase-paper-form').waitFor();
     await page.locator('.coinbase-paper-form button').click();
