@@ -44,3 +44,16 @@ test("endpoint rejects unrecognized chains and write methods", async () => {
   assert.equal((await handler({method:"GET",url:"/api/scout/discovery?chains=999"},res())).code,400);
   assert.equal((await handler({method:"POST"},res())).code,405);
 });
+
+test("risk thresholds compose with asset filters and exclude missing metrics", async () => {
+  const rows = [
+    row(8453),
+    {...row(8453),marketId:"0x"+"c".repeat(64),state:{liquidityAssetsUsd:1999,utilization:0.5}},
+    {...row(8453),marketId:"0x"+"d".repeat(64),state:{liquidityAssetsUsd:2000,utilization:0.51}},
+    {...row(8453),marketId:"0x"+"e".repeat(64),state:{liquidityAssetsUsd:2000,utilization:null}}
+  ];
+  const [result] = await discoverMorphoMarkets({chainIds:[8453],asset:"USDC",minLiquidityUsd:"2000",maxUtilizationPct:"50",fetcher:async()=>json(rows)});
+  assert.equal(result.scanned,4);
+  assert.deepEqual(result.markets.map(m=>m.marketId),[rows[0].marketId]);
+  await assert.rejects(discoverMorphoMarkets({chainIds:[8453],maxUtilizationPct:"101",fetcher:()=>assert.fail("invalid thresholds must not fetch")}),/threshold/);
+});

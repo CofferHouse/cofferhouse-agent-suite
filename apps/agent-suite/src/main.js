@@ -834,17 +834,20 @@ function render() {
     if (scoutDiscoveryState.mode === "loading") return;
     const form = new FormData(event.currentTarget);
     const chains = form.getAll("chain").map(Number), asset = String(form.get("asset")).trim();
-    scoutDiscoveryState = { mode: chains.length ? "loading" : "error", chains, asset, networks: [] };
+    const minLiquidityUsd = String(form.get("minLiquidityUsd")).trim();
+    const maxUtilizationPct = String(form.get("maxUtilizationPct")).trim();
+    const filters = { chains, asset, minLiquidityUsd, maxUtilizationPct };
+    scoutDiscoveryState = { mode: chains.length ? "loading" : "error", ...filters, networks: [] };
     render();
     if (!chains.length) return;
     try {
-      const query = new URLSearchParams({chains: chains.join(","), asset});
+      const query = new URLSearchParams({...filters, chains: chains.join(",")});
       const response = await fetch(`/api/scout/discovery?${query}`, {signal: AbortSignal.timeout(15000)});
       const body = await response.json();
       if (!response.ok || !body.ok || !Array.isArray(body.networks)) throw Error("Discovery unavailable");
-      scoutDiscoveryState = { mode: "ready", chains, asset, networks: body.networks };
+      scoutDiscoveryState = { mode: "ready", ...filters, networks: body.networks };
     } catch {
-      scoutDiscoveryState = { mode: "error", chains, asset, networks: [] };
+      scoutDiscoveryState = { mode: "error", ...filters, networks: [] };
     }
     render();
   });

@@ -78,6 +78,8 @@ try {
       if (url.pathname === "/api/scout/discovery") {
         assert.equal(url.searchParams.get("chains"), "8453");
         assert.equal(url.searchParams.get("asset"), "USDC");
+        assert.equal(url.searchParams.get("minLiquidityUsd"), "2000");
+        assert.equal(url.searchParams.get("maxUtilizationPct"), "50");
         body = {ok:true,networks:[{id:8453,name:"Base",status:"FOUND",scanned:1,observedAt:new Date().toISOString(),markets:[{
           id:"eip155:8453:morpho-blue:" + market,asset:{symbol:"USDC",address:asset},collateral:null,
           supplyApyPct:8,liquidityUsd:2000,utilizationPct:50
@@ -113,6 +115,8 @@ try {
     await scout.locator('input[value="5042"]').uncheck();
     await scout.locator('input[value="1"]').uncheck();
     await scout.locator('input[name="asset"]').fill("USDC");
+    await scout.locator('input[name="minLiquidityUsd"]').fill("2000");
+    await scout.locator('input[name="maxUtilizationPct"]').fill("50");
     await scout.locator("button").click();
     await scout.locator("tbody tr").waitFor();
     assert.match(await scout.locator("tbody tr").innerText(), /USDC.*8%/s);
