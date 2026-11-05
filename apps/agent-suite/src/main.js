@@ -1,3 +1,4 @@
+import { scoutDiscoveryHtml } from "../../../packages/agent-modules/scout-discovery-view.js";
 import { coinbaseHtml } from '../../../packages/agent-modules/coinbase-view.js';
 import { simulateCoinbasePurchase } from '../../../packages/arc-data/coinbase.js';
 import { sealDocument } from '../../../packages/evidence/integrity.js';
@@ -74,6 +75,7 @@ let holderIdentity = disconnectedHolderIdentity(Boolean(window.ethereum));
 let holderIdentityBusy = false;
 let stopWalletSessionWatch = () => {};
 let coinbaseState = { mode: 'idle', product: 'BTC-USD', observation: null, preview: null };
+let scoutDiscoveryState = { mode: "idle", chains: [5042, 8453, 1], asset: "", networks: [] };
 let gatewayState = { mode: "idle", observation: null };
 let gatewayGeneration = 0;
 let telegramAlertState = { mode: "checking", message: "Checking the official CofferHouse alert channel…", readiness: null, preferences: { ...defaultAlertPreferences }, telegramUrl: null, code: null, statusToken: null, expiresAt: null };
@@ -302,6 +304,7 @@ function render() {
         </div>
         <section class="holder-tools" aria-labelledby="holder-tools-title"><div class="holder-tools-head"><div><p class="eyebrow">YOUR HOUSE TOOLS</p><h2 id="holder-tools-title">Services by level.</h2></div><p>Research previews may open now. Financial services remain locked until their contracts, controls and eligibility checks are live.</p></div><div class="holder-tool-grid">${holderEntitlements.map((service) => `<article class="${service.unlocked ? "unlocked" : "locked"}"><span>${h(service.status.toUpperCase())} · ${h(holderLevels.find((level) => level.id === service.level)?.label ?? service.level)}</span><h3>${h(service.label)}</h3><p>${h(service.description)}</p>${service.view && service.unlocked ? `<button class="holder-open-tool" data-view="${h(service.view)}" type="button">OPEN ${h(service.label.toUpperCase())} →</button>` : `<button type="button" disabled>${service.unlocked ? "ROADMAP" : `UNLOCKS AT ${h(service.level.toUpperCase())}`}</button>`}</article>`).join("")}</div></section>
         ${gatewayHtml(gatewayState, holderIdentity.address)}
+        ${scoutDiscoveryHtml(scoutDiscoveryState)}
         ${coinbaseHtml(coinbaseState)}
         <footer class="holder-boundary"><b>MEMBERSHIP VIEW, NOT A WALLET</b><span>Demo · Read only · No custody · No execution</span></footer>
       </section>
@@ -823,6 +826,25 @@ function render() {
       onrampState = { ...onrampState, mode: "ready", message: "Short-lived session created. Review the destination before opening Circle's hosted flow.", session: payload.session };
     } catch (error) {
       onrampState = { ...onrampState, mode: "error", message: error.message ?? "Onramp session could not be created.", session: null };
+    }
+    render();
+  });
+  document.querySelector(".scout-discovery-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (scoutDiscoveryState.mode === "loading") return;
+    const form = new FormData(event.currentTarget);
+    const chains = form.getAll("chain").map(Number), asset = String(form.get("asset")).trim();
+    scoutDiscoveryState = { mode: chains.length ? "loading" : "error", chains, asset, networks: [] };
+    render();
+    if (!chains.length) return;
+    try {
+      const query = new URLSearchParams({chains: chains.join(","), asset});
+      const response = await fetch(`/api/scout/discovery?${query}`, {signal: AbortSignal.timeout(15000)});
+      const body = await response.json();
+      if (!response.ok || !body.ok || !Array.isArray(body.networks)) throw Error("Discovery unavailable");
+      scoutDiscoveryState = { mode: "ready", chains, asset, networks: body.networks };
+    } catch {
+      scoutDiscoveryState = { mode: "error", chains, asset, networks: [] };
     }
     render();
   });

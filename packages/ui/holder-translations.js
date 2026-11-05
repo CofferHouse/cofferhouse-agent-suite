@@ -1,6 +1,20 @@
 // Columns: English, Simplified Chinese, Japanese, Hindi, Spanish.
 // Proper names, contract addresses, signed messages and exported evidence retain their original values.
 export const holderTranslations = [
+["Scout · lending across networks", "Scout · 跨网络借贷", "Scout · 複数ネットワークの貸付", "Scout · कई नेटवर्क पर ऋण", "Scout · préstamos en varias redes"],
+["Research only. Scout scans up to 20 listed Morpho markets per selected network, then applies the asset filter.", "仅供研究。Scout 每个所选网络最多扫描 20 个 Morpho 上架市场，然后按资产筛选。", "調査専用です。Scoutは選択したネットワークごとにMorphoの掲載市場を最大20件調べ、資産で絞り込みます。", "केवल शोध। Scout हर चुने गए नेटवर्क में Morpho के अधिकतम 20 सूचीबद्ध बाज़ार देखकर परिसंपत्ति फ़िल्टर लगाता है।", "Solo investigación. Scout consulta hasta 20 mercados listados en Morpho por red seleccionada y luego aplica el filtro de activo."],
+["Networks", "网络", "ネットワーク", "नेटवर्क", "Redes"],
+["Loan asset symbol or contract address", "借贷资产符号或合约地址", "貸付資産のシンボルまたはコントラクトアドレス", "ऋण परिसंपत्ति का प्रतीक या अनुबंध पता", "Símbolo o contrato del activo de préstamo"],
+["SEARCH LENDING MARKETS", "搜索借贷市场", "貸付市場を検索", "ऋण बाज़ार खोजें", "BUSCAR MERCADOS DE PRÉSTAMO"],
+["Checking markets…", "正在查询市场…", "市場を確認中…", "बाज़ार देख रहे हैं…", "Consultando mercados…"],
+["Could not search. Check your filters and retry.", "无法搜索。请检查筛选条件后重试。", "検索できませんでした。絞り込み条件を確認して再試行してください。", "खोज नहीं हो सकी। फ़िल्टर जाँचकर दोबारा कोशिश करें।", "No se pudo buscar. Revisa los filtros e inténtalo de nuevo."],
+["Markets found", "已找到市场", "市場が見つかりました", "बाज़ार मिले", "Mercados encontrados"],
+["No match in the scanned markets", "扫描的市场中没有匹配项", "調査した市場に該当なし", "देखे गए बाज़ारों में कोई मेल नहीं", "Sin coincidencias en los mercados consultados"],
+["Data source unavailable", "数据源不可用", "データソースを利用できません", "डेटा स्रोत उपलब्ध नहीं है", "Fuente de datos no disponible"],
+["markets scanned", "个已扫描市场", "件の市場を調査", "बाज़ार देखे गए", "mercados consultados"],
+["Loan asset", "借贷资产", "貸付資産", "ऋण परिसंपत्ति", "Activo de préstamo"],
+["Market identity", "市场标识", "市場の識別情報", "बाज़ार की पहचान", "Identidad del mercado"],
+["Reported APY is variable. Listing is not approval. No wallet connection, transfers or monitoring are enabled here.", "报告的年化收益率可变。上架不代表批准。此处不启用钱包连接、转账或监控。", "表示APYは変動します。掲載は承認を意味しません。ウォレット接続・送金・監視はここでは行いません。", "दिखाया गया APY बदलता रहता है। सूचीबद्ध होना मंज़ूरी नहीं है। यहाँ वॉलेट कनेक्शन, हस्तांतरण या निगरानी सक्षम नहीं हैं।", "El APY informado es variable. El listado no implica aprobación. Aquí no se conectan wallets ni se habilitan transferencias o monitoreo."],
 ["Coinbase · spot research", "Coinbase · 现货研究", "Coinbase · 現物調査", "Coinbase · स्पॉट अनुसंधान", "Coinbase · análisis de contado"],
 ["Public market data. No Coinbase account is connected.", "公开市场数据。未连接 Coinbase 账户。", "公開市場データです。Coinbaseアカウントは未接続です。", "सार्वजनिक बाज़ार डेटा। कोई Coinbase खाता जुड़ा नहीं है।", "Datos públicos de mercado. No hay una cuenta de Coinbase conectada."],
 ["Product", "产品", "商品", "उत्पाद", "Producto"],

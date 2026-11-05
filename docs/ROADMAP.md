@@ -82,3 +82,20 @@ CofferHouse uses readiness checks instead of artificial dates. The following pha
 ## Separate ecosystem milestones
 
 Membership collection, ascension, `$COFFERS`, rewards and distribution rules will be documented separately. None of them are required for the Scout MVP.
+
+## Multichain Scout discovery
+
+The read-only Holder Center discovery panel queries Morpho separately for Arc,
+Base and Ethereum. It scans at most 20 listed markets per selected network,
+ordered by supplied USD, then applies an optional loan-asset symbol or exact
+contract address filter. Symbols are labels, not token verification. An empty
+result means no match in the scanned slice, not absence on the chain. Missing
+metrics remain unknown and unavailable sources are reported separately.
+
+Each result has a network/protocol/market identity. Listed markets are not
+approved by CofferHouse. Provider-reported APY excludes any independent estimate
+of gas or net returns and is not a recommendation. These observations do not enter
+the Arc-only Action Center, scheduled Guardian watches, or policy engine.
+
+Next: reusable risk preferences and per-network source validation for watches,
+then Solana lending and an independently verified Robinhood Chain pool adapter.

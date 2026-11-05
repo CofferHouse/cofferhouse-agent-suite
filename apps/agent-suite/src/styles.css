@@ -393,3 +393,11 @@ html:is([lang='zh-CN'],[lang='ja'],[lang='hi']) :is(h1,h2,h3,h4,.holder-language
 .coinbase-panel label { display: grid; gap: 6px; max-width: 100%; }
 .coinbase-panel select, .coinbase-panel input { padding: 10px; border: 2px solid var(--ink); border-radius: 6px; background: #fff; color: var(--ink); max-width: 100%; min-width: 0; }
 .coinbase-panel button { max-width: 100%; white-space: normal; }
+
+.scout-discovery-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 12px 0; }
+.scout-discovery-form fieldset { min-width: 0; }
+.scout-discovery-form fieldset label { display: inline-block; margin-right: 8px; }
+.scout-discovery-form > label { display: grid; gap: 4px; min-width: 0; }
+.scout-discovery-form > label input { min-width: 0; max-width: 100%; }
+.scout-discovery table { width: 100%; min-width: 520px; }
+.scout-discovery td, .scout-discovery th { padding: 8px; text-align: left; }
