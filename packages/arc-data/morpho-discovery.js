@@ -38,9 +38,17 @@ function normalize(row, chainId) {
   };
 }
 
-export async function discoverMorphoMarkets({ chainIds, asset = "", fetcher = globalThis.fetch, now = () => new Date(), timeoutMs = 10000 }) {
+function optionalThreshold(value, max) {
+  if (value === "") return null;
+  if (typeof value !== "string" || !/^\d{1,16}(\.\d{1,8})?$/.test(value) || Number(value) > max) throw Error("Invalid risk threshold");
+  return Number(value);
+}
+
+export async function discoverMorphoMarkets({ chainIds, asset = "", minLiquidityUsd = "", maxUtilizationPct = "", fetcher = globalThis.fetch, now = () => new Date(), timeoutMs = 10000 }) {
   if (!Array.isArray(chainIds) || !chainIds.length || new Set(chainIds).size !== chainIds.length || chainIds.some(id => !discoveryNetworks.some(n => n.id === id))) throw Error("Unsupported discovery networks");
   if (typeof asset !== "string" || (asset && !token.test(asset) && !address.test(asset))) throw Error("Invalid asset filter");
+  const minLiquidity = optionalThreshold(minLiquidityUsd, Number.MAX_SAFE_INTEGER);
+  const maxUtilization = optionalThreshold(maxUtilizationPct, 100);
   return Promise.all(chainIds.map(async chainId => {
     const network = discoveryNetworks.find(n => n.id === chainId);
     try {
@@ -51,7 +59,11 @@ export async function discoverMorphoMarkets({ chainIds, asset = "", fetcher = gl
       const normalized = rows.map(row => normalize(row, chainId));
       if (new Set(normalized.map(row => row.id)).size !== normalized.length) throw Error("Duplicate market identity");
       const filter = asset.toLowerCase();
-      const markets = normalized.filter(row => !filter || row.asset.address === filter || row.asset.symbol.toLowerCase() === filter);
+      const markets = normalized.filter(row =>
+        (!filter || row.asset.address === filter || row.asset.symbol.toLowerCase() === filter) &&
+        (minLiquidity === null || (row.liquidityUsd !== null && row.liquidityUsd >= minLiquidity)) &&
+        (maxUtilization === null || (row.utilizationPct !== null && row.utilizationPct <= maxUtilization))
+      );
       return {...network, status: markets.length ? "FOUND" : "NO_MATCH", observedAt:now().toISOString(), scanned:rows.length, markets};
     } catch {
       return {...network, status:"UNAVAILABLE", observedAt:null, scanned:null, markets:[]};

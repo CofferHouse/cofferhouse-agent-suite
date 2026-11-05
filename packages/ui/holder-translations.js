@@ -1,8 +1,11 @@
 // Columns: English, Simplified Chinese, Japanese, Hindi, Spanish.
 // Proper names, contract addresses, signed messages and exported evidence retain their original values.
 export const holderTranslations = [
+["Minimum available liquidity (USD)","最低可用流动性（USD）","最低利用可能流動性（USD）","न्यूनतम उपलब्ध तरलता (USD)","Liquidez disponible mínima (USD)"],
+["Maximum utilization (%)","最高利用率（%）","最大利用率（%）","अधिकतम उपयोग (%)","Utilización máxima (%)"],
+["Markets with missing data do not pass a filter on that metric.","缺少指标数据的市场无法通过该指标筛选。","指標のデータがない市場は、その指標の絞り込み条件を満たしません。","किसी माप का डेटा न हो तो बाज़ार उस माप के फ़िल्टर में शामिल नहीं होगा।","Si falta un dato, el mercado no pasa el filtro de esa métrica."],
 ["Scout · lending across networks", "Scout · 跨网络借贷", "Scout · 複数ネットワークの貸付", "Scout · कई नेटवर्क पर ऋण", "Scout · préstamos en varias redes"],
-["Research only. Scout scans up to 20 listed Morpho markets per selected network, then applies the asset filter.", "仅供研究。Scout 每个所选网络最多扫描 20 个 Morpho 上架市场，然后按资产筛选。", "調査専用です。Scoutは選択したネットワークごとにMorphoの掲載市場を最大20件調べ、資産で絞り込みます。", "केवल शोध। Scout हर चुने गए नेटवर्क में Morpho के अधिकतम 20 सूचीबद्ध बाज़ार देखकर परिसंपत्ति फ़िल्टर लगाता है।", "Solo investigación. Scout consulta hasta 20 mercados listados en Morpho por red seleccionada y luego aplica el filtro de activo."],
+["Research only. Scout scans up to 20 listed Morpho markets per selected network, then applies your filters.", "仅供研究。Scout 每个所选网络最多扫描 20 个 Morpho 上架市场，然后应用你的筛选条件。", "調査専用です。Scoutは選択したネットワークごとにMorphoの掲載市場を最大20件調べ、指定した条件で絞り込みます。", "केवल शोध। Scout हर चुने गए नेटवर्क में Morpho के अधिकतम 20 सूचीबद्ध बाज़ार देखकर आपके फ़िल्टर लगाता है।", "Solo investigación. Scout consulta hasta 20 mercados listados en Morpho por red seleccionada y luego aplica tus filtros."],
 ["Networks", "网络", "ネットワーク", "नेटवर्क", "Redes"],
 ["Loan asset symbol or contract address", "借贷资产符号或合约地址", "貸付資産のシンボルまたはコントラクトアドレス", "ऋण परिसंपत्ति का प्रतीक या अनुबंध पता", "Símbolo o contrato del activo de préstamo"],
 ["SEARCH LENDING MARKETS", "搜索借贷市场", "貸付市場を検索", "ऋण बाज़ार खोजें", "BUSCAR MERCADOS DE PRÉSTAMO"],

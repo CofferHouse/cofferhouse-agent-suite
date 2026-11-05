@@ -6,9 +6,11 @@ export function createDiscoveryHandler({ discover = discoverMorphoMarkets } = {}
     const params = new URL(request.url, "https://cofferhouse.invalid").searchParams;
     const chains = request.query?.chains ?? params.get("chains");
     const asset = request.query?.asset ?? params.get("asset") ?? "";
+    const minLiquidityUsd = request.query?.minLiquidityUsd ?? params.get("minLiquidityUsd") ?? "";
+    const maxUtilizationPct = request.query?.maxUtilizationPct ?? params.get("maxUtilizationPct") ?? "";
     if (typeof chains !== "string" || !/^(5042|8453|1)(,(5042|8453|1)){0,2}$/.test(chains)) return response.status(400).json({ok:false,error:"Select supported networks"});
     try {
-      const networks = await discover({chainIds:chains.split(",").map(Number),asset});
+      const networks = await discover({chainIds:chains.split(",").map(Number),asset,minLiquidityUsd,maxUtilizationPct});
       return response.status(200).json({ok:true,networks});
     } catch {
       return response.status(400).json({ok:false,error:"Invalid discovery filters"});
