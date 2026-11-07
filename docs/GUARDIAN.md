@@ -46,3 +46,29 @@ difference is marked REVIEW, incomplete or mismatched data is not comparable,
 and source failure is unavailable. No vault alert, trade or transfer is sent in
 this stage. The Holder Center registration UI and outbound vault alerts are
 subsequent work.
+
+## Network market watches
+
+A separate protected operator endpoint, `/api/guardian/network-watch`, supports up
+to three Morpho targets across Arc (5042), Base (8453), and Ethereum (1). Existing
+Arc research approvals and lending policy are not broadened implicitly.
+
+Register with POST JSON containing numeric `chainId`, `marketId`,
+`approveBaseline: true`, and `limits: {minLiquidityUsd: 1000, maxUtilizationPct: 80}`.
+The existing operator bearer token is required. The server captures its own
+complete, listed baseline and records approval to watch; this is not a transaction
+approval. GET returns the registrations and latest sealed receipts. DELETE requires
+both `chainId` and `marketId` query parameters.
+
+The scheduler queries each exact market on its registered chain, independently of
+the discovery ranking and listing filter. Identity includes network, protocol and
+market hash. Below-minimum liquidity, above-maximum utilization, changed asset
+identity or removal from the listed set requires REVIEW. Missing metrics are
+INCOMPLETE; a failed or mismatched observation is UNAVAILABLE, not proof that a
+market disappeared. WITHIN_LIMITS describes these bounded checks only.
+
+Comparisons are indexed API snapshots with retrieval timestamps, not independent
+RPC verification or proof of withdrawability. No new automatic action or outbound
+notification is enabled. These network watches are operator-managed in this stage;
+Holder Center registration and notification subscriptions remain subsequent work.
+A compare-and-set prevents a concurrent run from overwriting registration changes.
