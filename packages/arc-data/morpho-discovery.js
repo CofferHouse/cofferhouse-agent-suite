@@ -21,16 +21,16 @@ function metric(value, min, max) {
   return Number.isFinite(number) && number >= min && number <= max ? number : null;
 }
 
-function normalize(row, chainId) {
+export function normalizeDiscoveryMarket(row, chainId, { requireListed = true } = {}) {
   const validAsset = asset => address.test(asset?.address ?? "") && typeof asset?.symbol === "string" && asset.symbol.length > 0 && asset.symbol.length <= 32;
-  if (row?.chain?.id !== chainId || row.listed !== true || !marketId.test(row.marketId ?? "") || !validAsset(row.loanAsset) || (row.collateralAsset != null && !validAsset(row.collateralAsset))) throw Error("Invalid Morpho market identity");
+  if (row?.chain?.id !== chainId || (requireListed && row.listed !== true) || !marketId.test(row.marketId ?? "") || !validAsset(row.loanAsset) || (row.collateralAsset != null && !validAsset(row.collateralAsset))) throw Error("Invalid Morpho market identity");
   const {state} = row, id = row.marketId.toLowerCase();
   const percent = (value, min, max) => {
     const result = metric(value, min, max);
     return result === null ? null : result * 100;
   };
   return {
-    id: `eip155:${chainId}:morpho-blue:${id}`, chainId, protocol: "Morpho Blue", marketId: id,
+    id: `eip155:${chainId}:morpho-blue:${id}`, chainId, protocol: "Morpho Blue", marketId: id, listed: row.listed === true,
     asset: {symbol: row.loanAsset.symbol, address: row.loanAsset.address.toLowerCase()},
     collateral: row.collateralAsset ? {symbol: row.collateralAsset.symbol, address: row.collateralAsset.address.toLowerCase()} : null,
     liquidityUsd: metric(state?.liquidityAssetsUsd, 0, Number.MAX_SAFE_INTEGER),
@@ -56,7 +56,7 @@ export async function discoverMorphoMarkets({ chainIds, asset = "", minLiquidity
       if (!response.ok) throw Error("Upstream HTTP failure");
       const payload = await response.json(), rows = payload.data?.markets?.items;
       if (payload.errors?.length || !Array.isArray(rows) || rows.length > discoveryLimit) throw Error("Incomplete market response");
-      const normalized = rows.map(row => normalize(row, chainId));
+      const normalized = rows.map(row => normalizeDiscoveryMarket(row, chainId));
       if (new Set(normalized.map(row => row.id)).size !== normalized.length) throw Error("Duplicate market identity");
       const filter = asset.toLowerCase();
       const markets = normalized.filter(row =>

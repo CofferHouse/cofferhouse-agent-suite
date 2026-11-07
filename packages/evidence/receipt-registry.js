@@ -9,6 +9,7 @@ export const receiptSchemas = Object.freeze([
   "cofferhouse.gateway.receipt.v1",
   "cofferhouse.coinbase.research-receipt.v1",
   "cofferhouse.guardian.vault-watch-receipt.v1",
+  "cofferhouse.guardian.network-watch-receipt.v1",
   "cofferhouse.morpho.vault-exposure-receipt.v1"
 ]);
 const supported = new Set(receiptSchemas);
