@@ -63,3 +63,11 @@ Every agent will eventually receive and produce a common evidence envelope conta
 This creates one auditable path: Scout detects, Opportunity selects, Strategy allocates, the DEX branch performs separate pool research, Action Center requests approval, Guardian monitors, and Automation tests permissions. Interop Observer is a parallel evidence source for crosschain stablecoin activity; it does not silently join the capital-allocation path.
 
 Strategy Lab is operational with reserve, diversification, concentration, liquidity-impact caps, exit conditions and sealed receipts. The DEX branch adds user-selected Arc token contracts, indexed pool screening, official Uniswap route evidence when configured, bounded DEX Opportunity ranking and separate swap/LP Strategy proposals without mixing lending APY with LP metrics. Action Center now creates non-executable intents with one expiring human gate, and Guardian monitors those approved intents without pretending that a funded position exists.
+
+## Investment workflow expansion
+
+[Investment workflows and agent responsibilities](AGENT_INVESTMENT_WORKFLOWS.md)
+defines the researched expansion into lending, LP accounting, trading research
+and tokenized equities. It assigns existing agents distinct tasks and proposes
+performance accounting and budgeted paid-data modules. New capabilities remain
+planned until their sources, logic, user controls, tests and evidence are integrated.
