@@ -75,7 +75,9 @@ try {
       const url = new URL(route.request().url());
       let status = 200;
       let body;
-      if (url.pathname === "/api/scout/discovery") {
+      if (url.pathname === "/api/scout/solana") {
+        body = {ok:true,configured:false,status:"NOT_CONFIGURED",tokens:[]};
+      } else if (url.pathname === "/api/scout/discovery") {
         assert.equal(url.searchParams.get("chains"), "8453");
         assert.equal(url.searchParams.get("asset"), "USDC");
         assert.equal(url.searchParams.get("minLiquidityUsd"), "2000");
@@ -111,6 +113,8 @@ try {
     page.setDefaultTimeout(10_000);
     await page.goto(server.resolvedUrls.local[0]);
     await page.locator(".gateway-refresh").waitFor();
+    await page.locator(".solana-refresh").click();
+    await page.getByText("Jupiter data access is not configured.", {exact:true}).waitFor();
     const scout = page.locator(".scout-discovery");
     await scout.locator('input[value="5042"]').uncheck();
     await scout.locator('input[value="1"]').uncheck();

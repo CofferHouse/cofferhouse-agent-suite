@@ -1,6 +1,15 @@
 // Columns: English, Simplified Chinese, Japanese, Hindi, Spanish.
 // Proper names, contract addresses, signed messages and exported evidence retain their original values.
 export const holderTranslations = [
+["Solana · Jupiter Lend research", "Solana · Jupiter Lend 研究", "Solana · Jupiter Lend調査", "Solana · Jupiter Lend शोध", "Solana · análisis de Jupiter Lend"],
+["CHECK SOLANA LENDING", "查询 Solana 借贷", "Solanaの貸付を確認", "Solana ऋण देखें", "CONSULTAR PRÉSTAMOS EN SOLANA"],
+["Checking Jupiter…", "正在查询 Jupiter…", "Jupiterを確認中…", "Jupiter की जाँच हो रही है…", "Consultando Jupiter…"],
+["Jupiter data access is not configured.", "尚未配置 Jupiter 数据访问。", "Jupiterのデータアクセスは未設定です。", "Jupiter डेटा पहुँच कॉन्फ़िगर नहीं है।", "El acceso a los datos de Jupiter no está configurado."],
+["Jupiter data is unavailable.", "Jupiter 数据不可用。", "Jupiterのデータを取得できません。", "Jupiter डेटा उपलब्ध नहीं है।", "Los datos de Jupiter no están disponibles."],
+["No Jupiter Earn assets returned.", "未返回 Jupiter Earn 资产。", "Jupiter Earnの資産が返されませんでした。", "Jupiter Earn परिसंपत्तियाँ नहीं मिलीं।", "Jupiter Earn no devolvió activos."],
+["Underlying mint", "基础资产 mint", "原資産mint", "अंतर्निहित मिंट", "Mint del activo subyacente"],
+["Lending mint", "借贷 mint", "貸付mint", "ऋण मिंट", "Mint de préstamo"],
+["Rates are not ranked until their units are verified. Deposits are not withdrawal liquidity. Research only.", "在验证单位前不对利率排序。存款不等于可提取流动性。仅供研究。", "単位を検証するまで利率を順位付けしません。預入額は出金可能な流動性ではありません。調査専用です。", "इकाइयाँ सत्यापित होने तक दरों की रैंकिंग नहीं होती। जमा निकासी की तरलता नहीं है। केवल शोध।", "Las tasas no se clasifican hasta verificar sus unidades. Los depósitos no son liquidez de retiro. Solo investigación."],
 ["Minimum available liquidity (USD)","最低可用流动性（USD）","最低利用可能流動性（USD）","न्यूनतम उपलब्ध तरलता (USD)","Liquidez disponible mínima (USD)"],
 ["Maximum utilization (%)","最高利用率（%）","最大利用率（%）","अधिकतम उपयोग (%)","Utilización máxima (%)"],
 ["Markets with missing data do not pass a filter on that metric.","缺少指标数据的市场无法通过该指标筛选。","指標のデータがない市場は、その指標の絞り込み条件を満たしません。","किसी माप का डेटा न हो तो बाज़ार उस माप के फ़िल्टर में शामिल नहीं होगा।","Si falta un dato, el mercado no pasa el filtro de esa métrica."],
