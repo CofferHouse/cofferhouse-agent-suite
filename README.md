@@ -10,6 +10,8 @@ CofferHouse Agent Suite is a working room inside the larger CofferHouse product:
 
 **Live demo:** [cofferhouse-scout.vercel.app](https://cofferhouse-scout.vercel.app/)
 
+**Public API:** [Scout market discovery](docs/SCOUT_DISCOVERY_API.md)
+
 ## What the suite is designed to do
 
 The suite currently:
