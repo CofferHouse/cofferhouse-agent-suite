@@ -1,5 +1,6 @@
 import { solanaDiscoveryHtml } from "../../../packages/agent-modules/solana-discovery-view.js";
 import { scoutDiscoveryHtml } from "../../../packages/agent-modules/scout-discovery-view.js";
+import { createScoutDiscoveryReceipt } from "../../../packages/evidence/scout-discovery-receipt.js";
 import { coinbaseHtml } from '../../../packages/agent-modules/coinbase-view.js';
 import { simulateCoinbasePurchase } from '../../../packages/arc-data/coinbase.js';
 import { sealDocument } from '../../../packages/evidence/integrity.js';
@@ -860,11 +861,15 @@ function render() {
       const response = await fetch(`/api/scout/discovery?${query}`, {signal: AbortSignal.timeout(15000)});
       const body = await response.json();
       if (!response.ok || !body.ok || !Array.isArray(body.networks)) throw Error("Discovery unavailable");
-      scoutDiscoveryState = { mode: "ready", ...filters, networks: body.networks };
+      const receipt = createScoutDiscoveryReceipt(filters, body.networks);
+      scoutDiscoveryState = { mode: "ready", ...filters, networks: body.networks, receipt };
     } catch {
       scoutDiscoveryState = { mode: "error", ...filters, networks: [] };
     }
     render();
+  });
+  document.querySelector(".scout-discovery-download")?.addEventListener("click", () => {
+    if (scoutDiscoveryState.receipt) downloadScoutReceipt(scoutDiscoveryState.receipt);
   });
   document.querySelector('.coinbase-market-form')?.addEventListener('submit', async event => {
     event.preventDefault();

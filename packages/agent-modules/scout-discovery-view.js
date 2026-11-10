@@ -17,6 +17,7 @@ export function scoutDiscoveryHtml(state) {
       <button type="submit" ${state.mode === "loading" ? "disabled" : ""}>SEARCH LENDING MARKETS</button>
     </form>
     <p role="status">${state.mode === "loading" ? "Checking markets…" : state.mode === "error" ? "Could not search. Check your filters and retry." : ""}</p>
+    ${state.receipt ? '<button type="button" class="scout-discovery-download">DOWNLOAD SEARCH RECEIPT</button>' : ""}
     ${state.networks.map(network => `<details open><summary>${h(network.name)} · <span>${h(labels[network.status] ?? labels.UNAVAILABLE)}</span></summary>
       ${network.observedAt ? `<p><span>Observed at</span>: <time>${h(network.observedAt)}</time> · ${h(network.scanned)} <span>markets scanned</span></p>` : ""}
       ${network.markets.length ? `<div class="vault-exposure-scroll"><table><thead><tr><th>Loan asset</th><th>Collateral</th><th>Supply APY</th><th>Available liquidity</th><th>Utilization</th></tr></thead><tbody>

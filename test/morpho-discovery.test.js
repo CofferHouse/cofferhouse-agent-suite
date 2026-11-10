@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {discoverMorphoMarkets} from "../packages/arc-data/morpho-discovery.js";
 import {scoutDiscoveryHtml} from "../packages/agent-modules/scout-discovery-view.js";
 import {createDiscoveryHandler} from "../server/scout/discovery.js";
+import {createScoutDiscoveryReceipt} from "../packages/evidence/scout-discovery-receipt.js";
+import {verifyReceiptDocument} from "../packages/evidence/receipt-registry.js";
 
 const token = "0x"+"a".repeat(40);
 const row = id => ({ marketId:"0x"+"b".repeat(64), chain:{id}, listed:true, loanAsset:{address:token,symbol:"USDC"}, collateralAsset:null, state:{liquidityAssetsUsd:"2000",utilization:0.5,supplyApy:0.08} });
@@ -56,4 +58,18 @@ test("risk thresholds compose with asset filters and exclude missing metrics", a
   assert.equal(result.scanned,4);
   assert.deepEqual(result.markets.map(m=>m.marketId),[rows[0].marketId]);
   await assert.rejects(discoverMorphoMarkets({chainIds:[8453],maxUtilizationPct:"101",fetcher:()=>assert.fail("invalid thresholds must not fetch")}),/threshold/);
+});
+
+test("a discovery receipt distinguishes a filtered-out network from a provider outage", async () => {
+  const filters = {chains:[8453,1], asset:"USDC", minLiquidityUsd:"3000", maxUtilizationPct:"50"};
+  const networks = await discoverMorphoMarkets({
+    ...filters, chainIds:filters.chains,
+    fetcher:async(_, opts) => requested(opts) === 8453 ? json([row(8453)]) : {ok:false}
+  });
+  const receipt = JSON.parse(JSON.stringify(createScoutDiscoveryReceipt(filters, networks)));
+  assert.equal(verifyReceiptDocument(receipt).valid,true);
+  assert.deepEqual(receipt.networks.map(({status,scanned}) => [status,scanned]), [["NO_MATCH",1],["UNAVAILABLE",null]]);
+  assert.equal(createScoutDiscoveryReceipt(filters, networks.filter(({id}) => id === 1)),null);
+  receipt.filters.minLiquidityUsd = "0";
+  assert.equal(verifyReceiptDocument(receipt).valid,false);
 });
