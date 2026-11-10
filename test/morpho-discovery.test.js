@@ -5,7 +5,6 @@ import {scoutDiscoveryHtml} from "../packages/agent-modules/scout-discovery-view
 import {createDiscoveryHandler} from "../server/scout/discovery.js";
 import {createScoutDiscoveryReceipt} from "../packages/evidence/scout-discovery-receipt.js";
 import {verifyReceiptDocument} from "../packages/evidence/receipt-registry.js";
-import {networkMarketIdentity} from "../packages/arc-data/morpho-network-target.js";
 
 const token = "0x"+"a".repeat(40);
 const row = id => ({ marketId:"0x"+"b".repeat(64), chain:{id}, listed:true, loanAsset:{address:token,symbol:"USDC"}, collateralAsset:null, state:{liquidityAssetsUsd:"2000",utilization:0.5,supplyApy:0.08} });
@@ -49,7 +48,7 @@ test("endpoint rejects unrecognized chains and write methods", async () => {
   assert.equal((await handler({method:"POST"},res())).code,405);
 });
 
-test("Robinhood Chain supports filtered discovery with the other networks without enabling Guardian watches", async () => {
+test("Robinhood Chain supports filtered discovery with the other networks", async () => {
   const handler = createDiscoveryHandler({discover: params => discoverMorphoMarkets({
     ...params, fetcher: async (_, opts) => {
       const id = requested(opts), market = row(id);
@@ -63,7 +62,6 @@ test("Robinhood Chain supports filtered discovery with the other networks withou
   assert.deepEqual(res.body.networks.map(n => n.status), ["NO_MATCH","NO_MATCH","NO_MATCH","FOUND"]);
   const market = res.body.networks[3].markets[0];
   assert.equal(market.id, `eip155:4663:morpho-blue:${row(4663).marketId}`);
-  assert.throws(() => networkMarketIdentity(4663,market.marketId), /Invalid network market identity/);
 });
 
 test("risk thresholds compose with asset filters and exclude missing metrics", async () => {

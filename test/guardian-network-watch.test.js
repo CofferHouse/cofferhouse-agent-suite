@@ -55,3 +55,30 @@ test("exact network lookup uses target chain and rejects an unexpected market",a
  await assert.rejects(fetchNetworkMarket({...target,chainId:999},{fetcher}));
  assert.equal(calls,1);
 });
+
+test("Robinhood watch captures its own USDG baseline and reviews a later liquidity drop", async () => {
+ let state=null, liquidity=2000;
+ const load=async()=>state;
+ const save=async(_key,expected,next)=>{assert.equal(expected,state);state=next;return true;};
+ const observe=target=>fetchNetworkMarket(target,{fetcher:async(_url,opts)=>{
+  const request=JSON.parse(opts.body);
+  assert.match(request.query,/chainId: 4663/);
+  assert.equal(request.variables.market,marketId);
+  return {ok:true,json:async()=>({data:{marketById:{chain:{id:4663},marketId,listed:true,loanAsset:{address:asset,symbol:"USDG"},collateralAsset:null,state:{liquidityAssetsUsd:liquidity,utilization:0.5,supplyApy:null}}}})};
+ }});
+ const handler=createNetworkWatchHandler({load,save,observe,configured:()=>true,token:()=>"test"});
+ const response={setHeader(){},status(code){this.code=code;return this;},json(){return this;}};
+ await handler({method:"POST",headers:{authorization:"Bearer test"},body:{chainId:4663,marketId,approveBaseline:true,limits:{minLiquidityUsd:1000,maxUtilizationPct:80}}},response);
+ assert.equal(response.code,200);
+ assert.equal(state[0].baseline.asset.symbol,"USDG");
+ liquidity=900;
+ assert.deepEqual(await runNetworkWatches({load,save,observe}),{count:1,saved:true});
+ const { latest }=state[0];
+ assert.equal(latest.target,`eip155:4663:morpho-blue:${marketId}`);
+ assert.equal(latest.baseline.liquidityUsd,2000);
+ assert.equal(latest.current.liquidityUsd,900);
+ assert.equal(latest.status,"REVIEW");
+ assert.deepEqual(latest.reasons,["LIQUIDITY_BELOW_MINIMUM"]);
+ assert.equal(latest.automatedAction,false);
+ assert.equal(verifyReceiptDocument(latest).valid,true);
+});

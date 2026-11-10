@@ -50,7 +50,8 @@ subsequent work.
 ## Network market watches
 
 A separate protected operator endpoint, `/api/guardian/network-watch`, supports up
-to three Morpho targets across Arc (5042), Base (8453), and Ethereum (1). Existing
+to three Morpho targets total across Arc (5042), Base (8453), Ethereum (1), and
+Robinhood Chain (4663). Existing
 Arc research approvals and lending policy are not broadened implicitly.
 
 Register with POST JSON containing numeric `chainId`, `marketId`,
