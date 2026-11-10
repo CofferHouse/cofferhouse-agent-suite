@@ -18,6 +18,7 @@ export const holderTranslations = [
 ["Networks", "网络", "ネットワーク", "नेटवर्क", "Redes"],
 ["Loan asset symbol or contract address", "借贷资产符号或合约地址", "貸付資産のシンボルまたはコントラクトアドレス", "ऋण परिसंपत्ति का प्रतीक या अनुबंध पता", "Símbolo o contrato del activo de préstamo"],
 ["SEARCH LENDING MARKETS", "搜索借贷市场", "貸付市場を検索", "ऋण बाज़ार खोजें", "BUSCAR MERCADOS DE PRÉSTAMO"],
+["DOWNLOAD SEARCH RECEIPT", "下载搜索记录", "検索レシートをダウンロード", "खोज रसीद डाउनलोड करें", "DESCARGAR REGISTRO DE BÚSQUEDA"],
 ["Checking markets…", "正在查询市场…", "市場を確認中…", "बाज़ार देख रहे हैं…", "Consultando mercados…"],
 ["Could not search. Check your filters and retry.", "无法搜索。请检查筛选条件后重试。", "検索できませんでした。絞り込み条件を確認して再試行してください。", "खोज नहीं हो सकी। फ़िल्टर जाँचकर दोबारा कोशिश करें।", "No se pudo buscar. Revisa los filtros e inténtalo de nuevo."],
 ["Markets found", "已找到市场", "市場が見つかりました", "बाज़ार मिले", "Mercados encontrados"],
