@@ -845,6 +845,17 @@ function render() {
     } catch { solanaDiscoveryState = { mode: "error", status: "UNAVAILABLE", tokens: [] }; }
     render();
   });
+  document.querySelector(".solana-download")?.addEventListener("click", () => {
+    if (solanaDiscoveryState.status !== "FOUND" || !solanaDiscoveryState.tokens.length) return;
+    downloadScoutReceipt(sealDocument({
+      schema: "cofferhouse.scout.solana-discovery-receipt.v1",
+      generatedAt: new Date().toISOString(),
+      network: "Solana mainnet",
+      source: "Jupiter Lend Earn",
+      tokens: solanaDiscoveryState.tokens,
+      notice: "Read-only research. Raw provider rates are not verified APY. Total assets are not withdrawal liquidity. The integrity hash does not authenticate the data source."
+    }, "scout-solana"));
+  });
   document.querySelector(".scout-discovery-form")?.addEventListener("submit", async event => {
     event.preventDefault();
     if (scoutDiscoveryState.mode === "loading") return;

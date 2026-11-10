@@ -1,4 +1,5 @@
-import { discoverMorphoMarkets } from "../../packages/arc-data/morpho-discovery.js";
+import { discoverMorphoMarkets, discoveryNetworks } from "../../packages/arc-data/morpho-discovery.js";
+const supportedChains = new Set(discoveryNetworks.map(network => String(network.id)));
 export function createDiscoveryHandler({ discover = discoverMorphoMarkets } = {}) {
   return async (request, response) => {
     response.setHeader("Cache-Control", "no-store");
@@ -8,9 +9,10 @@ export function createDiscoveryHandler({ discover = discoverMorphoMarkets } = {}
     const asset = request.query?.asset ?? params.get("asset") ?? "";
     const minLiquidityUsd = request.query?.minLiquidityUsd ?? params.get("minLiquidityUsd") ?? "";
     const maxUtilizationPct = request.query?.maxUtilizationPct ?? params.get("maxUtilizationPct") ?? "";
-    if (typeof chains !== "string" || !/^(5042|8453|1)(,(5042|8453|1)){0,2}$/.test(chains)) return response.status(400).json({ok:false,error:"Select supported networks"});
+    const chainIds = typeof chains === "string" && chains.length <= discoveryNetworks.length * 5 ? chains.split(",") : [];
+    if (!chainIds.length || chainIds.length > supportedChains.size || new Set(chainIds).size !== chainIds.length || chainIds.some(id => !supportedChains.has(id))) return response.status(400).json({ok:false,error:"Select supported networks"});
     try {
-      const networks = await discover({chainIds:chains.split(",").map(Number),asset,minLiquidityUsd,maxUtilizationPct});
+      const networks = await discover({chainIds:chainIds.map(Number),asset,minLiquidityUsd,maxUtilizationPct});
       return response.status(200).json({ok:true,networks});
     } catch {
       return response.status(400).json({ok:false,error:"Invalid discovery filters"});

@@ -4,6 +4,7 @@ export function solanaDiscoveryHtml(state) {
   return `<section class="gateway-panel solana-discovery" aria-labelledby="solana-discovery-title">
     <h3 id="solana-discovery-title">Solana · Jupiter Lend research</h3>
     <button class="solana-refresh" type="button" ${state.mode==="loading" ? "disabled" : ""}>CHECK SOLANA LENDING</button>
+    ${state.status === "FOUND" && state.tokens.length ? '<button class="solana-download" type="button">DOWNLOAD SEARCH RECEIPT</button>' : ""}
     <p role="status">${state.mode==="loading" ? "Checking Jupiter…" : h(statuses[state.status] ?? "")}</p>
     ${state.tokens.length ? `<ul>${state.tokens.map(token=>`<li><b>${h(token.asset.symbol)}</b><br><span>Underlying mint</span>: <code>${h(token.asset.mint)}</code><br><span>Lending mint</span>: <code>${h(token.lendingMint)}</code><br><span>Observed at</span>: <time>${h(token.observedAt)}</time></li>`).join("")}</ul>` : ""}
     <p>Rates are not ranked until their units are verified. Deposits are not withdrawal liquidity. Research only.</p>

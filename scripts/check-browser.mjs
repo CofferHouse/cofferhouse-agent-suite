@@ -69,6 +69,7 @@ try {
     let failCoinbase = false;
     let failGateway = false;
     let failExposure = false;
+    let solanaConfigured = false;
     let holdGateway = null;
     let gatewayStarted = () => {};
     await context.route("**/api/**", async route => {
@@ -76,14 +77,18 @@ try {
       let status = 200;
       let body;
       if (url.pathname === "/api/scout/solana") {
-        body = {ok:true,configured:false,status:"NOT_CONFIGURED",tokens:[]};
+        body = solanaConfigured ? {ok:true,configured:true,status:"FOUND",tokens:[{
+          asset:{symbol:"USDC",mint:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"},
+          lendingMint:"So11111111111111111111111111111111111111112",observedAt:recordedAt,
+          providerRates:{supply:"250"},supplyApyPct:null,withdrawableLiquidityUsd:null
+        }]} : {ok:true,configured:false,status:"NOT_CONFIGURED",tokens:[]};
       } else if (url.pathname === "/api/scout/discovery") {
-        assert.equal(url.searchParams.get("chains"), "8453");
-        assert.equal(url.searchParams.get("asset"), "USDC");
+        assert.equal(url.searchParams.get("chains"), "4663");
+        assert.equal(url.searchParams.get("asset"), "USDG");
         assert.equal(url.searchParams.get("minLiquidityUsd"), "2000");
         assert.equal(url.searchParams.get("maxUtilizationPct"), "50");
-        body = {ok:true,networks:[{id:8453,name:"Base",status:"FOUND",scanned:1,observedAt:new Date().toISOString(),markets:[{
-          id:"eip155:8453:morpho-blue:" + market,asset:{symbol:"USDC",address:asset},collateral:null,
+        body = {ok:true,networks:[{id:4663,name:"Robinhood Chain",status:"FOUND",scanned:1,observedAt:new Date().toISOString(),markets:[{
+          id:"eip155:4663:morpho-blue:" + market,asset:{symbol:"USDG",address:asset},collateral:null,
           supplyApyPct:8,liquidityUsd:2000,utilizationPct:50
         }]}]};
       } else if (url.pathname === '/api/coinbase/market') {
@@ -115,22 +120,34 @@ try {
     await page.locator(".gateway-refresh").waitFor();
     await page.locator(".solana-refresh").click();
     await page.getByText("Jupiter data access is not configured.", {exact:true}).waitFor();
+    assert.equal(await page.locator(".solana-download").count(),0);
+    solanaConfigured = true;
+    await page.locator(".solana-refresh").click();
+    const solanaDownload = page.waitForEvent("download");
+    await page.locator(".solana-download").click();
+    const solanaReceipt = JSON.parse(await readFile(await (await solanaDownload).path(), "utf8"));
+    assert.equal(verifyReceiptDocument(solanaReceipt).valid,true);
+    assert.equal(solanaReceipt.network,"Solana mainnet");
+    assert.equal(solanaReceipt.tokens[0].providerRates.supply,"250");
+    assert.equal(solanaReceipt.tokens[0].supplyApyPct,null);
     const scout = page.locator(".scout-discovery");
     await scout.locator('input[value="5042"]').uncheck();
+    await scout.locator('input[value="8453"]').uncheck();
     await scout.locator('input[value="1"]').uncheck();
-    await scout.locator('input[name="asset"]').fill("USDC");
+    await scout.locator('input[value="4663"]').check();
+    await scout.locator('input[name="asset"]').fill("USDG");
     await scout.locator('input[name="minLiquidityUsd"]').fill("2000");
     await scout.locator('input[name="maxUtilizationPct"]').fill("50");
     await scout.locator('button[type="submit"]').click();
     await scout.locator("tbody tr").waitFor();
-    assert.match(await scout.locator("tbody tr").innerText(), /USDC.*8%/s);
-    assert.match(await scout.locator("details > summary").first().innerText(), /Base/);
+    assert.match(await scout.locator("tbody tr").innerText(), /USDG.*8%/s);
+    assert.match(await scout.locator("details > summary").first().innerText(), /Robinhood Chain/);
     const discoveryDownload = page.waitForEvent("download");
     await scout.locator(".scout-discovery-download").click();
     const discoveryReceipt = JSON.parse(await readFile(await (await discoveryDownload).path(), "utf8"));
     assert.equal(verifyReceiptDocument(discoveryReceipt).valid, true);
-    assert.deepEqual(discoveryReceipt.filters, { chains: [8453], asset: "USDC", minLiquidityUsd: "2000", maxUtilizationPct: "50" });
-    assert.equal(discoveryReceipt.networks[0].markets[0].id, `eip155:8453:morpho-blue:${market}`);
+    assert.deepEqual(discoveryReceipt.filters, { chains: [4663], asset: "USDG", minLiquidityUsd: "2000", maxUtilizationPct: "50" });
+    assert.equal(discoveryReceipt.networks[0].markets[0].id, `eip155:4663:morpho-blue:${market}`);
     discoveryReceipt.networks[0].markets[0].supplyApyPct = 99;
     assert.equal(verifyReceiptDocument(discoveryReceipt).valid, false);
     await page.locator('.coinbase-market-form button').click();

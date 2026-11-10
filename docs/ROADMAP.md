@@ -86,7 +86,7 @@ Membership collection, ascension, `$COFFERS`, rewards and distribution rules wil
 ## Multichain Scout discovery
 
 The read-only Holder Center discovery panel queries Morpho separately for Arc,
-Base and Ethereum. It scans at most 20 listed markets per selected network,
+Base, Ethereum and Robinhood Chain (4663). It scans at most 20 listed markets per selected network,
 ordered by supplied USD, then applies an optional loan-asset symbol or exact
 contract address filter. Symbols are labels, not token verification. An empty
 result means no match in the scanned slice, not absence on the chain. Missing
@@ -97,5 +97,9 @@ approved by CofferHouse. Provider-reported APY excludes any independent estimate
 of gas or net returns and is not a recommendation. These observations do not enter
 the Arc-only Action Center, scheduled Guardian watches, or policy engine.
 
-Next: reusable risk preferences and per-network source validation for watches,
-then Solana lending and an independently verified Robinhood Chain pool adapter.
+Solana uses a [separate Jupiter Earn panel](SOLANA_LEND_RESEARCH.md) because its
+mint identifiers and provider metrics differ from the Morpho results. It needs
+a server-side Jupiter key to return live observations.
+
+Next: reusable risk preferences, per-network source validation for watches, and
+independent verification of any future Robinhood Chain DEX pool adapter.

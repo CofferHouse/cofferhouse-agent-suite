@@ -1,7 +1,8 @@
 export const discoveryNetworks = Object.freeze([
   Object.freeze({ id: 5042, name: "Arc" }),
   Object.freeze({ id: 8453, name: "Base" }),
-  Object.freeze({ id: 1, name: "Ethereum" })
+  Object.freeze({ id: 1, name: "Ethereum" }),
+  Object.freeze({ id: 4663, name: "Robinhood Chain" })
 ]);
 export const discoveryLimit = 20;
 const address = /^0x[0-9a-f]{40}$/i;
