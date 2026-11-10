@@ -28,6 +28,9 @@ the lending receipt mint. The API base route scopes this research to Solana main
 the provider's asset.chain_id value is not used as an EVM chain identifier.
 
 The visible panel shows returned underlying/lending mints and retrieval timestamps.
+When assets are found, it exports a JSON receipt with the observed mints, raw provider
+values and timestamps. The receipt verifier checks its integrity hash, not the
+authenticity of the upstream source. No receipt is offered without observations.
 No transactions, wallet connection, paid data requests, portfolio allocation or
 Guardian watch registration is enabled for Solana in this release.
 

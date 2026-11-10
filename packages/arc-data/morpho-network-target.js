@@ -1,7 +1,10 @@
-import { discoveryNetworks, normalizeDiscoveryMarket } from "./morpho-discovery.js";
+import { normalizeDiscoveryMarket } from "./morpho-discovery.js";
+
+// Scout discovery may add networks before protected watches support them.
+const watchedChains = new Set([5042, 8453, 1]);
 
 export function networkMarketIdentity(chainId, marketId) {
-  if (!discoveryNetworks.some(n=>n.id === chainId) || typeof marketId !== "string" || !/^0x[0-9a-f]{64}$/i.test(marketId)) throw Error("Invalid network market identity.");
+  if (!watchedChains.has(chainId) || typeof marketId !== "string" || !/^0x[0-9a-f]{64}$/i.test(marketId)) throw Error("Invalid network market identity.");
   return `eip155:${chainId}:morpho-blue:${marketId.toLowerCase()}`;
 }
 
