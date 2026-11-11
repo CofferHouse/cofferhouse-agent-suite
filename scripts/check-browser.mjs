@@ -8,6 +8,7 @@ import { fetchGatewayObservation } from "../packages/arc-data/gateway.js";
 import { normalizeVaultExposure } from "../packages/arc-data/vault-exposure.js";
 import { verifyReceiptDocument } from "../packages/evidence/index.js";
 import { normalizeMeteoraPools } from "../packages/arc-data/meteora.js";
+import { normalizeMeteoraPosition } from "../packages/arc-data/meteora-position.js";
 import { screenLiquidityPools } from "../packages/agent-modules/liquidity-research.js";
 
 // Deterministic browser acceptance: no real wallet, API key or chain transaction.
@@ -17,6 +18,8 @@ const asset = `0x${"3".repeat(40)}`;
 const contract = `0x${"4".repeat(40)}`;
 const market = `0x${"5".repeat(64)}`;
 const recordedAt = "2026-10-30T15:00:00.000Z";
+const positionTarget={pool:"5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6",user:"11111111111111111111111111111111",position:"So11111111111111111111111111111111111111112"};
+const positionFixture=normalizeMeteoraPosition({positionAddress:positionTarget.position,isClosed:false,lowerBinId:10,upperBinId:20,poolActiveBinId:21,isOutOfRange:true,pnlUsd:"-3.00",allTimeFees:{total:{usd:"12.25"}},unrealizedPnl:{balanceTokenX:{amount:"1",usd:"120"},unclaimedFeeTokenX:{amount:"0.1",usd:"12"}}},{tokenX:positionTarget.position,tokenY:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"},positionTarget,recordedAt);
 const identity = { chain_id: 5042, last_indexed_block: "123" };
 const exposure = normalizeVaultExposure({
   config: { ...identity, address: vault, version: "1.0", asset: { address: asset, symbol: "USDC", decimals: 6 }, owner: contract, curator: account },
@@ -73,13 +76,18 @@ try {
     let failExposure = false;
     let solanaConfigured = false;
     let failMeteora = false;
+    let failMeteoraPosition = false;
     let holdGateway = null;
     let gatewayStarted = () => {};
     await context.route("**/api/**", async route => {
       const url = new URL(route.request().url());
       let status = 200;
       let body;
-      if (url.pathname === "/api/scout/meteora") {
+      if (url.pathname === "/api/scout/meteora-position") {
+        assert.equal(route.request().method(),"POST");
+        assert.deepEqual(route.request().postDataJSON(),positionTarget);
+        body={ok:true,status:failMeteoraPosition ? "UNAVAILABLE":"FOUND",observation:failMeteoraPosition ? null:positionFixture};
+      } else if (url.pathname === "/api/scout/meteora") {
         assert.equal(url.searchParams.get("minTvlUsd"),"25000");
         const pools=failMeteora ? [] : normalizeMeteoraPools({current_page:1,data:[{
           address:"5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6",tvl:100000,volume:{"24h":20000},fees:{"24h":100},is_blacklisted:false,
@@ -133,6 +141,24 @@ try {
     await meteora.locator('button[type="submit"]').click();
     await meteora.locator("tbody tr").waitFor();
     assert.match(await meteora.locator("tbody tr").innerText(),/SOL \/ USDC/);
+    await meteora.locator(".meteora-use-pool").click();
+    const positionPanel=page.locator(".meteora-position");
+    assert.equal(await positionPanel.locator('input[name="pool"]').inputValue(),positionTarget.pool);
+    await positionPanel.locator('input[name="user"]').fill(positionTarget.user);
+    await positionPanel.locator('input[name="position"]').fill(positionTarget.position);
+    await positionPanel.locator('button[type="submit"]').click();
+    await positionPanel.getByText("Price is outside the position range; review required",{exact:true}).waitFor();
+    const positionDownload=page.waitForEvent("download");
+    await positionPanel.locator(".meteora-position-download").click();
+    const positionReceipt=JSON.parse(await readFile(await (await positionDownload).path(),"utf8"));
+    assert.equal(verifyReceiptDocument(positionReceipt).valid,true);
+    assert.equal(positionReceipt.observation.providerPnlUsd,"-3.00");
+    assert.equal(positionReceipt.observation.costAdjustedPnlUsd,null);
+    assert.equal(positionReceipt.observation.rangeNeedsReview,true);
+    failMeteoraPosition=true;
+    await positionPanel.locator('button[type="submit"]').click();
+    await positionPanel.getByText("Position data is unavailable.",{exact:true}).waitFor();
+    assert.equal(await positionPanel.locator(".meteora-position-download").count(),0);
     const meteoraDownload=page.waitForEvent("download");
     await meteora.locator(".meteora-download").click();
     const meteoraReceipt=JSON.parse(await readFile(await (await meteoraDownload).path(),"utf8"));

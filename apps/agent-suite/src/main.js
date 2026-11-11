@@ -1,5 +1,6 @@
 import { solanaDiscoveryHtml } from "../../../packages/agent-modules/solana-discovery-view.js";
 import { meteoraHtml } from "../../../packages/agent-modules/meteora-view.js";
+import { meteoraPositionHtml } from "../../../packages/agent-modules/meteora-position-view.js";
 import { defaultLiquidityFilters } from "../../../packages/agent-modules/liquidity-research.js";
 import { evaluateLiquidityScenario } from "../../../packages/agent-modules/liquidity-scenario.js";
 import { defaultLiquidityScenario, liquidityScenarioHtml } from "../../../packages/agent-modules/liquidity-scenario-view.js";
@@ -83,6 +84,7 @@ let stopWalletSessionWatch = () => {};
 let coinbaseState = { mode: 'idle', product: 'BTC-USD', observation: null, preview: null };
 let solanaDiscoveryState = { mode: "idle", status: null, tokens: [] };
 let meteoraState = { mode: "idle", ...defaultLiquidityFilters, observation: null };
+let meteoraPositionState = { mode: "idle", pool: "", user: "", position: "", result: null };
 let lpScenarioState = { assumptions: { ...defaultLiquidityScenario }, result: null, error: false };
 let scoutDiscoveryState = { mode: "idle", chains: [5042, 8453, 1], asset: "", networks: [] };
 let gatewayState = { mode: "idle", observation: null };
@@ -316,6 +318,7 @@ function render() {
         ${scoutDiscoveryHtml(scoutDiscoveryState)}
         ${solanaDiscoveryHtml(solanaDiscoveryState)}
         ${meteoraHtml(meteoraState)}
+        ${meteoraPositionHtml(meteoraPositionState)}
         ${coinbaseHtml(coinbaseState)}
         <footer class="holder-boundary"><b>MEMBERSHIP VIEW, NOT A WALLET</b><span>Demo · Read only · No custody · No execution</span></footer>
       </section>
@@ -840,6 +843,29 @@ function render() {
       onrampState = { ...onrampState, mode: "error", message: error.message ?? "Onramp session could not be created.", session: null };
     }
     render();
+  });
+  document.querySelectorAll(".meteora-use-pool").forEach(button => button.addEventListener("click", () => {
+    meteoraPositionState = { ...meteoraPositionState, mode: "idle", pool: button.dataset.pool, result: null };
+    render();
+    document.querySelector('.meteora-position-form input[name="user"]')?.focus();
+  }));
+  document.querySelector(".meteora-position-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (meteoraPositionState.mode === "loading") return;
+    const data = new FormData(event.currentTarget);
+    const target = Object.fromEntries(["pool", "user", "position"].map(name => [name, String(data.get(name)).trim()]));
+    meteoraPositionState = { mode: "loading", ...target, result: null };
+    render();
+    try {
+      const response = await fetch("/api/scout/meteora-position", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(target), signal: AbortSignal.timeout(15000) });
+      const body = await response.json();
+      if (!response.ok || !body.ok || !["FOUND", "NOT_OBSERVED", "NOT_FOUND_IN_SAMPLE", "UNAVAILABLE"].includes(body.status)) throw Error("Unavailable");
+      meteoraPositionState = { mode: "ready", ...target, result: body };
+    } catch { meteoraPositionState = { mode: "error", ...target, result: null }; }
+    render();
+  });
+  document.querySelector(".meteora-position-download")?.addEventListener("click", () => {
+    if (meteoraPositionState.result?.status === "FOUND") downloadScoutReceipt(sealDocument({ schema: "cofferhouse.meteora.position-receipt.v1", generatedAt: new Date().toISOString(), observation: meteoraPositionState.result.observation }, "meteora-position"));
   });
   document.querySelector(".lp-scenario-form")?.addEventListener("submit", event => {
     event.preventDefault();
