@@ -60,7 +60,7 @@ An out-of-range result needs review; being in range does not establish profitabi
 This is an indexed observation, not onchain ownership verification or a scheduled watch.
 
 The output preserves principal amounts and unclaimed fees separately as decimal
-strings. Provider-reported PnL, all-time fees, deposits and withdrawals remain separate;
+strings in the provider's units. Token amount units are not independently verified. Provider-reported PnL, all-time fees, deposits and withdrawals remain separate;
 their accounting semantics and costs are not independently reconciled. No fee amount
 is added to provider PnL, no net-of-cost profit is asserted and no lifetime amounts are
 silently imported into the fixed-horizon paper scenario. A position receipt preserves

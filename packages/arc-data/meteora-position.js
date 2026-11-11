@@ -27,7 +27,7 @@ export function normalizeMeteoraPosition(row, payload, target, observedAt = new 
     schema: "cofferhouse.meteora.position-observation.v1",
     id: `solana:mainnet:meteora-dlmm:${target.pool}:${target.position}`,
     pool: target.pool, position: target.position, queriedUser: target.user, observedAt,
-    source: "Meteora DLMM Data API", onchainVerified: false,
+    source: "Meteora DLMM Data API", onchainVerified: false, tokenAmountUnitsVerified: false,
     range: { lowerBinId: lower, upperBinId: upper, activeBinId: active, state: rangeState, isClosed: closed, providerOutOfRange: typeof row.isOutOfRange === "boolean" ? row.isOutOfRange : null },
     rangeNeedsReview: rangeState === "OUT_OF_RANGE" || rangeState === "UNKNOWN",
     tokenX: token(payload.tokenX, unrealized?.balanceTokenX, unrealized?.unclaimedFeeTokenX),
