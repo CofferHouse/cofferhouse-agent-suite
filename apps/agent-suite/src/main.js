@@ -1,4 +1,8 @@
 import { solanaDiscoveryHtml } from "../../../packages/agent-modules/solana-discovery-view.js";
+import { meteoraHtml } from "../../../packages/agent-modules/meteora-view.js";
+import { defaultLiquidityFilters } from "../../../packages/agent-modules/liquidity-research.js";
+import { evaluateLiquidityScenario } from "../../../packages/agent-modules/liquidity-scenario.js";
+import { defaultLiquidityScenario, liquidityScenarioHtml } from "../../../packages/agent-modules/liquidity-scenario-view.js";
 import { scoutDiscoveryHtml } from "../../../packages/agent-modules/scout-discovery-view.js";
 import { createScoutDiscoveryReceipt } from "../../../packages/evidence/scout-discovery-receipt.js";
 import { coinbaseHtml } from '../../../packages/agent-modules/coinbase-view.js';
@@ -78,6 +82,8 @@ let holderIdentityBusy = false;
 let stopWalletSessionWatch = () => {};
 let coinbaseState = { mode: 'idle', product: 'BTC-USD', observation: null, preview: null };
 let solanaDiscoveryState = { mode: "idle", status: null, tokens: [] };
+let meteoraState = { mode: "idle", ...defaultLiquidityFilters, observation: null };
+let lpScenarioState = { assumptions: { ...defaultLiquidityScenario }, result: null, error: false };
 let scoutDiscoveryState = { mode: "idle", chains: [5042, 8453, 1], asset: "", networks: [] };
 let gatewayState = { mode: "idle", observation: null };
 let gatewayGeneration = 0;
@@ -309,6 +315,7 @@ function render() {
         ${gatewayHtml(gatewayState, holderIdentity.address)}
         ${scoutDiscoveryHtml(scoutDiscoveryState)}
         ${solanaDiscoveryHtml(solanaDiscoveryState)}
+        ${meteoraHtml(meteoraState)}
         ${coinbaseHtml(coinbaseState)}
         <footer class="holder-boundary"><b>MEMBERSHIP VIEW, NOT A WALLET</b><span>Demo · Read only · No custody · No execution</span></footer>
       </section>
@@ -545,6 +552,7 @@ function render() {
           ${earnKitState.mode === "loading" ? `<div class="strategy-empty"><b>DISCOVERING OFFICIAL VAULTS</b><p>Strategy Lab will build this branch after Earn Kit evidence arrives.</p></div>` : earnStrategyProposal.positions.length ? `<div class="earn-strategy-positions">${earnStrategyProposal.positions.map((position, index) => `<article><span>${String(index + 1).padStart(2, "0")}</span><div><h4>${h(position.name)}</h4><small>${h(position.asset)} · ${h(position.protocol)} · ${h(shortId(position.vaultAddress))}</small><p>Research score ${position.researchScore} · ${h(position.status)}${position.warnings[0] ? ` · ${h(position.warnings[0])}` : ""}</p></div><strong>${formatMoney(position.amountUsd)}</strong><div><b>${formatPct(position.observedApyPct, 3)}</b><small>OBSERVED APY</small></div><details><summary>REVIEW CONDITIONS</summary>${position.reviewConditions.map((condition) => `<p>${h(condition)}</p>`).join("")}</details></article>`).join("")}</div>` : `<div class="strategy-empty"><b>NO ELIGIBLE EARN ALLOCATION</b><p>No official Earn vault clears both the active Earn filters and Strategy bounds.</p></div>`}
           <footer><span>${h(earnStrategyProposal.status.replaceAll("_", " "))} · ${earnStrategyReceipt.receiptId}</span><span>No deposit · No approval · No signature · No execution</span></footer>
         </section>
+        ${liquidityScenarioHtml(lpScenarioState)}
         <footer><span>${h(strategyProposal.status.replaceAll("_", " "))} · ${strategyReceipt.receiptId}</span><span>Research proposal only · Human decision required · No transaction</span></footer>
       </section>
 
@@ -832,6 +840,36 @@ function render() {
       onrampState = { ...onrampState, mode: "error", message: error.message ?? "Onramp session could not be created.", session: null };
     }
     render();
+  });
+  document.querySelector(".lp-scenario-form")?.addEventListener("submit", event => {
+    event.preventDefault();
+    const assumptions = Object.fromEntries([...new FormData(event.currentTarget)].map(([key, value]) => [key, Number(value)]));
+    try { lpScenarioState = { assumptions, result: evaluateLiquidityScenario(assumptions), error: false }; }
+    catch { lpScenarioState = { assumptions, result: null, error: true }; }
+    render();
+  });
+  document.querySelector(".lp-scenario-download")?.addEventListener("click", () => {
+    if (lpScenarioState.result) downloadScoutReceipt(sealDocument({ schema: "cofferhouse.liquidity.paper-receipt.v1", generatedAt: new Date().toISOString(), scenario: lpScenarioState.result }, "lp-scenario"));
+  });
+  document.querySelector(".meteora-discovery .meteora-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (meteoraState.mode === "loading") return;
+    const form = new FormData(event.currentTarget);
+    const filters = { minTvlUsd: String(form.get("minTvlUsd")).trim(), minVolume24hUsd: String(form.get("minVolume24hUsd")).trim() };
+    meteoraState = { mode: "loading", ...filters, observation: null };
+    render();
+    try {
+      const response = await fetch(`/api/scout/meteora?${new URLSearchParams(filters)}`, { signal: AbortSignal.timeout(15000) });
+      const body = await response.json();
+      if (!response.ok || !body.ok || !["FOUND", "NO_MATCH", "UNAVAILABLE"].includes(body.observation?.status) || !Array.isArray(body.observation.candidates)) throw Error("Unavailable");
+      meteoraState = { mode: "ready", ...filters, observation: body.observation };
+    } catch { meteoraState = { mode: "error", ...filters, observation: null }; }
+    render();
+  });
+  document.querySelector(".meteora-download")?.addEventListener("click", () => {
+    if (meteoraState.observation?.status !== "FOUND") return;
+    downloadScoutReceipt(sealDocument({ schema: "cofferhouse.scout.meteora-research-receipt.v1", generatedAt: new Date().toISOString(), observation: meteoraState.observation,
+      notice: "Research only. Pool fees are not position earnings. SHA-256 checks content integrity, not source authenticity." }, "scout-meteora"));
   });
   document.querySelector(".solana-refresh")?.addEventListener("click", async () => {
     if (solanaDiscoveryState.mode === "loading") return;

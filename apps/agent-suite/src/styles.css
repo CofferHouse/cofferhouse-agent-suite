@@ -399,5 +399,11 @@ html:is([lang='zh-CN'],[lang='ja'],[lang='hi']) :is(h1,h2,h3,h4,.holder-language
 .scout-discovery-form fieldset label { display: inline-block; margin-right: 8px; }
 .scout-discovery-form > label { display: grid; gap: 4px; min-width: 0; }
 .scout-discovery-form > label input { min-width: 0; max-width: 100%; }
+.meteora-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 12px 0; }
+.meteora-form label { display: grid; gap: 4px; min-width: 0; }
+.meteora-form input { min-width: 0; max-width: 100%; }
+.lp-scenario-result dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+.lp-scenario-result dt { font-size: .85rem; }
+.lp-scenario-result dd { margin: 4px 0 0; font-weight: 700; }
 .scout-discovery table { width: 100%; min-width: 520px; }
 .scout-discovery td, .scout-discovery th { padding: 8px; text-align: left; }

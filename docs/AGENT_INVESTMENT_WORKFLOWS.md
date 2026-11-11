@@ -132,6 +132,12 @@ or funding are authorized by this specification.
 
 ## Delivery order and acceptance
 
+The [liquidity research branch](LIQUIDITY_RESEARCH.md) specializes Scout's Meteora
+DLMM discovery and screening and Strategy Lab's manual fee/loss/cost scenarios.
+It compares the modeled net result with holding and a user-defined adverse-loss
+limit. Real position fee participation, bin ranges, paper allocation and Guardian
+exit/rotation proposals remain separate next steps before any execution work.
+
 1. Complete exact-target Guardian watches on Base/Ethereum, keeping Arc operational.
 2. Add performance/cost accounting and net scenario comparisons for existing lending.
 3. Add actual-position LP observation and holding-benchmark accounting.
