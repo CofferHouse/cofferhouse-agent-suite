@@ -13,7 +13,7 @@ target return for CofferHouse.
 | Discover | Scout | A bounded read-only sample from Meteora's public DLMM data API. |
 | Screen | Opportunity / liquidity research | User-defined minimum TVL and 24h volume; exclude missing metrics, blacklisted/unknown blacklist state, and unresolved token freeze controls. Passing these checks still requires manual review. |
 | Propose | Strategy Lab | Delivered: manual position economics comparing net P&L, holding, costs, minimum required position fees and an adverse principal/fee scenario. Next: position/bin-derived assumptions and bounded allocation. Existing full-range constant-product IL illustrations must not be used as DLMM position forecasts. |
-| Observe | Guardian | Next: explicit pool/position baseline, active-bin range, fee accrual, token controls and source freshness, with no automatic action. Existing Morpho watches do not support DLMM positions. |
+| Observe | Guardian / position research | Delivered: on-demand lookup of an exact position in a pool/wallet context, indexed token balances, unclaimed fees and bin-range checks. Next: explicit baseline, changes over time, token controls and source freshness. Existing Morpho watches do not support DLMM positions. |
 | Exit / rotate | Action Center | Next: explain the trigger and expected withdrawal assets/costs, require a fresh simulation and explicit approval. Execution is not enabled by this module. |
 | Measure | Performance accounting | Next: reconcile deposits, withdrawals, position token quantities, collected and uncollected fees, rewards, transaction costs and a same-assets holding benchmark. |
 
@@ -40,6 +40,31 @@ volume authenticity and withdrawal behavior are not independently verified here.
 Search receipts preserve the filters, sampling scope, outcomes, pool/mint identities
 and provider observations. SHA-256 detects content changes relative to the stored
 hash; it is not a signature or independent authentication of the API response.
+
+## On-demand position lookup
+
+`POST /api/scout/meteora-position` takes JSON `{pool, user, position}`, all public
+Solana keys. The UI explains that the lookup sends the provided addresses to Meteora.
+It requests neither a wallet connection nor a signature and does not persist addresses
+in browser storage. POST keeps the entered addresses out of the application's query
+URL; the upstream API still requires the user address as a query parameter.
+
+The reader searches up to three pages of 20 positions in the requested pool/user
+context. It returns only an exact, case-sensitive position-address match. Exhausting
+the sample does not prove absence, and absence from the index does not prove closure.
+Repeated identities, malformed pages and provider errors produce UNAVAILABLE.
+
+Open positions are compared with their lower and upper bin IDs, inclusively. Missing
+bins or conflicting provider range flags result in UNKNOWN, not an in-range claim.
+An out-of-range result needs review; being in range does not establish profitability.
+This is an indexed observation, not onchain ownership verification or a scheduled watch.
+
+The output preserves principal amounts and unclaimed fees separately as decimal
+strings in the provider's units. Token amount units are not independently verified. Provider-reported PnL, all-time fees, deposits and withdrawals remain separate;
+their accounting semantics and costs are not independently reconciled. No fee amount
+is added to provider PnL, no net-of-cost profit is asserted and no lifetime amounts are
+silently imported into the fixed-horizon paper scenario. A position receipt preserves
+these distinctions and the query scope, including the supplied public wallet address.
 
 ## Accounting and decision gates
 
@@ -79,6 +104,7 @@ and validate caps, revocation and explicit signing separately.
 - Official API overview: https://docs.meteora.ag/developer-guides/dlmm/api-reference/overview
 - Official pool endpoint schema: https://docs.meteora.ag/api-reference/dlmm/pools/pools
 - Source documentation: https://github.com/MeteoraAg/docs/blob/main/developer-guides/dlmm/api-reference/overview.mdx
+- Official position endpoint: https://docs.meteora.ag/api-reference/dlmm/positions/get-position-pnl-data-open-and-closed-positions-with-on-the-fly-calculation
 
 The production API returned HTTP 403 from the development environment during
 implementation. Unit/browser fixtures are based on the documented schema and are
