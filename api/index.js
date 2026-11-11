@@ -1,4 +1,5 @@
 import solanaDiscoveryHandler from "../server/scout/solana.js";
+import meteoraHandler from "../server/scout/meteora.js";
 import networkWatchHandler from "../server/guardian/network-watch.js";
 import scoutDiscoveryHandler from "../server/scout/discovery.js";
 import vaultWatchHandler from "../server/guardian/vault-watch.js";
@@ -28,6 +29,7 @@ import gatewayHandler from "../server/app-kits/gateway.js";
 import vaultExposureHandler from "../server/app-kits/vault-exposure.js";
 
 const routes = new Map([
+  ["/api/scout/meteora", meteoraHandler],
   ["/api/scout/solana", solanaDiscoveryHandler],
   ["/api/guardian/network-watch", networkWatchHandler],
   ["/api/scout/discovery", scoutDiscoveryHandler],

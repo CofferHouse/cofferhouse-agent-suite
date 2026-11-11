@@ -7,6 +7,8 @@ import { chromium } from "playwright";
 import { fetchGatewayObservation } from "../packages/arc-data/gateway.js";
 import { normalizeVaultExposure } from "../packages/arc-data/vault-exposure.js";
 import { verifyReceiptDocument } from "../packages/evidence/index.js";
+import { normalizeMeteoraPools } from "../packages/arc-data/meteora.js";
+import { screenLiquidityPools } from "../packages/agent-modules/liquidity-research.js";
 
 // Deterministic browser acceptance: no real wallet, API key or chain transaction.
 const account = `0x${"1".repeat(40)}`;
@@ -70,13 +72,22 @@ try {
     let failGateway = false;
     let failExposure = false;
     let solanaConfigured = false;
+    let failMeteora = false;
     let holdGateway = null;
     let gatewayStarted = () => {};
     await context.route("**/api/**", async route => {
       const url = new URL(route.request().url());
       let status = 200;
       let body;
-      if (url.pathname === "/api/scout/solana") {
+      if (url.pathname === "/api/scout/meteora") {
+        assert.equal(url.searchParams.get("minTvlUsd"),"25000");
+        const pools=failMeteora ? [] : normalizeMeteoraPools({current_page:1,data:[{
+          address:"5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6",tvl:100000,volume:{"24h":20000},fees:{"24h":100},is_blacklisted:false,
+          token_x:{address:"So11111111111111111111111111111111111111112",symbol:"SOL",freeze_authority_disabled:true},
+          token_y:{address:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",symbol:"USDC",freeze_authority_disabled:true}
+        }]});
+        body={ok:true,observation:screenLiquidityPools({status:failMeteora ? "UNAVAILABLE":"FOUND",pools,sampled:failMeteora ? null:1})};
+      } else if (url.pathname === "/api/scout/solana") {
         body = solanaConfigured ? {ok:true,configured:true,status:"FOUND",tokens:[{
           asset:{symbol:"USDC",mint:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"},
           lendingMint:"So11111111111111111111111111111111111111112",observedAt:recordedAt,
@@ -118,6 +129,20 @@ try {
     page.setDefaultTimeout(10_000);
     await page.goto(server.resolvedUrls.local[0]);
     await page.locator(".gateway-refresh").waitFor();
+    const meteora=page.locator(".meteora-discovery");
+    await meteora.locator('button[type="submit"]').click();
+    await meteora.locator("tbody tr").waitFor();
+    assert.match(await meteora.locator("tbody tr").innerText(),/SOL \/ USDC/);
+    const meteoraDownload=page.waitForEvent("download");
+    await meteora.locator(".meteora-download").click();
+    const meteoraReceipt=JSON.parse(await readFile(await (await meteoraDownload).path(),"utf8"));
+    assert.equal(verifyReceiptDocument(meteoraReceipt).valid,true);
+    assert.equal(meteoraReceipt.observation.candidates[0].positionPnlUsd,null);
+    assert.equal(meteoraReceipt.observation.execution.enabled,false);
+    failMeteora=true;
+    await meteora.locator('button[type="submit"]').click();
+    await meteora.getByText("Meteora data is unavailable. No pool recommendation was produced.",{exact:true}).waitFor();
+    assert.equal(await meteora.locator(".meteora-download").count(),0);
     await page.locator(".solana-refresh").click();
     await page.getByText("Jupiter data access is not configured.", {exact:true}).waitFor();
     assert.equal(await page.locator(".solana-download").count(),0);
@@ -237,6 +262,21 @@ try {
     assert.equal(await page.locator(".holder-connection code").count(), 0);
     assert.equal(await page.locator(".gateway-balances").isDisabled(), true);
     await page.locator('.suite-tab[data-view="hub"]').click();
+    await page.locator('.suite-tab[data-view="strategy"]').click();
+    const lp=page.locator(".lp-scenario");
+    await lp.locator('input[name="principalUsd"]').fill("960");
+    await lp.locator('input[name="positionFeesUsd"]').fill("100");
+    await lp.locator('input[name="costsUsd"]').fill("20");
+    await lp.locator('input[name="holdingValueUsd"]').fill("1050");
+    await lp.locator('button[type="submit"]').click();
+    await lp.locator(".lp-scenario-result").waitFor();
+    const lpDownload=page.waitForEvent("download");
+    await lp.locator(".lp-scenario-download").click();
+    const lpReceipt=JSON.parse(await readFile(await (await lpDownload).path(),"utf8"));
+    assert.equal(verifyReceiptDocument(lpReceipt).valid,true);
+    assert.equal(lpReceipt.scenario.netPnlUsd,40);
+    assert.equal(lpReceipt.scenario.versusHoldingUsd,-10);
+    assert.equal(lpReceipt.scenario.decision,"OUTSIDE_PAPER_LIMITS");
     await page.locator('.suite-tab[data-view="opportunity"]').click();
     await page.locator(".inspect-vault").click();
     await page.locator(".vault-exposure-download").waitFor();
