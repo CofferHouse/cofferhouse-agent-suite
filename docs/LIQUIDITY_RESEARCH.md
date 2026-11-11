@@ -82,5 +82,7 @@ and validate caps, revocation and explicit signing separately.
 
 The production API returned HTTP 403 from the development environment during
 implementation. Unit/browser fixtures are based on the documented schema and are
-not represented as live pools or financial performance. Deployment checks must
-establish whether the production runtime can retrieve live observations.
+not represented as live pools or financial performance. After deployment, the
+public endpoint returned FOUND with 20 live pool observations; five matched the
+default filters in that snapshot. These counts vary with the provider data and
+filters. This validates retrieval and screening, not profitable position execution.
