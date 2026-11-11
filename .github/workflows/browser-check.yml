@@ -25,7 +25,15 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run check
-      - run: npx playwright install --with-deps chromium
+      - name: Select browser for acceptance tests
+        run: |
+          if qa_browser_path="$(command -v google-chrome)"; then
+            printf '%s\n' "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$qa_browser_path" >> "$GITHUB_ENV"
+          elif qa_browser_path="$(command -v chromium)"; then
+            printf '%s\n' "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$qa_browser_path" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium
+          fi
       - run: npm run test:browser
         env:
           BROWSER_QA_ARTIFACT_DIR: browser-artifacts
