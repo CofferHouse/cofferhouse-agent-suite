@@ -3,6 +3,10 @@ name: Holder Center browser acceptance
 on:
   pull_request:
     paths:
+      - "api/**"
+      - "server/**"
+      - "test/**"
+      - "public/llms.txt"
       - "apps/**"
       - "packages/**"
       - "scripts/check-browser.mjs"
