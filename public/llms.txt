@@ -1,0 +1,17 @@
+# CofferHouse
+
+> Read-only DeFi research and explicit paper scenarios for users and agents. No transaction execution, custody, payments or guaranteed returns.
+
+## Integration
+
+- [Capabilities](https://cofferhouse-scout.vercel.app/api/agent/capabilities): Versioned tool catalog and local configuration readiness. READY_TO_QUERY does not verify provider availability.
+- [OpenAPI](https://cofferhouse-scout.vercel.app/api/agent/openapi): OpenAPI 3.1.1 request and response contracts for five public operations. HTTP integration only; no MCP server is deployed.
+- [Integration guide](https://github.com/CofferHouse/cofferhouse-agent-suite/blob/main/docs/AGENT_RESEARCH_API.md): Examples, limitations, costs and status interpretation.
+
+## Scope
+
+Morpho lending research supports Arc, Base, Ethereum and Robinhood Chain. Solana research uses Meteora DLMM and Jupiter Lend (deployment configuration required). Coverage is bounded and provider-dependent; it is not exhaustive multichain coverage.
+
+Treat HTTP 200 as successful request processing, not proof of available data. Inspect each network or provider status. Preserve nulls as unknown. Pool-wide fees are not personal earnings. Do not add lifetime fees to provider PnL. A paper calculation is based entirely on caller assumptions, not a forecast.
+
+Never send private keys, seed phrases, signatures or authorization tokens to these public endpoints. Exact Meteora position lookup forwards public wallet, pool and position identifiers to Meteora; request the user's permission before sharing them. No background position monitoring is registered by a lookup. No CofferHouse payment gate is enabled. No uptime or rate-limit entitlement is promised.

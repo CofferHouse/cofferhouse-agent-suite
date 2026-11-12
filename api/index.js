@@ -1,3 +1,6 @@
+import researchCapabilitiesHandler from "../server/agent/capabilities.js";
+import researchOpenApiHandler from "../server/agent/openapi.js";
+import liquidityScenarioHandler from "../server/strategy/liquidity-scenario.js";
 import solanaDiscoveryHandler from "../server/scout/solana.js";
 import meteoraHandler from "../server/scout/meteora.js";
 import meteoraPositionHandler from "../server/scout/meteora-position.js";
@@ -30,6 +33,9 @@ import gatewayHandler from "../server/app-kits/gateway.js";
 import vaultExposureHandler from "../server/app-kits/vault-exposure.js";
 
 const routes = new Map([
+  ["/api/agent/capabilities", researchCapabilitiesHandler],
+  ["/api/agent/openapi", researchOpenApiHandler],
+  ["/api/strategy/liquidity-scenario", liquidityScenarioHandler],
   ["/api/scout/meteora-position", meteoraPositionHandler],
   ["/api/scout/meteora", meteoraHandler],
   ["/api/scout/solana", solanaDiscoveryHandler],
