@@ -1,3 +1,5 @@
+import { evaluateLiquidityCashflows } from "../../../packages/agent-modules/liquidity-cashflows.js";
+import { meteoraHistoryHtml, currentHistoryReceipt } from "../../../packages/agent-modules/meteora-history-view.js";
 import { readMeteoraPositionReceipt, MAX_POSITION_RECEIPT_BYTES } from "../../../packages/agent-modules/meteora-position-comparison.js";
 import { meteoraComparisonHtml, currentPositionReceipt, positionComparison } from "../../../packages/agent-modules/meteora-comparison-view.js";
 import { solanaDiscoveryHtml } from "../../../packages/agent-modules/solana-discovery-view.js";
@@ -86,6 +88,8 @@ let stopWalletSessionWatch = () => {};
 let coinbaseState = { mode: 'idle', product: 'BTC-USD', observation: null, preview: null };
 let solanaDiscoveryState = { mode: "idle", status: null, tokens: [] };
 let meteoraState = { mode: "idle", ...defaultLiquidityFilters, observation: null };
+let meteoraHistoryState = { mode: "idle", history: null, costs: [], cashflows: null };
+let meteoraHistoryRequest = 0;
 let meteoraBaselineState = { receipt: null, error: false };
 let meteoraBaselineImport = 0;
 let meteoraPositionState = { mode: "idle", pool: "", user: "", position: "", result: null };
@@ -324,6 +328,7 @@ function render() {
         ${meteoraHtml(meteoraState)}
         ${meteoraPositionHtml(meteoraPositionState)}
         ${meteoraComparisonHtml(meteoraBaselineState, meteoraPositionState.result?.observation)}
+        ${meteoraHistoryHtml(meteoraHistoryState, meteoraPositionState.result?.observation)}
         ${coinbaseHtml(coinbaseState)}
         <footer class="holder-boundary"><b>MEMBERSHIP VIEW, NOT A WALLET</b><span>Demo · Read only · No custody · No execution</span></footer>
       </section>
@@ -850,6 +855,8 @@ function render() {
     render();
   });
   document.querySelectorAll(".meteora-use-pool").forEach(button => button.addEventListener("click", () => {
+    ++meteoraHistoryRequest;
+    meteoraHistoryState = { mode: "idle", history: null, costs: [], cashflows: null };
     meteoraPositionState = { ...meteoraPositionState, mode: "idle", pool: button.dataset.pool, result: null };
     render();
     document.querySelector('.meteora-position-form input[name="user"]')?.focus();
@@ -859,6 +866,8 @@ function render() {
     if (meteoraPositionState.mode === "loading") return;
     const data = new FormData(event.currentTarget);
     const target = Object.fromEntries(["pool", "user", "position"].map(name => [name, String(data.get(name)).trim()]));
+    ++meteoraHistoryRequest;
+    meteoraHistoryState = { mode: "idle", history: null, costs: [], cashflows: null };
     meteoraPositionState = { mode: "loading", ...target, result: null };
     render();
     try {
@@ -868,6 +877,45 @@ function render() {
       meteoraPositionState = { mode: "ready", ...target, result: body };
     } catch { meteoraPositionState = { mode: "error", ...target, result: null }; }
     render();
+  });
+  document.querySelector(".meteora-history-load")?.addEventListener("click", async () => {
+    const observation = meteoraPositionState.result?.observation;
+    if (!observation || meteoraHistoryState.mode === "loading") return;
+    const ticket = ++meteoraHistoryRequest;
+    const target = { pool: observation.pool, position: observation.position, user: observation.queriedUser };
+    meteoraHistoryState = { mode: "loading", history: null, costs: [], cashflows: null, forObservationAt: observation.observedAt };
+    render();
+    try {
+      const response = await fetch("/api/scout/meteora-history", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(target), signal: AbortSignal.timeout(15000) });
+      const body = await response.json();
+      if (!response.ok || !body.ok || !["FOUND", "NOT_OBSERVED", "LIMIT_EXCEEDED", "UNAVAILABLE"].includes(body.history?.status)) throw Error("Unavailable");
+      const history = body.history;
+      const receipt = ["FOUND", "NOT_OBSERVED"].includes(history.status) ? currentHistoryReceipt(history) : null;
+      const cashflows = history.status === "FOUND" ? evaluateLiquidityCashflows(receipt, []) : null;
+      if (ticket === meteoraHistoryRequest) meteoraHistoryState = { mode: "ready", history, receipt, costs: [], cashflows, forObservationAt: observation.observedAt };
+    } catch { if (ticket === meteoraHistoryRequest) meteoraHistoryState = { mode: "error", history: null, costs: [], cashflows: null }; }
+    if (ticket === meteoraHistoryRequest) render();
+  });
+  document.querySelector(".meteora-history-download")?.addEventListener("click", () => {
+    if (meteoraHistoryState.receipt) downloadScoutReceipt(meteoraHistoryState.receipt);
+  });
+  document.querySelector(".meteora-cost-form")?.addEventListener("input", event => {
+    meteoraHistoryState.costs = [...new FormData(event.currentTarget)].filter(([,usd]) => String(usd).trim() !== "").map(([signature,usd]) => ({ signature, usd: String(usd).trim() }));
+    meteoraHistoryState.cashflows = null;
+    meteoraHistoryState.costError = false;
+    document.querySelector(".meteora-cashflow-result")?.remove();
+    const status = document.querySelector(".meteora-cost-status");
+    if (status) status.textContent = "";
+  });
+  document.querySelector(".meteora-cost-form")?.addEventListener("submit", event => {
+    event.preventDefault();
+    const costs = [...new FormData(event.currentTarget)].filter(([,usd]) => String(usd).trim() !== "").map(([signature,usd]) => ({ signature, usd: String(usd).trim() }));
+    try { meteoraHistoryState = { ...meteoraHistoryState, costs, cashflows: evaluateLiquidityCashflows(meteoraHistoryState.receipt, costs), costError: false }; }
+    catch { meteoraHistoryState = { ...meteoraHistoryState, costs, cashflows: null, costError: true }; }
+    render();
+  });
+  document.querySelector(".meteora-cashflow-download")?.addEventListener("click", () => {
+    if (meteoraHistoryState.cashflows) downloadScoutReceipt(sealDocument({ schema: "cofferhouse.liquidity.cashflow-receipt.v1", generatedAt: new Date().toISOString(), historyReceipt: meteoraHistoryState.receipt, cashflows: meteoraHistoryState.cashflows }, "lp-cashflows"));
   });
   document.querySelector(".meteora-baseline-file")?.addEventListener("change", async event => {
     const file = event.currentTarget.files?.[0];

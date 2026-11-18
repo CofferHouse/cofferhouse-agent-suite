@@ -119,3 +119,10 @@ filters. This validates retrieval and screening, not profitable position executi
 Holder Center now imports a prior sealed position receipt (up to 32 KB), or saves the current observation as a session-only baseline, to compare against a later exact position lookup. The file is processed locally, with no persistent browser storage. Missing or unavailable new observations hide the comparison; reimport failure clears the former baseline. A comparison receipt preserves both input receipt IDs and observation times.
 
 The shared read-only HTTP comparison accepts the same two receipts; see [the integration guide](AGENT_RESEARCH_API.md#comparing-position-observations). It verifies integrity and identity, preserves exact decimal-string deltas, flags capital flow/counter/range changes, and does not compute investment return or realized profit. No transaction-history reconciliation or unattended Meteora position monitoring is implied.
+
+
+### Indexed position history and cost entries
+
+Holder Center explicitly reads Meteora add/remove/claim events for the currently observed position, with a 200-row and 256 KB response cap. Exact duplicates collapse, conflicting identities reject the history, and source absence/outage/size limits stay distinct. There is no provider completeness proof or network-cost field; no full-history or realized-performance claim is made.
+
+Users can enter separately paid external USD costs allocated once per observed transaction. Event values and costs use exact decimal-string arithmetic. Unknown values and missing cost entries prevent an adjusted sum; editing a cost clears the old result. The provisional indexed cashflow balance excludes current position equity and remains separate from provider PnL, unrealized fees and investment return. Full history, event semantics, historical prices and transaction-level cost attribution are still required before net performance can be reconciled. See [API guide](AGENT_RESEARCH_API.md#indexed-history-and-external-costs).

@@ -1,3 +1,4 @@
+import { normalizeMeteoraHistory } from "../packages/arc-data/meteora-history.js";
 import { normalizeCoinbaseProduct } from '../packages/arc-data/coinbase.js';
 import assert from "node:assert/strict";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
@@ -19,6 +20,12 @@ const contract = `0x${"4".repeat(40)}`;
 const market = `0x${"5".repeat(64)}`;
 const recordedAt = "2026-10-30T15:00:00.000Z";
 const positionTarget={pool:"5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6",user:"11111111111111111111111111111111",position:"So11111111111111111111111111111111111111112"};
+const historySignature="1".repeat(64);
+const historyFixture=normalizeMeteoraHistory({events:[
+  {eventType:"add",ixIndex:0,amountXUsd:"50",amountYUsd:"50",totalUsd:"100"},
+  {eventType:"remove",ixIndex:1,amountXUsd:"45",amountYUsd:"45",totalUsd:"90"},
+  {eventType:"claim_fee",ixIndex:2,amountXUsd:"5",amountYUsd:"10",totalUsd:"15"}
+].map(e=>({...e,signature:historySignature,positionAddress:positionTarget.position,poolAddress:positionTarget.pool,userAddress:positionTarget.user,tokenX:positionTarget.position,tokenY:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",blockTime:Math.floor(Date.parse(recordedAt)/1000),slot:100,createdAt:recordedAt,amountX:"1",amountY:"1"}))},positionTarget,recordedAt);
 const positionFixture=normalizeMeteoraPosition({positionAddress:positionTarget.position,isClosed:false,lowerBinId:10,upperBinId:20,poolActiveBinId:21,isOutOfRange:true,pnlUsd:"-3.00",allTimeFees:{total:{usd:"12.25"}},unrealizedPnl:{balanceTokenX:{amount:"1",usd:"120"},unclaimedFeeTokenX:{amount:"0.1",usd:"12"}}},{tokenX:positionTarget.position,tokenY:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"},positionTarget,recordedAt);
 const identity = { chain_id: 5042, last_indexed_block: "123" };
 const exposure = normalizeVaultExposure({
@@ -77,13 +84,18 @@ try {
     let solanaConfigured = false;
     let failMeteora = false;
     let failMeteoraPosition = false;
+    let failMeteoraHistory = false;
     let holdGateway = null;
     let gatewayStarted = () => {};
     await context.route("**/api/**", async route => {
       const url = new URL(route.request().url());
       let status = 200;
       let body;
-      if (url.pathname === "/api/scout/meteora-position") {
+      if (url.pathname === "/api/scout/meteora-history") {
+        assert.equal(route.request().method(),"POST");
+        assert.deepEqual(route.request().postDataJSON(),positionTarget);
+        body={ok:true,history:failMeteoraHistory ? {status:"UNAVAILABLE",target:positionTarget,events:[]}:historyFixture};
+      } else if (url.pathname === "/api/scout/meteora-position") {
         assert.equal(route.request().method(),"POST");
         assert.deepEqual(route.request().postDataJSON(),positionTarget);
         body={ok:true,status:failMeteoraPosition ? "UNAVAILABLE":"FOUND",observation:failMeteoraPosition ? null:positionFixture};
@@ -174,6 +186,40 @@ try {
     assert.equal(await comparisonPanel.locator(".meteora-comparison-download").count(),0);
     await comparisonPanel.locator(".meteora-baseline-file").setInputFiles({name:"previous-position.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify(earlierReceipt))});
     await comparisonPanel.locator(".meteora-comparison-download").waitFor();
+    const historyPanel=page.locator(".meteora-history");
+    await historyPanel.locator(".meteora-history-load").click();
+    await historyPanel.locator(".meteora-history-download").waitFor();
+    await historyPanel.getByText("Some observed transactions have no cost entry; an adjusted balance is not shown.",{exact:true}).waitFor();
+    const historyDownload=page.waitForEvent("download");
+    await historyPanel.locator(".meteora-history-download").click();
+    const historyReceipt=JSON.parse(await readFile(await (await historyDownload).path(),"utf8"));
+    assert.equal(verifyReceiptDocument(historyReceipt).valid,true);
+    assert.equal(historyReceipt.history.events.length,3);
+    await historyPanel.locator(".meteora-cost-form summary").click();
+    await historyPanel.locator(".meteora-cost-form input").fill("0.5");
+    assert.equal(await historyPanel.locator(".meteora-cashflow-download").count(),0);
+    await historyPanel.locator('.meteora-cost-form button[type="submit"]').click();
+    await historyPanel.getByText("Costs were entered for all observed transactions; they are not independently verified.",{exact:true}).waitFor();
+    const cashflowDownload=page.waitForEvent("download");
+    await historyPanel.locator(".meteora-cashflow-download").click();
+    const cashflowReceipt=JSON.parse(await readFile(await (await cashflowDownload).path(),"utf8"));
+    assert.equal(verifyReceiptDocument(cashflowReceipt).valid,true);
+    assert.equal(cashflowReceipt.historyReceipt.receiptId,historyReceipt.receiptId);
+    assert.equal(cashflowReceipt.cashflows.transactionCount,1);
+    assert.equal(cashflowReceipt.cashflows.indexedCashflowBalanceUsd,"5");
+    assert.equal(cashflowReceipt.cashflows.indexedBalanceAfterEnteredCostsUsd,"4.5");
+    assert.equal(cashflowReceipt.cashflows.realizedProfitUsd,null);
+    await historyPanel.locator(".meteora-cost-form summary").click();
+    await historyPanel.locator(".meteora-cost-form input").fill("-1");
+    assert.equal(await historyPanel.locator(".meteora-cashflow-download").count(),0);
+    await historyPanel.locator('.meteora-cost-form button[type="submit"]').click();
+    await historyPanel.getByText("Check the transaction costs. Use nonnegative USD decimal values.",{exact:true}).waitFor();
+    assert.equal(await historyPanel.locator(".meteora-cashflow-download").count(),0);
+    failMeteoraHistory=true;
+    await historyPanel.locator(".meteora-history-load").click();
+    await historyPanel.getByText("Position history is unavailable.",{exact:true}).waitFor();
+    assert.equal(await historyPanel.locator(".meteora-history-download").count(),0);
+    assert.equal(await historyPanel.locator(".meteora-cashflow-download").count(),0);
     failMeteoraPosition=true;
     await positionPanel.locator('button[type="submit"]').click();
     await positionPanel.getByText("Position data is unavailable.",{exact:true}).waitFor();

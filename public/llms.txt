@@ -5,7 +5,7 @@
 ## Integration
 
 - [Capabilities](https://cofferhouse-scout.vercel.app/api/agent/capabilities): Versioned tool catalog and local configuration readiness. READY_TO_QUERY does not verify provider availability.
-- [OpenAPI](https://cofferhouse-scout.vercel.app/api/agent/openapi): OpenAPI 3.1.1 request and response contracts for six public operations. HTTP integration only; no MCP server is deployed.
+- [OpenAPI](https://cofferhouse-scout.vercel.app/api/agent/openapi): OpenAPI 3.1.1 request and response contracts for eight public operations. HTTP integration only; no MCP server is deployed.
 - [Integration guide](https://github.com/CofferHouse/cofferhouse-agent-suite/blob/main/docs/AGENT_RESEARCH_API.md): Examples, limitations, costs and status interpretation.
 
 ## Scope
@@ -17,3 +17,5 @@ Treat HTTP 200 as successful request processing, not proof of available data. In
 Never send private keys, seed phrases, signatures or authorization tokens to these public endpoints. Exact Meteora position lookup forwards public wallet, pool and position identifiers to Meteora; request the user's permission before sharing them. No background position monitoring is registered by a lookup. No CofferHouse payment gate is enabled. No uptime or rate-limit entitlement is promised.
 
 Saved Meteora position receipts can be compared with POST /api/scout/meteora-comparison. It makes no provider request or persistent registration. Deltas are provider data changes, not realized profit or investment return. Holder Center offers the same comparison locally in the tab.
+
+POST /api/scout/meteora-history reads up to 200 indexed position events (bounded response, completeness unverified). POST /api/strategy/liquidity-cashflows accepts a sealed history receipt and external USD costs allocated once per observed transaction. Its cashflow balance excludes current position value and never claims realized profit or investment return. Missing costs remain unknown.
