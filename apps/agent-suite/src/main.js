@@ -1,3 +1,5 @@
+import { readMeteoraPositionReceipt, MAX_POSITION_RECEIPT_BYTES } from "../../../packages/agent-modules/meteora-position-comparison.js";
+import { meteoraComparisonHtml, currentPositionReceipt, positionComparison } from "../../../packages/agent-modules/meteora-comparison-view.js";
 import { solanaDiscoveryHtml } from "../../../packages/agent-modules/solana-discovery-view.js";
 import { meteoraHtml } from "../../../packages/agent-modules/meteora-view.js";
 import { meteoraPositionHtml } from "../../../packages/agent-modules/meteora-position-view.js";
@@ -84,6 +86,8 @@ let stopWalletSessionWatch = () => {};
 let coinbaseState = { mode: 'idle', product: 'BTC-USD', observation: null, preview: null };
 let solanaDiscoveryState = { mode: "idle", status: null, tokens: [] };
 let meteoraState = { mode: "idle", ...defaultLiquidityFilters, observation: null };
+let meteoraBaselineState = { receipt: null, error: false };
+let meteoraBaselineImport = 0;
 let meteoraPositionState = { mode: "idle", pool: "", user: "", position: "", result: null };
 let lpScenarioState = { assumptions: { ...defaultLiquidityScenario }, result: null, error: false };
 let scoutDiscoveryState = { mode: "idle", chains: [5042, 8453, 1], asset: "", networks: [] };
@@ -319,6 +323,7 @@ function render() {
         ${solanaDiscoveryHtml(solanaDiscoveryState)}
         ${meteoraHtml(meteoraState)}
         ${meteoraPositionHtml(meteoraPositionState)}
+        ${meteoraComparisonHtml(meteoraBaselineState, meteoraPositionState.result?.observation)}
         ${coinbaseHtml(coinbaseState)}
         <footer class="holder-boundary"><b>MEMBERSHIP VIEW, NOT A WALLET</b><span>Demo · Read only · No custody · No execution</span></footer>
       </section>
@@ -864,8 +869,40 @@ function render() {
     } catch { meteoraPositionState = { mode: "error", ...target, result: null }; }
     render();
   });
+  document.querySelector(".meteora-baseline-file")?.addEventListener("change", async event => {
+    const file = event.currentTarget.files?.[0];
+    if (!file) return;
+    const ticket = ++meteoraBaselineImport;
+    meteoraBaselineState = { receipt: null, error: false };
+    render();
+    try {
+      if (file.size > MAX_POSITION_RECEIPT_BYTES) throw Error("Too large");
+      const receipt = JSON.parse(await file.text());
+      readMeteoraPositionReceipt(receipt);
+      if (ticket === meteoraBaselineImport) meteoraBaselineState = { receipt, error: false };
+    } catch { if (ticket === meteoraBaselineImport) meteoraBaselineState = { receipt: null, error: true }; }
+    if (ticket === meteoraBaselineImport) render();
+  });
+  document.querySelector(".meteora-save-baseline")?.addEventListener("click", () => {
+    ++meteoraBaselineImport;
+    try {
+      const receipt = currentPositionReceipt(meteoraPositionState.result.observation);
+      readMeteoraPositionReceipt(receipt);
+      meteoraBaselineState = { receipt, error: false };
+    } catch { meteoraBaselineState = { receipt: null, error: true }; }
+    render();
+  });
+  document.querySelector(".meteora-clear-baseline")?.addEventListener("click", () => {
+    ++meteoraBaselineImport;
+    meteoraBaselineState = { receipt: null, error: false };
+    render();
+  });
+  document.querySelector(".meteora-comparison-download")?.addEventListener("click", () => {
+    const { result } = positionComparison(meteoraBaselineState, meteoraPositionState.result?.observation);
+    if (result) downloadScoutReceipt(sealDocument({ schema: "cofferhouse.meteora.comparison-receipt.v1", generatedAt: new Date().toISOString(), comparison: result }, "meteora-comparison"));
+  });
   document.querySelector(".meteora-position-download")?.addEventListener("click", () => {
-    if (meteoraPositionState.result?.status === "FOUND") downloadScoutReceipt(sealDocument({ schema: "cofferhouse.meteora.position-receipt.v1", generatedAt: new Date().toISOString(), observation: meteoraPositionState.result.observation }, "meteora-position"));
+    if (meteoraPositionState.result?.status === "FOUND") downloadScoutReceipt(currentPositionReceipt(meteoraPositionState.result.observation));
   });
   document.querySelector(".lp-scenario-form")?.addEventListener("submit", event => {
     event.preventDefault();
