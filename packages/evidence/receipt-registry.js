@@ -6,6 +6,8 @@ export const receiptSchemas = Object.freeze([
   "cofferhouse.scout.meteora-research-receipt.v1",
   "cofferhouse.meteora.position-receipt.v1",
   "cofferhouse.meteora.comparison-receipt.v1",
+  "cofferhouse.meteora.history-receipt.v1",
+  "cofferhouse.liquidity.cashflow-receipt.v1",
   "cofferhouse.liquidity.paper-receipt.v1",
   "cofferhouse.opportunity.receipt.v1", "cofferhouse.arc-app-kits.earn-receipt.v1", "cofferhouse.arc-app-kits.earn-strategy-receipt.v1", "cofferhouse.arc-app-kits.borrow-preview-receipt.v1", "cofferhouse.strategy.receipt.v1",
   "cofferhouse.dex.pool-receipt.v1", "cofferhouse.dex.opportunity-receipt.v1",

@@ -407,3 +407,10 @@ html:is([lang='zh-CN'],[lang='ja'],[lang='hi']) :is(h1,h2,h3,h4,.holder-language
 .lp-scenario-result dd { margin: 4px 0 0; font-weight: 700; }
 .scout-discovery table { width: 100%; min-width: 520px; }
 .scout-discovery td, .scout-discovery th { padding: 8px; text-align: left; }
+
+.meteora-history-table { max-width: 100%; overflow-x: auto; }
+.meteora-history-table table { min-width: 560px; width: 100%; }
+.meteora-history-table td, .meteora-history-table th { padding: 8px; text-align: left; }
+.meteora-cost-form label { display: grid; gap: 4px; min-width: 0; margin: 12px 0; }
+.meteora-cost-form code { overflow-wrap: anywhere; word-break: break-all; }
+.meteora-cost-form input { width: min(100%, 260px); min-width: 0; max-width: 100%; }
