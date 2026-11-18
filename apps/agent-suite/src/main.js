@@ -902,7 +902,7 @@ function render() {
     if (result) downloadScoutReceipt(sealDocument({ schema: "cofferhouse.meteora.comparison-receipt.v1", generatedAt: new Date().toISOString(), comparison: result }, "meteora-comparison"));
   });
   document.querySelector(".meteora-position-download")?.addEventListener("click", () => {
-    if (meteoraPositionState.result?.status === "FOUND") downloadScoutReceipt(sealDocument({ schema: "cofferhouse.meteora.position-receipt.v1", generatedAt: new Date().toISOString(), observation: meteoraPositionState.result.observation }, "meteora-position"));
+    if (meteoraPositionState.result?.status === "FOUND") downloadScoutReceipt(currentPositionReceipt(meteoraPositionState.result.observation));
   });
   document.querySelector(".lp-scenario-form")?.addEventListener("submit", event => {
     event.preventDefault();

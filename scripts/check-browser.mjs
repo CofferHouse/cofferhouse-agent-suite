@@ -167,6 +167,8 @@ try {
     assert.equal(compared.comparison.providerChangesUsd.providerPnlUsd,"5");
     assert.equal(compared.comparison.providerChangesUsd.providerAllTimeFeesUsd,"2.25");
     assert.equal(compared.comparison.netReturnPct,null);
+    assert.equal(compared.comparison.beforeReceiptId,earlierReceipt.receiptId);
+    assert.equal(compared.comparison.afterReceiptId,positionReceipt.receiptId);
     await comparisonPanel.locator(".meteora-baseline-file").setInputFiles({name:"invalid.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify({...earlierReceipt,observation:{...earlierObservation,providerPnlUsd:"100"}}))});
     await comparisonPanel.getByText("Invalid position receipt. Check its integrity, identities and required data.",{exact:true}).waitFor();
     assert.equal(await comparisonPanel.locator(".meteora-comparison-download").count(),0);
