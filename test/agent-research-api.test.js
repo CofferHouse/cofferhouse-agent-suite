@@ -15,7 +15,7 @@ test("agent catalog reports configuration rather than upstream health and expose
   const missing = researchCapabilities({ now:()=>new Date("2026-11-12T12:00:00Z") });
   const ready = researchCapabilities({jupiterConfigured:true});
   assert.equal(missing.checkedAt,"2026-11-12T12:00:00.000Z");
-  assert.equal(missing.capabilities.length,5);
+  assert.equal(missing.capabilities.length,6);
   assert.equal(missing.capabilities.find(c=>c.id==="discoverJupiterLendTokens").readiness,"SETUP_REQUIRED");
   assert.equal(ready.capabilities.find(c=>c.id==="discoverJupiterLendTokens").readiness,"READY_TO_QUERY");
   assert.deepEqual(missing.integration,{http:true,mcp:false,paidAccess:false,scheduledPositionMonitoring:false});
@@ -48,7 +48,7 @@ test("OpenAPI references resolve, operation IDs are unique and write privileges 
     assert.ok(op.responses["200"]);assert.ok(op.responses["405"]);
     ids.push(op.operationId);
   }
-  assert.equal(new Set(ids).size,5);
+  assert.equal(new Set(ids).size,6);
   assert.equal(researchOpenApi.components.schemas.PaperScenarioInput.additionalProperties,false);
   assert.equal(researchOpenApi.components.schemas.PaperScenarioInput.required.length,10);
 });

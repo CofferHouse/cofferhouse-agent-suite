@@ -1,3 +1,4 @@
+import meteoraComparisonHandler from "../server/scout/meteora-comparison.js";
 import researchCapabilitiesHandler from "../server/agent/capabilities.js";
 import researchOpenApiHandler from "../server/agent/openapi.js";
 import liquidityScenarioHandler from "../server/strategy/liquidity-scenario.js";
@@ -33,6 +34,7 @@ import gatewayHandler from "../server/app-kits/gateway.js";
 import vaultExposureHandler from "../server/app-kits/vault-exposure.js";
 
 const routes = new Map([
+  ["/api/scout/meteora-comparison", meteoraComparisonHandler],
   ["/api/agent/capabilities", researchCapabilitiesHandler],
   ["/api/agent/openapi", researchOpenApiHandler],
   ["/api/strategy/liquidity-scenario", liquidityScenarioHandler],

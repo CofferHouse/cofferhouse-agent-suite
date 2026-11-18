@@ -112,3 +112,10 @@ not represented as live pools or financial performance. After deployment, the
 public endpoint returned FOUND with 20 live pool observations; five matched the
 default filters in that snapshot. These counts vary with the provider data and
 filters. This validates retrieval and screening, not profitable position execution.
+
+
+### Position observation comparison
+
+Holder Center now imports a prior sealed position receipt (up to 32 KB), or saves the current observation as a session-only baseline, to compare against a later exact position lookup. The file is processed locally, with no persistent browser storage. Missing or unavailable new observations hide the comparison; reimport failure clears the former baseline. A comparison receipt preserves both input receipt IDs and observation times.
+
+The shared read-only HTTP comparison accepts the same two receipts; see [the integration guide](AGENT_RESEARCH_API.md#comparing-position-observations). It verifies integrity and identity, preserves exact decimal-string deltas, flags capital flow/counter/range changes, and does not compute investment return or realized profit. No transaction-history reconciliation or unattended Meteora position monitoring is implied.

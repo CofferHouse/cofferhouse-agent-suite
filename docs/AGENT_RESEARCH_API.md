@@ -18,6 +18,7 @@ Production base: `https://cofferhouse-scout.vercel.app`.
 | discoverJupiterLendTokens | GET /api/scout/solana | Token observations, no inferred APY or exit liquidity |
 | screenMeteoraPools | GET /api/scout/meteora | First 20 pools by TVL, then screening; passing requires further review |
 | inspectMeteoraPosition | POST /api/scout/meteora-position | Exact position within at most 3 pages of 20 indexed records |
+| compareMeteoraPositionReceipts | POST /api/scout/meteora-comparison | Two receipt snapshots; no provider request or persistence; not a return calculation |
 | evaluateLiquidityPaperScenario | POST /api/strategy/liquidity-scenario | Explicit assumptions, deterministic calculation, no provider call or persistence |
 
 ## Examples
@@ -52,3 +53,14 @@ The B2A thesis suggests serving research and monitoring both directly to people 
 Potential products are usage-priced research reports and monitoring subscriptions. No CofferHouse payment gate, paid purchases, billing, MCP transport or scheduled Meteora position monitoring is enabled by this release. Pricing requires measured provider costs and evidence of useful repeat usage first. Any future MCP wrapper should reuse these exact validators and schemas. Any paid access must publish a quote and terms and enforce an explicit budget before payment; the present API accepts no payment credentials.
 
 Current public access has no CofferHouse charge enabled and no promised service level or request entitlement. Consumers should use bounded requests, handle failures and back off rather than retrying indefinitely. Publishing OpenAPI or llms.txt does not itself install a connector or register CofferHouse in an agent directory.
+
+
+## Comparing position observations
+
+`POST /api/scout/meteora-comparison` accepts `{ "before": <position receipt>, "after": <position receipt> }`, with a maximum serialized size of 32 KB per receipt. Reuse downloaded `cofferhouse.meteora.position-receipt.v1` files. The same implementation is available in Holder Center without uploading the file: import an earlier receipt or use the current observation as a session baseline, then query a later observation. A reload clears the imported baseline. No scheduled watch is registered.
+
+Comparison verifies receipt integrity, exact case-sensitive position/pool/queried-wallet identity and both token mints, the observation schema and ordered timestamps. Missing token identities prevent comparison. SHA-256 is not a provider signature: a caller can fabricate and reseal a receipt. These are caller-supplied, indexed observations, not independently authenticated onchain history. Observed timestamps describe data retrieval, not block-level finality.
+
+Provider PnL, lifetime fees, deposit totals and withdrawal totals are subtracted independently with exact decimal arithmetic. They remain strings, preserving up to 18 decimal places and values larger than safe JavaScript integers. Missing metrics remain null. A decrease in a lifetime total is flagged as a provider correction/reset; an increase can also reflect repricing or correction. Neither proves a transaction or fee realization. Net deposit-minus-withdrawal changes are shown only when both lifetime deltas are known and nonnegative.
+
+A change in cumulative deposits or withdrawals is marked `CHANGED`; unchanged observed totals are `NO_CHANGE_OBSERVED`, not proof of no transactions. The result always leaves realized profit, cost-adjusted PnL, holding benchmark and return percentage null. It never adds lifetime fees to PnL, annualizes two snapshots or infers realized return from PnL changes. Bin boundary changes, current range status and unknown data remain visible for review. Transaction-level history, costs and historical prices are still needed for reliable economic attribution.
