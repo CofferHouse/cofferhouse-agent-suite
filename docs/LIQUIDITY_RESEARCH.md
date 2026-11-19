@@ -126,3 +126,10 @@ The shared read-only HTTP comparison accepts the same two receipts; see [the int
 Holder Center explicitly reads Meteora add/remove/claim events for the currently observed position, with a 200-row and 256 KB response cap. Exact duplicates collapse, conflicting identities reject the history, and source absence/outage/size limits stay distinct. There is no provider completeness proof or network-cost field; no full-history or realized-performance claim is made.
 
 Users can enter separately paid external USD costs allocated once per observed transaction. Event values and costs use exact decimal-string arithmetic. Unknown values and missing cost entries prevent an adjusted sum; editing a cost clears the old result. The provisional indexed cashflow balance excludes current position equity and remains separate from provider PnL, unrealized fees and investment return. Full history, event semantics, historical prices and transaction-level cost attribution are still required before net performance can be reconciled. See [API guide](AGENT_RESEARCH_API.md#indexed-history-and-external-costs).
+
+
+### Position balance-only reference
+
+A cashflow calculation can now attach the exact position receipt used by Holder Center. The additional reference combines indexed cashflows with the two provider-reported balance USD components, optionally after entered external costs, while showing pending fee USD values separately. Pending fees/rewards and provider PnL/lifetime fees are not added. The source schema does not independently establish component non-overlap or a complete equity valuation.
+
+Identity and token mints must match, retrieval times must be within 120 seconds, and events cannot be later than the position snapshot. Missing balances, unknown state or nonzero closed-position components suppress the reference. A missing cost is not zero. The reference remains explicitly unverified and dated; no realized gain, net return, holding benchmark, automated cost retrieval or trading execution is enabled. Downloaded cashflow evidence embeds both source receipts. See [API guide](AGENT_RESEARCH_API.md#optional-position-balance-reference).

@@ -19,3 +19,5 @@ Never send private keys, seed phrases, signatures or authorization tokens to the
 Saved Meteora position receipts can be compared with POST /api/scout/meteora-comparison. It makes no provider request or persistent registration. Deltas are provider data changes, not realized profit or investment return. Holder Center offers the same comparison locally in the tab.
 
 POST /api/scout/meteora-history reads up to 200 indexed position events (bounded response, completeness unverified). POST /api/strategy/liquidity-cashflows accepts a sealed history receipt and external USD costs allocated once per observed transaction. Its cashflow balance excludes current position value and never claims realized profit or investment return. Missing costs remain unknown.
+
+The cashflow evaluator optionally accepts a matching positionReceipt and returns a separate balance-only reference. Both USD balances are required, retrieval times must be within 120 seconds and events cannot postdate the position snapshot. Pending fees/rewards are not added. This unverified, dated reference is not realized profit or a return estimate; missing costs suppress the after-cost reference.

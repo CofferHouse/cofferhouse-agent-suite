@@ -1,3 +1,4 @@
+import { liquidityPositionValueHtml } from "./liquidity-position-value-view.js";
 import { escapeHtml as h } from "../shared/index.js";
 import { sealDocument } from "../evidence/integrity.js";
 export function currentHistoryReceipt(history) {
@@ -22,7 +23,7 @@ export function meteoraHistoryHtml(state, observation) {
         <details><summary>Transaction cost entries</summary>${signatures.map(signature => `<label><code>${h(signature)}</code><span>Allocated external cost (USD)</span><input name="${h(signature)}" inputmode="decimal" maxlength="51" autocomplete="off" value="${h(cost(signature))}"></label>`).join("")}</details><button type="submit">CALCULATE OBSERVED CASHFLOWS</button></form>
       <p class="meteora-cost-status" role="status">${state.costError ? "Check the transaction costs. Use nonnegative USD decimal values." : ""}</p>
       ${state.cashflows ? `<div class="lp-scenario-result meteora-cashflow-result"><dl>${[["Observed deposits (USD)",state.cashflows.groups.add.usd],["Observed withdrawals (USD)",state.cashflows.groups.remove.usd],["Observed fee claims (USD)",state.cashflows.groups.claim_fee.usd],["Observed reward claims (USD)",state.cashflows.groups.claim_reward.usd],["Indexed cashflow balance before costs (USD)",state.cashflows.indexedCashflowBalanceUsd],["Entered external costs (USD)",state.cashflows.providedCostsUsd],["Indexed balance after entered costs (USD)",state.cashflows.indexedBalanceAfterEnteredCostsUsd]].map(([label,value]) => `<div><dt>${label}</dt><dd>${h(value ?? "—")}</dd></div>`).join("")}</dl>
-      <p>${state.cashflows.costCoverage === "MISSING_TRANSACTION_COSTS" ? "Some observed transactions have no cost entry; an adjusted balance is not shown." : "Costs were entered for all observed transactions; they are not independently verified."}</p><button class="meteora-cashflow-download" type="button">DOWNLOAD CASHFLOW RECEIPT</button></div>` : ""}` : ""}
+      <p>${state.cashflows.costCoverage === "MISSING_TRANSACTION_COSTS" ? "Some observed transactions have no cost entry; an adjusted balance is not shown." : "Costs were entered for all observed transactions; they are not independently verified."}</p>${liquidityPositionValueHtml(state.cashflows.positionValue)}<button class="meteora-cashflow-download" type="button">DOWNLOAD CASHFLOW RECEIPT</button></div>` : ""}` : ""}
     <p>A negative cashflow balance can mean capital is still in the position.</p>
-    <p>This balance excludes current position value and does not establish realized profit or investment return. Complete history, prices and costs still require reconciliation. No transaction or scheduled monitoring is started.</p></section>`;
+    <p>Indexed cashflows exclude current position value. The optional balance-only reference is separate and unverified. Complete history, prices and costs still require reconciliation; no transaction or scheduled monitoring is started.</p></section>`;
 }

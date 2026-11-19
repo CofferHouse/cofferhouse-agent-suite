@@ -26,7 +26,7 @@ const historyFixture=normalizeMeteoraHistory({events:[
   {eventType:"remove",ixIndex:1,amountXUsd:"45",amountYUsd:"45",totalUsd:"90"},
   {eventType:"claim_fee",ixIndex:2,amountXUsd:"5",amountYUsd:"10",totalUsd:"15"}
 ].map(e=>({...e,signature:historySignature,positionAddress:positionTarget.position,poolAddress:positionTarget.pool,userAddress:positionTarget.user,tokenX:positionTarget.position,tokenY:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",blockTime:Math.floor(Date.parse(recordedAt)/1000),slot:100,createdAt:recordedAt,amountX:"1",amountY:"1"}))},positionTarget,recordedAt);
-const positionFixture=normalizeMeteoraPosition({positionAddress:positionTarget.position,isClosed:false,lowerBinId:10,upperBinId:20,poolActiveBinId:21,isOutOfRange:true,pnlUsd:"-3.00",allTimeFees:{total:{usd:"12.25"}},unrealizedPnl:{balanceTokenX:{amount:"1",usd:"120"},unclaimedFeeTokenX:{amount:"0.1",usd:"12"}}},{tokenX:positionTarget.position,tokenY:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"},positionTarget,recordedAt);
+const positionFixture=normalizeMeteoraPosition({positionAddress:positionTarget.position,isClosed:false,lowerBinId:10,upperBinId:20,poolActiveBinId:21,isOutOfRange:true,pnlUsd:"-3.00",allTimeFees:{total:{usd:"12.25"}},unrealizedPnl:{balanceTokenX:{amount:"1",usd:"120"},balanceTokenY:{amount:"20",usd:"20"},unclaimedFeeTokenX:{amount:"0.1",usd:"12"},unclaimedFeeTokenY:{amount:"1",usd:"1"}}},{tokenX:positionTarget.position,tokenY:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"},positionTarget,recordedAt);
 const identity = { chain_id: 5042, last_indexed_block: "123" };
 const exposure = normalizeVaultExposure({
   config: { ...identity, address: vault, version: "1.0", asset: { address: asset, symbol: "USDC", decimals: 6 }, owner: contract, curator: account },
@@ -209,6 +209,15 @@ try {
     assert.equal(cashflowReceipt.cashflows.indexedCashflowBalanceUsd,"5");
     assert.equal(cashflowReceipt.cashflows.indexedBalanceAfterEnteredCostsUsd,"4.5");
     assert.equal(cashflowReceipt.cashflows.realizedProfitUsd,null);
+    assert.equal(cashflowReceipt.positionReceipt.receiptId,positionReceipt.receiptId);
+    assert.equal(cashflowReceipt.cashflows.positionValue.positionReceiptId,positionReceipt.receiptId);
+    assert.equal(cashflowReceipt.cashflows.positionValue.providerBalanceComponentsUsd.total,"140");
+    assert.equal(cashflowReceipt.cashflows.positionValue.providerPendingFeeComponentsUsd.total,"13");
+    assert.equal(cashflowReceipt.cashflows.positionValue.balanceOnlyReferenceUsd,"145");
+    assert.equal(cashflowReceipt.cashflows.positionValue.balanceOnlyReferenceAfterEnteredCostsUsd,"144.5");
+    assert.equal(cashflowReceipt.cashflows.positionValue.pendingFeesAdded,false);
+    assert.equal(cashflowReceipt.cashflows.positionValue.valuationVerified,false);
+    assert.equal(cashflowReceipt.cashflows.positionValue.realizedProfitUsd,null);
     await historyPanel.locator(".meteora-cost-form summary").click();
     await historyPanel.locator(".meteora-cost-form input").fill("-1");
     assert.equal(await historyPanel.locator(".meteora-cashflow-download").count(),0);
