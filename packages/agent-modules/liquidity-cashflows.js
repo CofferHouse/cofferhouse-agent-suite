@@ -1,8 +1,9 @@
+import { attachLiquidityPositionValue } from "./liquidity-position-value.js";
 import { normalizeMeteoraHistory, METEORA_HISTORY_SOURCE, METEORA_HISTORY_LIMIT } from "../arc-data/meteora-history.js";
 import { decimalUnits, decimalText } from "../shared/decimal-usd.js";
 import { verifySealedDocument } from "../evidence/integrity.js";
 export const MAX_HISTORY_RECEIPT_BYTES = 524288;
-export function evaluateLiquidityCashflows(receipt, costs = []) {
+export function evaluateLiquidityCashflows(receipt, costs = [], positionReceipt = null) {
   if (!receipt || receipt.schema !== "cofferhouse.meteora.history-receipt.v1" || new TextEncoder().encode(JSON.stringify(receipt)).length > MAX_HISTORY_RECEIPT_BYTES || !verifySealedDocument(receipt).valid) throw Error("INVALID_HISTORY_RECEIPT");
   if (typeof receipt.generatedAt !== "string" || !Number.isFinite(Date.parse(receipt.generatedAt)) || new Date(receipt.generatedAt).toISOString() !== receipt.generatedAt) throw Error("INVALID_HISTORY_RECEIPT");
   const history = receipt.history;
@@ -27,7 +28,7 @@ export function evaluateLiquidityCashflows(receipt, costs = []) {
   const balance = known ? values.remove + values.claim_fee + values.claim_reward - values.add : null;
   const costsComplete = signatures.every(signature => seenCosts.has(signature));
   const providedCost = [...seenCosts.values()].reduce((a,b) => a+b,0n);
-  return {
+  const result = {
     schema: "cofferhouse.liquidity.indexed-cashflows.v1", historyReceiptId: receipt.receiptId,
     target: normalized.target, observedAt: normalized.observedAt, sourceAuthenticated: false, coverage: "UNVERIFIED",
     groups, eventCount: normalized.events.length, transactionCount: signatures.length,
@@ -40,4 +41,6 @@ export function evaluateLiquidityCashflows(receipt, costs = []) {
     execution: { enabled: false, signed: false, submitted: false },
     notice: "Arithmetic over observed add/remove/claim event USD values minus separately entered external transaction costs. This is not realized profit or net investment return: current position value, complete history, historical price semantics and transaction-level reconciliation remain unverified. Do not enter fees or costs already included in event values. Allocate each transaction's external cost once to this position; no whole-wallet cost attribution is inferred."
   };
+  result.positionValue = positionReceipt === null ? null : attachLiquidityPositionValue(result, receipt, positionReceipt);
+  return result;
 }

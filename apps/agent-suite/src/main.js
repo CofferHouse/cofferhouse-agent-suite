@@ -891,8 +891,9 @@ function render() {
       if (!response.ok || !body.ok || !["FOUND", "NOT_OBSERVED", "LIMIT_EXCEEDED", "UNAVAILABLE"].includes(body.history?.status)) throw Error("Unavailable");
       const history = body.history;
       const receipt = ["FOUND", "NOT_OBSERVED"].includes(history.status) ? currentHistoryReceipt(history) : null;
-      const cashflows = history.status === "FOUND" ? evaluateLiquidityCashflows(receipt, []) : null;
-      if (ticket === meteoraHistoryRequest) meteoraHistoryState = { mode: "ready", history, receipt, costs: [], cashflows, forObservationAt: observation.observedAt };
+      const positionReceipt = currentPositionReceipt(observation);
+      const cashflows = history.status === "FOUND" ? evaluateLiquidityCashflows(receipt, [], positionReceipt) : null;
+      if (ticket === meteoraHistoryRequest) meteoraHistoryState = { mode: "ready", history, receipt, positionReceipt, costs: [], cashflows, forObservationAt: observation.observedAt };
     } catch { if (ticket === meteoraHistoryRequest) meteoraHistoryState = { mode: "error", history: null, costs: [], cashflows: null }; }
     if (ticket === meteoraHistoryRequest) render();
   });
@@ -910,12 +911,12 @@ function render() {
   document.querySelector(".meteora-cost-form")?.addEventListener("submit", event => {
     event.preventDefault();
     const costs = [...new FormData(event.currentTarget)].filter(([,usd]) => String(usd).trim() !== "").map(([signature,usd]) => ({ signature, usd: String(usd).trim() }));
-    try { meteoraHistoryState = { ...meteoraHistoryState, costs, cashflows: evaluateLiquidityCashflows(meteoraHistoryState.receipt, costs), costError: false }; }
+    try { meteoraHistoryState = { ...meteoraHistoryState, costs, cashflows: evaluateLiquidityCashflows(meteoraHistoryState.receipt, costs, meteoraHistoryState.positionReceipt), costError: false }; }
     catch { meteoraHistoryState = { ...meteoraHistoryState, costs, cashflows: null, costError: true }; }
     render();
   });
   document.querySelector(".meteora-cashflow-download")?.addEventListener("click", () => {
-    if (meteoraHistoryState.cashflows) downloadScoutReceipt(sealDocument({ schema: "cofferhouse.liquidity.cashflow-receipt.v1", generatedAt: new Date().toISOString(), historyReceipt: meteoraHistoryState.receipt, cashflows: meteoraHistoryState.cashflows }, "lp-cashflows"));
+    if (meteoraHistoryState.cashflows) downloadScoutReceipt(sealDocument({ schema: "cofferhouse.liquidity.cashflow-receipt.v1", generatedAt: new Date().toISOString(), historyReceipt: meteoraHistoryState.receipt, positionReceipt: meteoraHistoryState.positionReceipt, cashflows: meteoraHistoryState.cashflows }, "lp-cashflows"));
   });
   document.querySelector(".meteora-baseline-file")?.addEventListener("change", async event => {
     const file = event.currentTarget.files?.[0];
