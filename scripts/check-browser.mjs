@@ -1,3 +1,4 @@
+import { fetchSolanaTransactionFees, METEORA_DLMM_PROGRAM } from "../packages/arc-data/solana-transaction-fees.js";
 import { normalizeMeteoraHistory } from "../packages/arc-data/meteora-history.js";
 import { normalizeCoinbaseProduct } from '../packages/arc-data/coinbase.js';
 import assert from "node:assert/strict";
@@ -27,6 +28,7 @@ const historyFixture=normalizeMeteoraHistory({events:[
   {eventType:"claim_fee",ixIndex:2,amountXUsd:"5",amountYUsd:"10",totalUsd:"15"}
 ].map(e=>({...e,signature:historySignature,positionAddress:positionTarget.position,poolAddress:positionTarget.pool,userAddress:positionTarget.user,tokenX:positionTarget.position,tokenY:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",blockTime:Math.floor(Date.parse(recordedAt)/1000),slot:100,createdAt:recordedAt,amountX:"1",amountY:"1"}))},positionTarget,recordedAt);
 const positionFixture=normalizeMeteoraPosition({positionAddress:positionTarget.position,isClosed:false,lowerBinId:10,upperBinId:20,poolActiveBinId:21,isOutOfRange:true,pnlUsd:"-3.00",allTimeFees:{total:{usd:"12.25"}},unrealizedPnl:{balanceTokenX:{amount:"1",usd:"120"},balanceTokenY:{amount:"20",usd:"20"},unclaimedFeeTokenX:{amount:"0.1",usd:"12"},unclaimedFeeTokenY:{amount:"1",usd:"1"}}},{tokenX:positionTarget.position,tokenY:"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"},positionTarget,recordedAt);
+const networkFeeFixture=await fetchSolanaTransactionFees({target:positionTarget,transactions:[{signature:historySignature,slot:100,blockTime:Math.floor(Date.parse(recordedAt)/1000)}],historyReceiptId:"fixture"},{fetcher:async()=>({ok:true,json:async()=>({jsonrpc:"2.0",id:historySignature,result:{version:0,slot:100,blockTime:Math.floor(Date.parse(recordedAt)/1000),meta:{err:null,fee:5000,innerInstructions:[]},transaction:{signatures:[historySignature],message:{accountKeys:[{pubkey:positionTarget.user,signer:true,writable:true},...[positionTarget.pool,positionTarget.position,METEORA_DLMM_PROGRAM].map(pubkey=>({pubkey,signer:false,writable:true}))],instructions:[{programId:METEORA_DLMM_PROGRAM,accounts:[positionTarget.pool,positionTarget.position]}]}}}})})});
 const identity = { chain_id: 5042, last_indexed_block: "123" };
 const exposure = normalizeVaultExposure({
   config: { ...identity, address: vault, version: "1.0", asset: { address: asset, symbol: "USDC", decimals: 6 }, owner: contract, curator: account },
@@ -85,13 +87,20 @@ try {
     let failMeteora = false;
     let failMeteoraPosition = false;
     let failMeteoraHistory = false;
+    let failNetworkFees = false;
     let holdGateway = null;
     let gatewayStarted = () => {};
     await context.route("**/api/**", async route => {
       const url = new URL(route.request().url());
       let status = 200;
       let body;
-      if (url.pathname === "/api/scout/meteora-history") {
+      if (url.pathname === "/api/scout/solana-transaction-fees") {
+        const input=route.request().postDataJSON();
+        assert.deepEqual(input.signatures,[historySignature]);
+        assert.equal(verifyReceiptDocument(input.historyReceipt).valid,true);
+        if(failNetworkFees){status=502;body={ok:false,error:"Unavailable"};}
+        else body={ok:true,observation:{...networkFeeFixture,historyReceiptId:input.historyReceipt.receiptId}};
+      } else if (url.pathname === "/api/scout/meteora-history") {
         assert.equal(route.request().method(),"POST");
         assert.deepEqual(route.request().postDataJSON(),positionTarget);
         body={ok:true,history:failMeteoraHistory ? {status:"UNAVAILABLE",target:positionTarget,events:[]}:historyFixture};
@@ -195,6 +204,21 @@ try {
     const historyReceipt=JSON.parse(await readFile(await (await historyDownload).path(),"utf8"));
     assert.equal(verifyReceiptDocument(historyReceipt).valid,true);
     assert.equal(historyReceipt.history.events.length,3);
+    await historyPanel.locator('.solana-fee-form button[type="submit"]').click();
+    await historyPanel.locator(".solana-fee-download").waitFor();
+    assert.match(await historyPanel.locator(".solana-fee-results").innerText(),/0.000005/);
+    const networkDownload=page.waitForEvent("download");
+    await historyPanel.locator(".solana-fee-download").click();
+    const networkReceipt=JSON.parse(await readFile(await (await networkDownload).path(),"utf8"));
+    assert.equal(verifyReceiptDocument(networkReceipt).valid,true);
+    assert.equal(networkReceipt.historyReceipt.receiptId,historyReceipt.receiptId);
+    assert.equal(networkReceipt.observation.transactions[0].feeLamports,"5000");
+    assert.equal(networkReceipt.observation.transactions[0].allocatedPositionCostUsd,null);
+    assert.equal(await historyPanel.locator(".meteora-cost-form input").inputValue(),"");
+    failNetworkFees=true;
+    await historyPanel.locator('.solana-fee-form button[type="submit"]').click();
+    await historyPanel.getByText("Network fees could not be read. Try again later.",{exact:true}).waitFor();
+    assert.equal(await historyPanel.locator(".solana-fee-download").count(),0);
     await historyPanel.locator(".meteora-cost-form summary").click();
     await historyPanel.locator(".meteora-cost-form input").fill("0.5");
     assert.equal(await historyPanel.locator(".meteora-cashflow-download").count(),0);

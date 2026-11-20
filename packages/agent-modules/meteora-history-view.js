@@ -1,3 +1,4 @@
+import { solanaTransactionFeesHtml } from "./solana-transaction-fees-view.js";
 import { liquidityPositionValueHtml } from "./liquidity-position-value-view.js";
 import { escapeHtml as h } from "../shared/index.js";
 import { sealDocument } from "../evidence/integrity.js";
@@ -19,6 +20,7 @@ export function meteoraHistoryHtml(state, observation) {
     ${history && ["FOUND", "NOT_OBSERVED"].includes(history.status) ? '<button class="meteora-history-download" type="button">DOWNLOAD HISTORY RECEIPT</button>' : ""}
     ${found ? `<p><span>Observed at</span>: ${h(history.observedAt)} · ${history.events.length} <span>indexed events</span></p><p>History completeness, event valuations and token units are unverified. Provider PnL and lifetime fees are not added to these events.</p>
       <div class="meteora-history-table"><table><thead><tr><th>Event</th><th>Block time</th><th>Indexed value (USD)</th><th>Transaction</th></tr></thead><tbody>${history.events.slice(0,30).map(e => `<tr><td>${labels[e.type]}</td><td>${h(new Date(e.blockTime*1000).toISOString())}</td><td>${h(e.indexedValueUsd ?? "—")}</td><td><code>${h(e.signature.slice(0,12))}…</code> #${h(e.ixIndex)}</td></tr>`).join("")}</tbody></table></div><p>Showing up to 30 events. The receipt contains all returned events within the limit.</p>
+      ${solanaTransactionFeesHtml(state,state.receipt)}
       <form class="meteora-cost-form"><p>Enter only external transaction costs allocated to this position, once per transaction. Do not repeat costs already included in event values. Blank means unknown; enter 0 only when confirmed.</p>
         <details><summary>Transaction cost entries</summary>${signatures.map(signature => `<label><code>${h(signature)}</code><span>Allocated external cost (USD)</span><input name="${h(signature)}" inputmode="decimal" maxlength="51" autocomplete="off" value="${h(cost(signature))}"></label>`).join("")}</details><button type="submit">CALCULATE OBSERVED CASHFLOWS</button></form>
       <p class="meteora-cost-status" role="status">${state.costError ? "Check the transaction costs. Use nonnegative USD decimal values." : ""}</p>

@@ -1,3 +1,4 @@
+import solanaFeeHandler from "../server/scout/solana-transaction-fees.js";
 import meteoraHistoryHandler from "../server/scout/meteora-history.js";
 import liquidityCashflowsHandler from "../server/strategy/liquidity-cashflows.js";
 import meteoraComparisonHandler from "../server/scout/meteora-comparison.js";
@@ -36,6 +37,7 @@ import gatewayHandler from "../server/app-kits/gateway.js";
 import vaultExposureHandler from "../server/app-kits/vault-exposure.js";
 
 const routes = new Map([
+  ["/api/scout/solana-transaction-fees", solanaFeeHandler],
   ["/api/scout/meteora-history", meteoraHistoryHandler],
   ["/api/strategy/liquidity-cashflows", liquidityCashflowsHandler],
   ["/api/scout/meteora-comparison", meteoraComparisonHandler],

@@ -5,7 +5,7 @@
 ## Integration
 
 - [Capabilities](https://cofferhouse-scout.vercel.app/api/agent/capabilities): Versioned tool catalog and local configuration readiness. READY_TO_QUERY does not verify provider availability.
-- [OpenAPI](https://cofferhouse-scout.vercel.app/api/agent/openapi): OpenAPI 3.1.1 request and response contracts for eight public operations. HTTP integration only; no MCP server is deployed.
+- [OpenAPI](https://cofferhouse-scout.vercel.app/api/agent/openapi): OpenAPI 3.1.1 request and response contracts for nine public operations. HTTP integration only; no MCP server is deployed.
 - [Integration guide](https://github.com/CofferHouse/cofferhouse-agent-suite/blob/main/docs/AGENT_RESEARCH_API.md): Examples, limitations, costs and status interpretation.
 
 ## Scope
@@ -21,3 +21,5 @@ Saved Meteora position receipts can be compared with POST /api/scout/meteora-com
 POST /api/scout/meteora-history reads up to 200 indexed position events (bounded response, completeness unverified). POST /api/strategy/liquidity-cashflows accepts a sealed history receipt and external USD costs allocated once per observed transaction. Its cashflow balance excludes current position value and never claims realized profit or investment return. Missing costs remain unknown.
 
 The cashflow evaluator optionally accepts a matching positionReceipt and returns a separate balance-only reference. Both USD balances are required, retrieval times must be within 120 seconds and events cannot postdate the position snapshot. Pending fees/rewards are not added. This unverified, dated reference is not realized profit or a return estimate; missing costs suppress the after-cost reference.
+
+POST /api/scout/solana-transaction-fees validates a sealed history receipt and reads up to three selected public transaction signatures through fixed Solana mainnet public RPC. It reports whole-transaction network fees in lamports/SOL, with payer and DLMM reference checks. This limited research feature has no SLA, supports legacy/v0 transactions, performs no USD conversion or position-cost allocation, and never replaces manual cost entries.
