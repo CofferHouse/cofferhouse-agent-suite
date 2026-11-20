@@ -133,3 +133,10 @@ Users can enter separately paid external USD costs allocated once per observed t
 A cashflow calculation can now attach the exact position receipt used by Holder Center. The additional reference combines indexed cashflows with the two provider-reported balance USD components, optionally after entered external costs, while showing pending fee USD values separately. Pending fees/rewards and provider PnL/lifetime fees are not added. The source schema does not independently establish component non-overlap or a complete equity valuation.
 
 Identity and token mints must match, retrieval times must be within 120 seconds, and events cannot be later than the position snapshot. Missing balances, unknown state or nonzero closed-position components suppress the reference. A missing cost is not zero. The reference remains explicitly unverified and dated; no realized gain, net return, holding benchmark, automated cost retrieval or trading execution is enabled. Downloaded cashflow evidence embeds both source receipts. See [API guide](AGENT_RESEARCH_API.md#optional-position-balance-reference).
+
+
+### RPC-reported network fees
+
+Holder Center can now explicitly query selected groups of up to three indexed transaction signatures through Solana public mainnet RPC. It checks finalized transaction identity, indexed slot/time, fee payer and an outer/inner DLMM instruction referencing the exact pool and position. The whole-transaction fee is retained in lamports and SOL, with separate absent/mismatch/failure/unavailable states. Response size and time are bounded and no retries or write methods are used.
+
+This is limited public-RPC research with no SLA, not complete LP expense attribution. Legacy/v0 only; later transaction versions are unavailable until supported. No USD conversion, tip/rent attribution, manual cost overwrite or fee allocation is inferred. Existing cashflows and valuation references remain separate. User-selected batches and downloadable receipts provide evidence for later cost reconciliation; see [API guide](AGENT_RESEARCH_API.md#limited-solana-network-fee-observations).

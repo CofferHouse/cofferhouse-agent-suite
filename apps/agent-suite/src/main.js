@@ -900,6 +900,32 @@ function render() {
   document.querySelector(".meteora-history-download")?.addEventListener("click", () => {
     if (meteoraHistoryState.receipt) downloadScoutReceipt(meteoraHistoryState.receipt);
   });
+  document.querySelector('.solana-fee-form select')?.addEventListener("change", event => {
+    if (meteoraHistoryState.feeMode === "loading") return;
+    meteoraHistoryState = { ...meteoraHistoryState, feeOffset: Number(event.currentTarget.value), feeObservation: null, feeMode: "idle" };
+    render();
+  });
+  document.querySelector(".solana-fee-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (meteoraHistoryState.feeMode === "loading" || !meteoraHistoryState.receipt) return;
+    const receipt = meteoraHistoryState.receipt;
+    const offset = Number(new FormData(event.currentTarget).get("offset"));
+    const signatures = [...new Set(receipt.history.events.map(e => e.signature))];
+    if (!Number.isInteger(offset) || offset < 0 || offset >= signatures.length || offset % 3 !== 0) return;
+    const ticket = meteoraHistoryRequest;
+    meteoraHistoryState = { ...meteoraHistoryState, feeMode: "loading", feeOffset: offset, feeObservation: null };
+    render();
+    try {
+      const response = await fetch("/api/scout/solana-transaction-fees", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ historyReceipt: receipt, signatures: signatures.slice(offset,offset+3) }), signal: AbortSignal.timeout(15000) });
+      const body = await response.json();
+      if (!response.ok || !body.ok || body.observation?.historyReceiptId !== receipt.receiptId || !["OBSERVED", "PARTIAL", "NO_OBSERVATION"].includes(body.observation.status)) throw Error("Unavailable");
+      if (ticket === meteoraHistoryRequest && meteoraHistoryState.receipt?.receiptId === receipt.receiptId) meteoraHistoryState = { ...meteoraHistoryState, feeMode: "ready", feeObservation: body.observation };
+    } catch { if (ticket === meteoraHistoryRequest && meteoraHistoryState.receipt?.receiptId === receipt.receiptId) meteoraHistoryState = { ...meteoraHistoryState, feeMode: "error", feeObservation: null }; }
+    if (ticket === meteoraHistoryRequest) render();
+  });
+  document.querySelector(".solana-fee-download")?.addEventListener("click", () => {
+    if (meteoraHistoryState.feeObservation) downloadScoutReceipt(sealDocument({ schema: "cofferhouse.solana.network-fee-receipt.v1", generatedAt: new Date().toISOString(), historyReceipt: meteoraHistoryState.receipt, observation: meteoraHistoryState.feeObservation }, "solana-network-fees"));
+  });
   document.querySelector(".meteora-cost-form")?.addEventListener("input", event => {
     meteoraHistoryState.costs = [...new FormData(event.currentTarget)].filter(([,usd]) => String(usd).trim() !== "").map(([signature,usd]) => ({ signature, usd: String(usd).trim() }));
     meteoraHistoryState.cashflows = null;
