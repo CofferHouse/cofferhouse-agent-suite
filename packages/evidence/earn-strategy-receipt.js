@@ -7,6 +7,7 @@ export function createEarnStrategyReceipt(proposal) {
     sourceAgent: "CofferHouse Strategy Lab · Arc Earn Kit", sourceSchema: proposal.sourceSchema,
     source: proposal.source, chain: proposal.chain, preferences: proposal.preferences, status: proposal.status,
     summary: proposal.summary, positions: proposal.positions, exclusions: proposal.exclusions,
+    idleCapitalPlan: proposal.idleCapitalPlan ?? null,
     separationRule: proposal.separationRule, notice: proposal.notice
   }, "earn-strategy");
 }
