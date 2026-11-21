@@ -1,3 +1,6 @@
+import { planIdleUsdc } from './idle-capital.js';
+import { usdcUnits } from './treasury-plan.js';
+
 const roundMoney = (value) => Math.round(value * 100) / 100;
 
 function allocateWithVaultCaps(candidates, deployableUsd, perVaultCapUsd) {
@@ -23,17 +26,28 @@ function allocateWithVaultCaps(candidates, deployableUsd, perVaultCapUsd) {
   return { allocations, remaining };
 }
 
-export function buildEarnStrategy(earnAnalysis, strategyPreferences) {
+export function buildEarnStrategy(earnAnalysis, strategyPreferences, { idleCapitalInput, now = Date.now() } = {}) {
   if (earnAnalysis?.schema !== "cofferhouse.arc-app-kits.earn-analysis.v1") throw new Error("A valid Earn opportunity analysis is required.");
   const capitalUsd = Number(strategyPreferences.capitalUsd);
   const reserveUsd = capitalUsd * Number(strategyPreferences.reservePct) / 100;
   const deployableUsd = capitalUsd - reserveUsd;
+  let idleCapitalPlan = null;
+  let boundedDeployableUsd = deployableUsd;
+  if (idleCapitalInput !== undefined) {
+    if (!Number.isFinite(capitalUsd) || capitalUsd <= 0 || capitalUsd > 1_000_000_000 || usdcUnits(idleCapitalInput?.walletUsdc) !== usdcUnits(String(capitalUsd))) throw new Error('Idle wallet balance must match Strategy capital in USDC.');
+    const times = [idleCapitalInput.observedAt, earnAnalysis.observedAt].map(value => typeof value === 'string' ? Date.parse(value) : NaN);
+    const fresh = times.every(value => Number.isFinite(value) && value <= now && now - value <= 300000);
+    idleCapitalInput = { ...idleCapitalInput, observedAt: fresh ? new Date(Math.min(...times)).toISOString() : 'invalid' };
+    idleCapitalPlan = planIdleUsdc(idleCapitalInput, { now });
+    // Round down to cents before entering the legacy USD research allocator.
+    boundedDeployableUsd = Math.min(deployableUsd, Number(usdcUnits(idleCapitalPlan.reviewableAllocationUsdc) / 10000n) / 100);
+  }
   const perVaultCapUsd = capitalUsd * Number(strategyPreferences.maxPerMarketPct) / 100;
   const candidates = earnAnalysis.opportunities
-    .filter((item) => item.eligible && item.researchScore >= Number(strategyPreferences.minResearchScore) && item.maxResearchAmountUsd > 0)
+    .filter((item) => item.eligible && (!idleCapitalPlan || item.asset === 'USDC') && item.researchScore >= Number(strategyPreferences.minResearchScore) && item.maxResearchAmountUsd > 0)
     .slice(0, Number(strategyPreferences.maxMarkets));
-  const allocation = allocateWithVaultCaps(candidates, deployableUsd, perVaultCapUsd);
-  const positions = allocation.allocations.filter((item) => item.amountUsd > 0.005).map(({ candidate, amountUsd }) => ({
+  const allocation = allocateWithVaultCaps(candidates, boundedDeployableUsd, perVaultCapUsd);
+  let positions = allocation.allocations.map(item => ({ ...item, amountUsd: idleCapitalPlan ? Math.floor(item.amountUsd * 100) / 100 : item.amountUsd })).filter((item) => item.amountUsd > 0.005).map(({ candidate, amountUsd }) => ({
     sourceType: "ARC_EARN_VAULT", vaultAddress: candidate.vaultAddress, name: candidate.name,
     protocol: candidate.protocol, asset: candidate.asset, amountUsd: roundMoney(amountUsd),
     portfolioPct: Math.round(amountUsd / capitalUsd * 10_000) / 100,
@@ -48,6 +62,12 @@ export function buildEarnStrategy(earnAnalysis, strategyPreferences) {
       "A wallet-controlled deposit would require a separate fresh quote, human approval and signature."
     ]
   }));
+  if (idleCapitalPlan) {
+    const sizedUsdc = roundMoney(positions.reduce((sum, item) => sum + item.amountUsd, 0)).toFixed(2);
+    idleCapitalPlan = planIdleUsdc({ ...idleCapitalInput, maxAllocationUsdc: sizedUsdc }, { now });
+    // Actual vault caps may make the smaller scenario uneconomic after fixed costs.
+    if (idleCapitalPlan.decision !== 'REVIEW_REQUIRED') positions = [];
+  }
   const allocatedUsd = positions.reduce((sum, item) => sum + item.amountUsd, 0);
   const observedAnnualizedYieldUsd = positions.reduce((sum, item) => sum + item.annualizedObservedYieldUsd, 0);
   return Object.freeze({
@@ -60,7 +80,7 @@ export function buildEarnStrategy(earnAnalysis, strategyPreferences) {
       weightedObservedApyPct: allocatedUsd ? Math.round(observedAnnualizedYieldUsd / allocatedUsd * 100_000) / 1000 : 0,
       observedAnnualizedYieldUsd: roundMoney(observedAnnualizedYieldUsd)
     }),
-    positions,
+    positions, idleCapitalPlan,
     exclusions: earnAnalysis.opportunities.filter((item) => !positions.some((position) => position.vaultAddress === item.vaultAddress)).map((item) => ({
       vaultAddress: item.vaultAddress, name: item.name,
       reason: !item.eligible ? item.reason : item.researchScore < Number(strategyPreferences.minResearchScore) ? "Research score is below the Strategy minimum." : "Excluded by diversification or sizing limits."
