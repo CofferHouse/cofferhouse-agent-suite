@@ -396,7 +396,7 @@ try {
     assert.equal(await idle.locator('.idle-capital-download').count(), 0);
     assert.equal(await idle.locator('input[name="walletUsdc"]').inputValue(), '');
     await idle.locator('.idle-capital-record-time').click();
-    assert.match(await idle.locator('input[name="observedAt"]').inputValue(), /^\\d{4}-\\d{2}-\\d{2}T/);
+    assert.match(await idle.locator('input[name="observedAt"]').inputValue(), /^[0-9]{4}-[0-9]{2}-[0-9]{2}T/);
     await idle.locator('.idle-capital-example').click();
     assert.equal(await idle.locator('input[name="withdrawalTermsReviewed"]').isChecked(), false);
     await idle.locator('button[type="submit"]').click();
