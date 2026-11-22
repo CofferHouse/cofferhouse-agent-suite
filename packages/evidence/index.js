@@ -17,3 +17,5 @@ export * from "./research-session-receipt.js";
 export * from "./research-session-history.js";
 export * from "./operator-workspace.js";
 export * from "./interop-receipt.js";
+
+export * from "./idle-capital-receipt.js";
