@@ -389,6 +389,58 @@ try {
     assert.equal(await page.locator(".gateway-balances").isDisabled(), true);
     await page.locator('.suite-tab[data-view="hub"]').click();
     await page.locator('.suite-tab[data-view="strategy"]').click();
+
+    await page.locator('#holder-language').selectOption('en');
+    await page.waitForFunction(() => document.documentElement.lang === 'en');
+    const idle = page.locator('.idle-capital-panel');
+    assert.equal(await idle.locator('.idle-capital-download').count(), 0);
+    assert.equal(await idle.locator('input[name="walletUsdc"]').inputValue(), '');
+    await idle.locator('.idle-capital-record-time').click();
+    assert.match(await idle.locator('input[name="observedAt"]').inputValue(), /^\\d{4}-\\d{2}-\\d{2}T/);
+    await idle.locator('.idle-capital-example').click();
+    assert.equal(await idle.locator('input[name="withdrawalTermsReviewed"]').isChecked(), false);
+    await idle.locator('button[type="submit"]').click();
+    assert.equal(await idle.locator('.idle-capital-result h4').innerText(), 'Keep funds liquid');
+    await idle.locator('input[name="withdrawalTermsReviewed"]').check();
+    assert.equal(await idle.locator('.idle-capital-download').count(), 0);
+    await idle.locator('button[type="submit"]').click();
+    await idle.locator('.idle-capital-download').waitFor();
+    const idleDownload = page.waitForEvent('download');
+    await idle.locator('.idle-capital-download').click();
+    const idleReceipt = JSON.parse(await readFile(await (await idleDownload).path(), 'utf8'));
+    assert.equal(verifyReceiptDocument(idleReceipt).valid, true);
+    assert.equal(idleReceipt.inputSource, 'EDITABLE_SYNTHETIC_EXAMPLE');
+    assert.equal(idleReceipt.scenario.decision, 'REVIEW_REQUIRED');
+    assert.equal(idleReceipt.scenario.reviewableAllocationUsdc, '4000.000000');
+    assert.equal(idleReceipt.scenario.netScenarioAfterEnteredCostsUsdc, '3.931506');
+    assert.equal(idleReceipt.scenario.execution.submitted, false);
+    await idle.locator('input[name="entryCostUsdc"]').fill('10');
+    assert.equal(await idle.locator('.idle-capital-download').count(), 0);
+    assert.equal(await idle.locator('.idle-capital-result').count(), 0);
+    await idle.locator('button[type="submit"]').click();
+    assert.match(await idle.locator('.idle-capital-result').innerText(), /does not clear entered costs/);
+    const blockedDownload = page.waitForEvent('download');
+    await idle.locator('.idle-capital-download').click();
+    const blockedReceipt = JSON.parse(await readFile(await (await blockedDownload).path(), 'utf8'));
+    assert.equal(blockedReceipt.scenario.reviewableAllocationUsdc, '0.000000');
+    assert.equal(blockedReceipt.scenario.decision, 'KEEP_LIQUID');
+    assert.equal(verifyReceiptDocument(blockedReceipt).valid, true);
+    for (const [language, locale] of [['zh','zh-CN'],['ja','ja'],['hi','hi'],['es','es']]) {
+      await page.locator('#holder-language').selectOption(language);
+      await page.waitForFunction(locale => document.documentElement.lang === locale, locale);
+      assert.notEqual(await idle.locator('#idle-capital-title').innerText(), 'USDC planning between commitments');
+      assert.notEqual(await idle.locator('.idle-capital-download').innerText(), 'DOWNLOAD USDC SCENARIO');
+      assert.match(await idle.locator('.idle-capital-result').innerText(), /4000.000000 USDC/);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false, 'Idle planner overflows horizontally');
+    }
+    if (artifacts) await page.screenshot({ path: join(artifacts, 'idle-capital-' + viewport.width + '.png'), fullPage: true });
+    await page.locator('#holder-language').selectOption('en');
+    await page.waitForFunction(() => document.documentElement.lang === 'en');
+    await idle.locator('.idle-capital-clear').click();
+    assert.equal(await idle.locator('input[name="walletUsdc"]').inputValue(), '');
+    assert.equal(await idle.locator('.idle-capital-download').count(), 0);
+    assert.equal(await idle.locator('input[name="withdrawalTermsReviewed"]').isChecked(), false);
+
     const lp=page.locator(".lp-scenario");
     await lp.locator('input[name="principalUsd"]').fill("960");
     await lp.locator('input[name="positionFeesUsd"]').fill("100");

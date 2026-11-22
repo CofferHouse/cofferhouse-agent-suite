@@ -1,3 +1,4 @@
+import { createIdleCapitalState, idleCapitalHtml, mountIdleCapital } from "../../../packages/agent-modules/idle-capital-view.js";
 import { evaluateLiquidityCashflows } from "../../../packages/agent-modules/liquidity-cashflows.js";
 import { meteoraHistoryHtml, currentHistoryReceipt } from "../../../packages/agent-modules/meteora-history-view.js";
 import { readMeteoraPositionReceipt, MAX_POSITION_RECEIPT_BYTES } from "../../../packages/agent-modules/meteora-position-comparison.js";
@@ -93,6 +94,7 @@ let meteoraHistoryRequest = 0;
 let meteoraBaselineState = { receipt: null, error: false };
 let meteoraBaselineImport = 0;
 let meteoraPositionState = { mode: "idle", pool: "", user: "", position: "", result: null };
+let idleCapitalState = createIdleCapitalState();
 let lpScenarioState = { assumptions: { ...defaultLiquidityScenario }, result: null, error: false };
 let scoutDiscoveryState = { mode: "idle", chains: [5042, 8453, 1], asset: "", networks: [] };
 let gatewayState = { mode: "idle", observation: null };
@@ -565,6 +567,7 @@ function render() {
           ${earnKitState.mode === "loading" ? `<div class="strategy-empty"><b>DISCOVERING OFFICIAL VAULTS</b><p>Strategy Lab will build this branch after Earn Kit evidence arrives.</p></div>` : earnStrategyProposal.positions.length ? `<div class="earn-strategy-positions">${earnStrategyProposal.positions.map((position, index) => `<article><span>${String(index + 1).padStart(2, "0")}</span><div><h4>${h(position.name)}</h4><small>${h(position.asset)} · ${h(position.protocol)} · ${h(shortId(position.vaultAddress))}</small><p>Research score ${position.researchScore} · ${h(position.status)}${position.warnings[0] ? ` · ${h(position.warnings[0])}` : ""}</p></div><strong>${formatMoney(position.amountUsd)}</strong><div><b>${formatPct(position.observedApyPct, 3)}</b><small>OBSERVED APY</small></div><details><summary>REVIEW CONDITIONS</summary>${position.reviewConditions.map((condition) => `<p>${h(condition)}</p>`).join("")}</details></article>`).join("")}</div>` : `<div class="strategy-empty"><b>NO ELIGIBLE EARN ALLOCATION</b><p>No official Earn vault clears both the active Earn filters and Strategy bounds.</p></div>`}
           <footer><span>${h(earnStrategyProposal.status.replaceAll("_", " "))} · ${earnStrategyReceipt.receiptId}</span><span>No deposit · No approval · No signature · No execution</span></footer>
         </section>
+        ${idleCapitalHtml(idleCapitalState)}
         ${liquidityScenarioHtml(lpScenarioState)}
         <footer><span>${h(strategyProposal.status.replaceAll("_", " "))} · ${strategyReceipt.receiptId}</span><span>Research proposal only · Human decision required · No transaction</span></footer>
       </section>
@@ -808,6 +811,7 @@ function render() {
 
   mountMembershipRoom();
   mountBotLab();
+  mountIdleCapital(app, idleCapitalState, { download: downloadScoutReceipt });
   document.querySelectorAll(".suite-view").forEach((view) => {
     const isActive = view.classList.contains("is-active");
     view.toggleAttribute("inert", !isActive);

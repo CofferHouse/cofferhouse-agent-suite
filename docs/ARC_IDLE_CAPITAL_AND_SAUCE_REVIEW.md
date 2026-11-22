@@ -92,9 +92,27 @@ position is proposed. Its idle-capital assumptions and result are included in
 `createEarnStrategyReceipt`, so changing them invalidates the integrity seal.
 A valid seal does not authenticate entered data or operator authority.
 
-This release provides developer-level planning and optional strategy integration;
-no new dashboard form, network call, wallet prompt, permission or fund transfer
-is enabled. Run `node --test test/idle-capital.test.js test/arc-app-kits.test.js`.
+Strategy Lab now includes a separate manual USDC scenario form. It starts blank;
+an optional synthetic example is visibly marked and does not pre-check withdrawal
+review. All monetary values remain decimal strings. Percent inputs convert to
+integer basis points without floating point. The manual form does not fetch
+wallet balances or allocate into Earn vaults; the developer opt-in Earn allocation
+integration above remains separate.
+
+Results distinguish protected cash, cash after commitments, the amount modeled
+before checks and the amount available for manual review. Every field or checkbox
+change removes the previous result and download until recalculation. Clearing the
+form also removes results. Figures remain in memory for the current page session
+and are not persisted in browser storage. EN/zh/ja/hi/es labels and reason messages
+are included; numeric values and exported evidence are never translated.
+
+A new supported `cofferhouse.treasury.idle-capital-receipt.v1` download includes
+the assumptions, scenario, timestamp and an explicit synthetic/user-entered source.
+Its integrity seal detects edits but does not verify the entered figures.
+No network call, wallet prompt, permission or transfer is added.
+Run `node --test test/idle-capital.test.js test/idle-capital-view.test.js test/arc-app-kits.test.js`.
+Browser acceptance checks exercise calculation, blocked scenarios, download
+invalidation, language changes, receipt verification and mobile layout.
 
 ## Sauce integration boundary
 
