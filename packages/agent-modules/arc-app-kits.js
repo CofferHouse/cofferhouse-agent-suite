@@ -62,10 +62,12 @@ export function saveEarnOpportunityPreferences(storage, value) {
   return normalized;
 }
 
+const reportedNumber = value => (typeof value === 'number' || (typeof value === 'string' && value.trim() !== '')) && Number.isFinite(Number(value)) ? Number(value) : null;
 export function normalizeEarnVault(value = {}) {
-  const apy = Number(value.currentApy ?? value.apyProfile?.current);
-  const liquidity = Number(value.liquidity ?? value.liquidityProfile?.available);
-  const deposits = Number(value.totalDeposits ?? value.liquidityProfile?.totalDeposits);
+  const apy = reportedNumber(value.currentApy ?? value.apyProfile?.current);
+  const rawLiquidity = value.liquidity ?? value.liquidityProfile?.available;
+  const liquidity = reportedNumber(rawLiquidity);
+  const deposits = reportedNumber(value.totalDeposits ?? value.liquidityProfile?.totalDeposits);
   return Object.freeze({
     vaultAddress: String(value.vaultAddress ?? value.address ?? ""),
     name: String(value.name ?? "Unnamed Earn vault"),
@@ -73,6 +75,9 @@ export function normalizeEarnVault(value = {}) {
     asset: String(value.asset ?? "Unknown"),
     apyPct: Number.isFinite(apy) ? apy * 100 : null,
     availableLiquidityUsd: Number.isFinite(liquidity) ? liquidity : null,
+    // SDK amounts are human-readable asset amounts. Preserve strings for USDC planning.
+    availableLiquidityAssetAmount: typeof rawLiquidity === 'string' && /^(0|[1-9][0-9]{0,17})(\.[0-9]{1,6})?$/.test(rawLiquidity) ? rawLiquidity : null,
+    liquidityAsOf: value.liquidityProfile?.asOf ?? value.asOf ?? null,
     totalDepositsUsd: Number.isFinite(deposits) ? deposits : null,
     status: String(value.status ?? value.liquidityProfile?.status ?? "unknown"),
     circleGuarded: value.circleGuarded === true,
@@ -89,6 +94,7 @@ export function normalizeEarnVaultResponse(payload = {}) {
     chain: "Arc",
     mode: "official-read-only",
     observedAt: payload.observedAt ?? new Date().toISOString(),
+    retrievedAt: typeof payload.observedAt === 'string' ? payload.observedAt : null,
     vaults,
     summary: Object.freeze({
       total: vaults.length,

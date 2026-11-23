@@ -83,6 +83,7 @@ try {
     let failCoinbase = false;
     let failGateway = false;
     let failExposure = false;
+    let failEarn = false;
     let solanaConfigured = false;
     let failMeteora = false;
     let failMeteoraPosition = false;
@@ -143,7 +144,8 @@ try {
         status = failExposure ? 502 : 200;
         body = failExposure ? { ok: false } : { ok: true, observation: exposure };
       } else if (url.pathname === "/api/app-kits/earn") {
-        body = { vaults: [{ vaultAddress: vault, protocol: "MORPHO", name: "Browser fixture vault", asset: "USDC", currentApy: 0.05, liquidity: "1000000", totalDeposits: "2000000", status: "active" }] };
+        status = failEarn ? 502 : 200;
+        body = failEarn ? { ok: false } : { observedAt: new Date().toISOString(), vaults: [{ vaultAddress: vault, protocol: "MORPHO", name: "Browser fixture vault", asset: "USDC", currentApy: 0.05, liquidity: "1000000", totalDeposits: "2000000", status: "active" }] };
       } else if (url.pathname === "/api/agent/status") {
         body = { configured: false, capabilities: {}, history: [] };
       } else {
@@ -441,6 +443,60 @@ try {
     assert.equal(await idle.locator('.idle-capital-download').count(), 0);
     assert.equal(await idle.locator('input[name="withdrawalTermsReviewed"]').isChecked(), false);
 
+    // Imported liquidity is source-bound; cash and the simple rate remain user assumptions.
+    await idle.locator('.idle-capital-example').click();
+    await idle.locator('input[name="scenarioAnnualSimpleRatePct"]').fill('3');
+    await idle.locator('.idle-capital-vault').selectOption(vault);
+    await idle.locator('.idle-capital-import').click();
+    assert.equal(await idle.locator('input[name="withdrawalTermsReviewed"]').isChecked(), false);
+    assert.equal(await idle.locator('input[name="vaultAvailableLiquidityUsdc"]').inputValue(), '1000000');
+    assert.equal(await idle.locator('input[name="vaultAvailableLiquidityUsdc"]').getAttribute('readonly'), '');
+    assert.equal(await idle.locator('input[name="scenarioAnnualSimpleRatePct"]').inputValue(), '3');
+    await idle.locator('input[name="withdrawalTermsReviewed"]').check();
+    await idle.locator('button[type="submit"]').click();
+    const earnIdleDownload = page.waitForEvent('download');
+    await idle.locator('.idle-capital-download').click();
+    const earnIdleReceipt = JSON.parse(await readFile(await (await earnIdleDownload).path(), 'utf8'));
+    assert.equal(verifyReceiptDocument(earnIdleReceipt).valid, true);
+    assert.equal(earnIdleReceipt.inputSource, 'EARN_LIQUIDITY_WITH_EDITABLE_SYNTHETIC_CASH');
+    assert.equal(earnIdleReceipt.scenario.marketSource.vaultAddress, vault);
+    assert.equal(earnIdleReceipt.scenario.marketSource.amountUsdc, '1000000');
+    assert.equal(earnIdleReceipt.scenario.marketSource.reportedApyPct, 5);
+    assert.equal(earnIdleReceipt.scenario.assumptions.scenarioAnnualSimpleRateBps, 300);
+    for (const [language, locale] of [['zh','zh-CN'],['ja','ja'],['hi','hi'],['es','es']]) {
+      await page.locator('#holder-language').selectOption(language);
+      await page.waitForFunction(locale => document.documentElement.lang === locale, locale);
+      assert.notEqual(await idle.locator('.idle-capital-refresh-earn').innerText(), 'REFRESH EARN SOURCES');
+      assert.notEqual(await idle.locator('.idle-capital-manual').innerText(), 'USE MANUAL LIQUIDITY');
+      assert.match(await idle.locator('.idle-capital-source-card').innerText(), /1000000 USDC/);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
+    }
+    if (artifacts) await idle.screenshot({ path: join(artifacts, 'idle-earn-' + viewport.width + '.png') });
+    await page.locator('#holder-language').selectOption('en');
+    await page.waitForFunction(() => document.documentElement.lang === 'en');
+    await idle.locator('.idle-capital-refresh-earn').click();
+    await idle.locator('.idle-capital-import:not([disabled])').waitFor();
+    assert.equal(await idle.locator('.idle-capital-download').count(), 0);
+    assert.match(await idle.locator('.idle-capital-source-card').innerText(), /Refresh and import/);
+    await idle.locator('.idle-capital-vault').selectOption(vault);
+    await idle.locator('.idle-capital-import').click();
+    await idle.locator('input[name="withdrawalTermsReviewed"]').check();
+    await idle.locator('button[type="submit"]').click();
+    assert.equal(await idle.locator('.idle-capital-download').count(), 1);
+    failEarn = true;
+    await idle.locator('.idle-capital-refresh-earn').click();
+    await page.waitForFunction(() => document.querySelector('.earn-kit-panel.error') !== null);
+    assert.equal(await idle.locator('.idle-capital-download').count(), 0);
+    await idle.locator('button[type="submit"]').click();
+    assert.match(await idle.locator('.idle-capital-result').innerText(), /Earn source is unavailable/);
+    await idle.locator('.idle-capital-manual').click();
+    assert.equal(await idle.locator('input[name="vaultAvailableLiquidityUsdc"]').getAttribute('readonly'), null);
+    assert.equal(await idle.locator('.idle-capital-download').count(), 0);
+    failEarn = false;
+    await idle.locator('.idle-capital-refresh-earn').click();
+    await idle.locator('.idle-capital-import:not([disabled])').waitFor();
+    await idle.locator('.idle-capital-clear').click();
+
     const lp=page.locator(".lp-scenario");
     await lp.locator('input[name="principalUsd"]').fill("960");
     await lp.locator('input[name="positionFeesUsd"]').fill("100");
@@ -491,3 +547,4 @@ try {
   await browser?.close();
   await server.close();
 }
+

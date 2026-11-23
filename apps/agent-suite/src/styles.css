@@ -436,3 +436,10 @@ html:is([lang='zh-CN'],[lang='ja'],[lang='hi']) :is(h1,h2,h3,h4,.holder-language
 .idle-capital-result dd { margin: 5px 0 0; font-weight: 700; overflow-wrap: anywhere; }
 .idle-capital-panel button { max-width: 100%; white-space: normal; }
 .idle-capital-result ul { padding-inline-start: 20px; }
+
+.idle-capital-source-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-block: 16px; }
+.idle-capital-source-controls label { display: grid; gap: 6px; min-width: 0; flex: 1 1 220px; }
+.idle-capital-source-controls select { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; padding: 10px; font: inherit; }
+.idle-capital-source-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+.idle-capital-source-details dd { margin: 4px 0 0; overflow-wrap: anywhere; }
+.idle-capital-form input[readonly] { background: #e5edfa; border: 1px solid #1755bc; }
