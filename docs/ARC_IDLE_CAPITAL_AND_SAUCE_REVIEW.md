@@ -142,3 +142,58 @@ EVM testnets. Do not fabricate an Arc Testnet lending deployment for a demo.
 
 No Eco/GetLiquid source code, contracts or SDK dependencies were copied in this
 release. The planning code is original CofferHouse code informed by these ideas.
+
+
+## Earn liquidity source import (2026-11-23)
+
+The Strategy Lab form can now select a reported active USDC vault from the Earn
+response already loaded by the application, or explicitly refresh that existing
+read-only endpoint. Importing a source copies only its human-readable USDC
+liquidity string. It does not fetch a wallet balance, copy APY into the simple
+rate, set costs, review withdrawal terms or allocate funds. Choosing a different
+source invalidates the previous result; importing it resets withdrawal review.
+Imported liquidity is read-only until the user explicitly switches to manual
+estimates. A pending selection must be imported or cleared before calculation.
+
+The source uses SDK asset amounts, not the legacy floating-point USD display
+field. The installed `@circle-fin/earn-kit` 1.9.0 type declarations describe
+`EarnVaultInfo.liquidity` and `EarnLiquidityProfile.available` as human-readable
+decimal strings. Normalization now retains an exact asset-amount string and the
+explicit response timestamp. Missing/blank/boolean metrics remain unknown instead
+of becoming numeric zero. No new SDK dependency or copied SDK code is introduced.
+
+Only canonical positive USDC amounts with up to six decimals, nonzero unique EVM
+vault addresses, active status and the Arc read-only source contract are accepted.
+EURC, inactive vaults, duplicate identities, missing source timestamps and numeric
+liquidity values without the original decimal string are excluded. Existing Earn
+opportunity ranking/filters remain separate; source import is not an endorsement
+or a declaration that those investment filters passed.
+
+An explicit Earn response timestamp must be no more than five minutes old and
+not in the future. A provider liquidity timestamp is checked if actually present;
+no provider time is fabricated from the APY date or the retrieval time. A recent
+API response alone cannot prove the underlying liquidity is fresh, liquid or
+redeemable. Its freshness remains unverified even after the source matches.
+The server's cache can return the same snapshot until refreshed or expired.
+
+`planIdleUsdcWithEarn` binds the reported amount, vault, chain, asset, response
+time and available provider metadata to the latest available report. A changed,
+stale or unavailable source, or an overridden liquidity field, forces zero
+reviewable allocation. Updating the manual scenario time does not refresh source
+evidence. Response refresh/reconciliation clears old results and downloads.
+Sources stay in memory only; clearing the form or loading the synthetic example
+removes the imported source. Wallet, cash, simple rate, costs and timing stay
+explicit caller assumptions.
+
+The existing scenario receipt now embeds `marketSource` and `sourceReview` and
+uses `EARN_LIQUIDITY_WITH_USER_ASSUMPTIONS` or
+`EARN_LIQUIDITY_WITH_EDITABLE_SYNTHETIC_CASH` provenance. The latter keeps sample
+cash distinct from the provider-reported amount. The source schema is embedded
+metadata, not a standalone registered evidence receipt. The integrity seal covers
+source fields, but does not authenticate the provider, token backing or funds.
+
+Tests include exact amounts beyond floating-point precision, stale/missing/future
+timestamps, missing provider times, changed sources, overridden amounts,
+non-USDC/inactive/duplicate identities, rate independence, receipt tampering and
+refresh invalidation. Browser acceptance also covers import, source refresh and
+failure, explicit manual detachment and source controls in all five languages.

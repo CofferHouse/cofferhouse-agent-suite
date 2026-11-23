@@ -1,6 +1,28 @@
 // Columns: English, Simplified Chinese, Japanese, Hindi, Spanish.
 // Proper names, contract addresses, signed messages and exported evidence retain their original values.
 export const holderTranslations = [
+["Cash, costs, timing and simple rate remain your estimates; the selected liquidity is a provider report.","现金、成本、时间和单利率仍为您的估计；所选流动性来自提供方的报告。","現金、費用、期間、単利率は利用者の見積もりです。選択した流動性は提供元の報告です。","नकदी, लागत, समय और साधारण दर आपके अनुमान हैं; चुनी लिक्विडिटी प्रदाता की रिपोर्ट है।","El efectivo, los costos, los plazos y la tasa simple siguen siendo tus estimaciones; la liquidez seleccionada proviene del reporte del proveedor."],
+["Choose a USDC vault","选择 USDC 金库","USDCボールトを選択","USDC वॉल्ट चुनें","Elige una bóveda USDC"],
+["USE REPORTED LIQUIDITY","使用报告的流动性","報告された流動性を使用","रिपोर्ट की गई लिक्विडिटी उपयोग करें","USAR LIQUIDEZ REPORTADA"],
+["REFRESH EARN SOURCES","刷新 Earn 数据源","Earnデータを更新","Earn स्रोत अपडेट करें","ACTUALIZAR FUENTES EARN"],
+["No recent active USDC source is available. Refresh Earn or use manual estimates.","暂无近期活跃的 USDC 数据源。请刷新 Earn 或使用手动估计。","最近の稼働中USDCデータがありません。Earnを更新するか手動の見積もりを使ってください。","हाल का सक्रिय USDC स्रोत उपलब्ध नहीं है। Earn अपडेट करें या मैन्युअल अनुमान लें।","No hay una fuente USDC activa con consulta reciente. Actualiza Earn o usa estimaciones manuales."],
+["Exit liquidity is currently a manual assumption.","退出流动性目前是手动假设。","出金流動性は現在、手動の仮定です。","निकासी लिक्विडिटी अभी मैन्युअल अनुमान है।","La liquidez de salida es actualmente un supuesto manual."],
+["Selected Earn vault","已选 Earn 金库","選択したEarnボールト","चुना गया Earn वॉल्ट","Bóveda Earn seleccionada"],
+["Vault address","金库地址","ボールトアドレス","वॉल्ट पता","Dirección de la bóveda"],
+["Reported exit liquidity (USDC)","报告的退出流动性 (USDC)","報告された出金流動性 (USDC)","रिपोर्ट की गई निकासी लिक्विडिटी (USDC)","Liquidez de salida reportada (USDC)"],
+["Earn response timestamp (UTC)","Earn 响应时间 (UTC)","Earn応答の記録日時 (UTC)","Earn उत्तर का समय (UTC)","Fecha de respuesta de Earn (UTC)"],
+["Provider liquidity timestamp (UTC)","提供方流动性时间戳 (UTC)","提供元の流動性データ日時 (UTC)","प्रदाता की लिक्विडिटी का समय (UTC)","Fecha de liquidez del proveedor (UTC)"],
+["Reported APY, not used in calculation","报告的 APY，不用于计算","報告APY（計算には不使用）","रिपोर्ट किया APY, गणना में उपयोग नहीं","APY reportado, no se usa en el cálculo"],
+["A recent API response does not prove fresh underlying vault data or guarantee a withdrawal.","近期的 API 响应不证明底层金库数据为最新，也不保证能提款。","最近のAPI応答でもボールト内部データの鮮度や出金は保証されません。","हाल का API उत्तर वॉल्ट डेटा के ताज़ा होने या निकासी की गारंटी नहीं है।","Una respuesta reciente de la API no demuestra que los datos subyacentes estén actualizados ni garantiza el retiro."],
+["Refresh and import the Earn source again before recalculating.","重新计算前，请刷新并再次导入 Earn 数据源。","再計算の前にEarnデータを更新して再度取り込んでください。","फिर गणना से पहले Earn स्रोत अपडेट करके दोबारा आयात करें।","Actualiza e importa nuevamente la fuente Earn antes de recalcular."],
+["USE MANUAL LIQUIDITY","使用手动流动性假设","流動性を手動で設定","मैन्युअल लिक्विडिटी उपयोग करें","USAR LIQUIDEZ MANUAL"],
+["Import the selected liquidity or switch to manual estimates.","请导入所选流动性或改用手动估计。","選択した流動性を取り込むか手動の見積もりに切り替えてください。","चुनी लिक्विडिटी आयात करें या मैन्युअल अनुमान चुनें।","Importa la liquidez seleccionada o cambia a estimaciones manuales."],
+["Reported liquidity imported. Review cash assumptions, costs and withdrawal terms.","已导入报告的流动性。请审阅现金假设、成本及提款条款。","報告された流動性を取り込みました。現金の仮定、費用、出金条件を確認してください。","रिपोर्ट की लिक्विडिटी आयात हुई। नकदी अनुमान, लागत और निकासी शर्तें जाँचें।","Se importó la liquidez reportada. Revisa los supuestos de efectivo, los costos y las condiciones de retiro."],
+["Cash assumptions began as a synthetic example.","现金假设最初来自模拟示例。","現金の仮定は仮の例から始めたものです。","नकदी मान्यताएँ काल्पनिक उदाहरण से शुरू हुई थीं।","Los supuestos de efectivo partieron de un ejemplo simulado."],
+["The Earn source is unavailable or no longer valid for this scenario.","Earn 数据源不可用，或已不适用于此情景。","Earnデータが利用できないか、このシナリオでは無効です。","Earn स्रोत उपलब्ध नहीं है या इस परिदृश्य के लिए मान्य नहीं रहा।","La fuente Earn no está disponible o ya no es válida para este escenario."],
+["The Earn source is older than five minutes or has an invalid timestamp.","Earn 数据源已超过五分钟，或时间戳无效。","Earnデータは5分以上前のものか、記録日時が無効です。","Earn स्रोत पाँच मिनट से पुराना है या समय अमान्य है।","La fuente Earn tiene más de cinco minutos o su fecha no es válida."],
+["The Earn report changed. Refresh and import the source again.","Earn 报告已更改。请刷新并再次导入数据源。","Earnの報告が変わりました。更新して再度取り込んでください。","Earn रिपोर्ट बदली है। स्रोत अपडेट करके फिर आयात करें।","El reporte Earn cambió. Actualiza e importa nuevamente la fuente."],
+["The liquidity amount no longer matches the selected Earn report.","流动性金额与所选 Earn 报告不再匹配。","流動性の金額が選択したEarn報告と一致しません。","लिक्विडिटी राशि चुनी Earn रिपोर्ट से मेल नहीं खाती।","El importe de liquidez ya no coincide con el reporte Earn seleccionado."],
 ["Use a dot for decimals, without thousands separators.","小数请使用点号，不要使用千位分隔符。","小数点にはピリオドを使い、桁区切りは入力しないでください。","दशमलव के लिए बिंदु लगाएँ, हज़ारों का विभाजक नहीं।","Usa punto decimal, sin separadores de miles."],
 ["RECORD CURRENT TIME","记录当前时间","現在時刻を記録","वर्तमान समय दर्ज करें","REGISTRAR HORA ACTUAL"],
 ["Timestamp records your estimates, not a live data check.","时间戳仅记录您的估计时间，并非实时数据核验。","記録日時は見積もりの時刻であり、リアルタイムデータの確認ではありません。","समय आपके अनुमान दर्ज करता है, लाइव डेटा की जाँच नहीं।","La fecha registra tus estimaciones; no representa una consulta de datos en vivo."],
@@ -985,3 +1007,4 @@ export const holderTranslations = [
 
 ['⌂ BACK TO THE HOUSE','⌂ 返回 HOUSE','⌂ HOUSE に戻る','⌂ HOUSE पर वापस','⌂ VOLVER A HOUSE'],
 ];
+

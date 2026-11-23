@@ -22,3 +22,4 @@ export * from "./borrow-kit.js";
 export * from "./loan-health.js";
 export * from "./treasury-plan.js";
 export * from "./idle-capital.js";
+export * from "./idle-capital-earn.js";
