@@ -416,6 +416,8 @@ try {
     assert.equal(idleReceipt.scenario.reviewableAllocationUsdc, '4000.000000');
     assert.equal(idleReceipt.scenario.netScenarioAfterEnteredCostsUsdc, '3.931506');
     assert.equal(idleReceipt.scenario.execution.submitted, false);
+    await idle.locator('.idle-capital-save-a').click();
+    assert.equal(await idle.locator('.idle-comparison-download').count(), 0);
     await idle.locator('input[name="entryCostUsdc"]').fill('10');
     assert.equal(await idle.locator('.idle-capital-download').count(), 0);
     assert.equal(await idle.locator('.idle-capital-result').count(), 0);
@@ -427,21 +429,51 @@ try {
     assert.equal(blockedReceipt.scenario.reviewableAllocationUsdc, '0.000000');
     assert.equal(blockedReceipt.scenario.decision, 'KEEP_LIQUID');
     assert.equal(verifyReceiptDocument(blockedReceipt).valid, true);
+    await idle.locator('.idle-capital-save-b').click();
+    const idleComparisonDownload = page.waitForEvent('download');
+    await idle.locator('.idle-comparison-download').click();
+    const idleComparisonReceipt = JSON.parse(await readFile(await (await idleComparisonDownload).path(), 'utf8'));
+    assert.equal(verifyReceiptDocument(idleComparisonReceipt).valid, true);
+    assert.equal(idleComparisonReceipt.snapshots.a.receiptId, idleReceipt.receiptId);
+    assert.equal(idleComparisonReceipt.snapshots.b.receiptId, blockedReceipt.receiptId);
+    assert.equal(idleComparisonReceipt.comparison.rows.find(row => row.id === 'net').deltaBMinusAUsdc, '-9.500000');
+    assert.equal(idleComparisonReceipt.comparison.decisionsAtCapture.b, 'KEEP_LIQUID');
     for (const [language, locale] of [['zh','zh-CN'],['ja','ja'],['hi','hi'],['es','es']]) {
       await page.locator('#holder-language').selectOption(language);
       await page.waitForFunction(locale => document.documentElement.lang === locale, locale);
       assert.notEqual(await idle.locator('#idle-capital-title').innerText(), 'USDC planning between commitments');
       assert.notEqual(await idle.locator('.idle-capital-download').innerText(), 'DOWNLOAD USDC SCENARIO');
+      assert.notEqual(await idle.locator('#idle-comparison-title').innerText(), 'Saved USDC scenarios');
+      assert.notEqual(await idle.locator('.idle-comparison-download').innerText(), 'DOWNLOAD SCENARIO COMPARISON');
+      assert.match(await idle.locator('.idle-comparison').innerText(), /-9.500000/);
       assert.match(await idle.locator('.idle-capital-result').innerText(), /4000.000000 USDC/);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false, 'Idle planner overflows horizontally');
     }
     if (artifacts) await page.screenshot({ path: join(artifacts, 'idle-capital-' + viewport.width + '.png'), fullPage: true });
     await page.locator('#holder-language').selectOption('en');
     await page.waitForFunction(() => document.documentElement.lang === 'en');
+    await idle.locator('input[name="holdingHours"]').fill('241');
+    assert.equal(await idle.locator('.idle-capital-download').count(), 0);
+    assert.equal(await idle.locator('.idle-comparison-download').count(), 1);
+    await idle.locator('button[type="submit"]').click();
+    await idle.locator('.idle-capital-save-b').click();
+    assert.match(await idle.locator('.idle-comparison-summary').innerText(), /not comparable/);
+    const mismatchDownload = page.waitForEvent('download');
+    await idle.locator('.idle-comparison-download').click();
+    const mismatchReceipt = JSON.parse(await readFile(await (await mismatchDownload).path(), 'utf8'));
+    assert.equal(mismatchReceipt.snapshots.a.receiptId, idleReceipt.receiptId);
+    assert.ok(mismatchReceipt.comparison.issues.includes('DIFFERENT_HOLDING_WINDOW'));
+    assert.ok(mismatchReceipt.comparison.rows.every(row => row.deltaBMinusAUsdc === null));
+    assert.equal(verifyReceiptDocument(mismatchReceipt).valid, true);
+    await idle.locator('.idle-comparison-clear').click();
+    assert.equal(await idle.locator('.idle-comparison-download').count(), 0);
+    assert.equal(await idle.locator('.idle-capital-download').count(), 1);
+    await idle.locator('.idle-capital-save-a').click();
     await idle.locator('.idle-capital-clear').click();
     assert.equal(await idle.locator('input[name="walletUsdc"]').inputValue(), '');
     assert.equal(await idle.locator('.idle-capital-download').count(), 0);
     assert.equal(await idle.locator('input[name="withdrawalTermsReviewed"]').isChecked(), false);
+    assert.equal(await idle.locator('.idle-comparison-clear').count(), 0);
 
     // Imported liquidity is source-bound; cash and the simple rate remain user assumptions.
     await idle.locator('.idle-capital-example').click();

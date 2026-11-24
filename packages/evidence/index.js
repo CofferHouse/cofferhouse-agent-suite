@@ -19,3 +19,4 @@ export * from "./operator-workspace.js";
 export * from "./interop-receipt.js";
 
 export * from "./idle-capital-receipt.js";
+export * from "./idle-capital-comparison-receipt.js";
