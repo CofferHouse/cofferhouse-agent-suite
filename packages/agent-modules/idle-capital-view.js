@@ -2,6 +2,9 @@ import { escapeHtml as h } from '../shared/index.js';
 import { planIdleUsdc } from './idle-capital.js';
 import { createIdleCapitalReceipt } from '../evidence/idle-capital-receipt.js';
 import { earnLiquiditySource, earnLiquiditySources, earnSourceIssues, planIdleUsdcWithEarn } from './idle-capital-earn.js';
+import { captureIdleCapitalScenario } from './idle-capital-comparison.js';
+import { createIdleCapitalComparisonReceipt } from '../evidence/idle-capital-comparison-receipt.js';
+import { idleCapitalComparisonHtml } from './idle-capital-comparison-view.js';
 
 export const idleCapitalFields = Object.freeze([
   { title: 'Cash and commitments', fields: [
@@ -26,7 +29,7 @@ export const idleCapitalFields = Object.freeze([
 ]);
 const names = idleCapitalFields.flatMap(group => group.fields.map(([name]) => name));
 export function createIdleCapitalState() {
-  return { values: Object.fromEntries([...names, 'observedAt'].map(name => [name, ''])), withdrawalTermsReviewed: false, paused: false, example: false, source: null, sourceIssue: false, pendingVault: '', result: null, receipt: null, error: false };
+  return { values: Object.fromEntries([...names, 'observedAt'].map(name => [name, ''])), withdrawalTermsReviewed: false, paused: false, example: false, source: null, sourceIssue: false, pendingVault: '', result: null, receipt: null, error: false, saved: { a: null, b: null, receipt: null, error: false } };
 }
 export function idleCapitalExample(now = Date.now()) {
   return {
@@ -81,7 +84,7 @@ export function idleCapitalResultHtml(state) {
     '<dl>' + rows.map(([label, value]) => '<div><dt>' + h(label) + '</dt><dd data-no-translate>' + h(value === null ? '—' : value + ' USDC') + '</dd></div>').join('') +
     '<div><dt>Modeled earning hours</dt><dd data-no-translate>' + h(p.earningHours === null ? '—' : String(p.earningHours)) + '</dd></div></dl>' +
     (p.reasons.length ? '<ul>' + p.reasons.map(reason => '<li>' + h(reasons[reason] || reasons.INVALID_INPUT) + '</li>').join('') + '</ul>' : '') +
-    '<p>Scenario result only; this is not permission to invest.</p><button class="idle-capital-download" type="button">DOWNLOAD USDC SCENARIO</button></div>';
+    '<p>Scenario result only; this is not permission to invest.</p><button class="idle-capital-download" type="button">DOWNLOAD USDC SCENARIO</button><button class="idle-capital-save-a" type="button">SAVE AS SCENARIO A</button><button class="idle-capital-save-b" type="button">SAVE AS SCENARIO B</button></div>';
 }
 export function reconcileIdleCapitalSource(state, earnData, now = Date.now()) {
   state.sourceIssue = Boolean(state.source && earnSourceIssues(state.source, earnData, { now }).length);
@@ -123,6 +126,7 @@ export function idleCapitalHtml(state, earnData = null) {
     '<button type="submit">EVALUATE USDC SCENARIO</button></form>' +
     '<p class="idle-capital-status" role="status">' + (state.error ? 'Check all amounts, times and rate assumptions.' : '') + '</p>' +
     '<div class="idle-capital-output" aria-live="polite">' + idleCapitalResultHtml(state) + '</div>' +
+    '<div class="idle-capital-comparison-output">' + idleCapitalComparisonHtml(state.saved) + '</div>' +
     '<p>Use a simple annual rate assumption, not a promised APY. Include gas, execution fees and failed attempts in cost estimates.</p>' +
     '<p>No deposit, approval or signature. Capital losses and changing rates are not modeled.</p></section>';
 }
@@ -134,6 +138,7 @@ export function mountIdleCapital(root, state, { now = Date.now, download = () =>
   const output = panel.querySelector('.idle-capital-output');
   const status = panel.querySelector('.idle-capital-status');
   const sourceSelect = panel.querySelector('.idle-capital-vault');
+  function renderComparison() { panel.querySelector('.idle-capital-comparison-output').innerHTML = idleCapitalComparisonHtml(state.saved); }
   function renderSource() {
     panel.querySelector('.idle-capital-source-card').innerHTML = sourceDetailsHtml(state);
     const liquidityInput = form.elements.namedItem('vaultAvailableLiquidityUsdc');
@@ -187,6 +192,7 @@ export function mountIdleCapital(root, state, { now = Date.now, download = () =>
     form.elements.namedItem('withdrawalTermsReviewed').checked = false; form.elements.namedItem('paused').checked = false;
     invalidate('Figures cleared.');
     sourceSelect.value = ''; renderSource();
+    renderComparison();
   });
   form.addEventListener('submit', event => {
     event.preventDefault(); read(); invalidate('');
@@ -203,6 +209,16 @@ export function mountIdleCapital(root, state, { now = Date.now, download = () =>
     }
   });
   panel.addEventListener('click', event => {
+    for (const key of ['a', 'b']) if (event.target.closest('.idle-capital-save-' + key) && state.receipt) {
+      try {
+        state.saved[key] = captureIdleCapitalScenario(state.receipt);
+        state.saved.error = false; state.saved.receipt = null;
+        if (state.saved.a && state.saved.b) state.saved.receipt = createIdleCapitalComparisonReceipt(state.saved.a, state.saved.b, { generatedAt: new Date(now()).toISOString() });
+      } catch { state.saved.error = true; state.saved.receipt = null; }
+      renderComparison();
+    }
+    if (event.target.closest('.idle-comparison-clear')) { state.saved = { a: null, b: null, receipt: null, error: false }; renderComparison(); }
+    if (event.target.closest('.idle-comparison-download') && state.saved.receipt) download(state.saved.receipt);
     if (event.target.closest('.idle-capital-manual')) {
       state.source = null; state.sourceIssue = false; state.pendingVault = ''; sourceSelect.value = '';
       invalidate('Exit liquidity is currently a manual assumption.'); renderSource();

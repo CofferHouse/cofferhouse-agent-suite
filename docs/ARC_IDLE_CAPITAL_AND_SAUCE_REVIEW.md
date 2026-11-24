@@ -197,3 +197,47 @@ timestamps, missing provider times, changed sources, overridden amounts,
 non-USDC/inactive/duplicate identities, rate independence, receipt tampering and
 refresh invalidation. Browser acceptance also covers import, source refresh and
 failure, explicit manual detachment and source controls in all five languages.
+
+## Session scenario comparison (2026-11-24)
+
+A calculated scenario can be saved into slot A or B without persisting it to
+browser storage. Each slot is a detached copy of the original sealed scenario
+receipt, including input provenance and any Earn source metadata. Subsequent form
+edits, synthetic examples or Earn refreshes invalidate the current calculation
+but do not rewrite the saved snapshots. Clearing saved scenarios preserves the
+current calculation; clearing all form figures removes both saved slots as well.
+Reloading the page loses all saved session scenarios.
+
+The comparison displays wallet cash, protected cash, available cash, modeled and
+reviewable amounts, the entered liquidity and cap, combined entry/exit costs and
+gross/net scenarios. Each slot also shows its captured timestamp, holding window,
+earning hours, entered simple rate and captured decision. Differences use exact
+integer micro-units and mean B minus A, including negative values. No winner,
+recommendation, new return forecast or allocation is produced.
+
+Differences are hidden if initial wallet amounts or holding windows differ, a
+scenario is incomplete, or both slots contain the same receipt. The original
+values remain visible. A blocked scenario keeps its captured KEEP_LIQUID label
+and zero reviewable allocation even if its gross modeled amount is positive.
+Different rates, reserve policies, withdrawal timing or source snapshots may
+explain differences. Matching arithmetic does not establish comparable risk.
+
+Before capture/comparison, schema and integrity checks run and numeric outputs
+are recomputed from the stored assumptions at the capture timestamp. Altered or
+resealed inconsistent arithmetic, executable artifacts and invalid reviewable
+amounts are rejected. This is consistency checking, not authentication of the
+entered figures, source metadata or the original operator. No receipt-file import
+or arbitrary historical data ingestion is enabled in this release.
+
+The new registered `cofferhouse.treasury.idle-comparison-receipt.v1` artifact seals
+both complete source receipts and the comparison. Its creation timestamp is not
+a new market observation: source timestamps remain unchanged, and captured
+decisions do not establish current eligibility. Source metadata stays historical
+even after the current Earn report changes. The comparison and controls support
+EN/zh/ja/hi/es, including a stacked table layout on narrow screens.
+
+Tests cover exact signed deltas, large balances, mismatched scopes, incomplete
+values, duplicate snapshots, detached copies, preserved source timestamps,
+receipt tampering, resealed arithmetic inconsistencies and translations. Browser
+acceptance checks exercise slot saving, snapshot preservation on edits, blocked
+costs, comparison downloads, horizon mismatch, clearing and mobile layout.
