@@ -1,4 +1,5 @@
 import { escapeHtml as h } from '../shared/index.js';
+import { idleSourceReviewHtml } from './idle-source-review-view.js';
 
 const labels = { wallet: 'Wallet USDC', protected: 'Protected cash', available: 'Cash after commitments', modeled: 'Modeled allocation before checks', reviewable: 'Amount available for manual review', liquidity: 'Exit liquidity used in scenario', cap: 'Maximum scenario allocation (USDC)', costs: 'Entered entry and exit costs', gross: 'Gross rate scenario', net: 'Net scenario after entered costs' };
 const issueLabels = { INCOMPLETE_SCENARIO: 'One scenario is incomplete; differences are hidden.', DIFFERENT_WALLET_BALANCE: 'Initial wallet balances differ; differences are hidden.', DIFFERENT_HOLDING_WINDOW: 'The times until funds are needed differ; differences are hidden.', SAME_SNAPSHOT: 'Both slots contain the same snapshot; differences are hidden.' };
@@ -27,5 +28,5 @@ export function idleCapitalComparisonHtml(saved) {
       (comparison.inputsDiffer ? '<p>The scenarios use different data origins. Review both sources.</p>' : '') +
       '<table class="idle-comparison-table"><caption>USDC amounts; differences are B minus A.</caption><thead><tr><th scope="col">Measure</th><th scope="col">Scenario A</th><th scope="col">Scenario B</th><th scope="col">B minus A</th></tr></thead><tbody>' + comparison.rows.map(row => '<tr><th scope="row">' + h(labels[row.id]) + '</th>' + [['Scenario A', row.aUsdc], ['Scenario B', row.bUsdc], ['B minus A', row.deltaBMinusAUsdc]].map(([label, value]) => '<td><span class="idle-comparison-cell-label">' + label + '</span><span data-no-translate>' + h(value ?? '—') + '</span></td>').join('') + '</tr>').join('') + '</tbody></table>' +
       '<button type="button" class="idle-comparison-download">DOWNLOAD SCENARIO COMPARISON</button>' : '') +
-    (saved.a || saved.b ? '<button type="button" class="idle-comparison-clear">CLEAR SAVED SCENARIOS</button>' : '') + '</section>';
+    (saved.a || saved.b ? '<button type="button" class="idle-comparison-clear">CLEAR SAVED SCENARIOS</button>' : '') + idleSourceReviewHtml(saved) + '</section>';
 }

@@ -241,3 +241,43 @@ values, duplicate snapshots, detached copies, preserved source timestamps,
 receipt tampering, resealed arithmetic inconsistencies and translations. Browser
 acceptance checks exercise slot saving, snapshot preservation on edits, blocked
 costs, comparison downloads, horizon mismatch, clearing and mobile layout.
+
+## Dated review of saved Earn sources (2026-11-25)
+
+Saved scenarios can now be reviewed against an explicitly refreshed Earn response.
+This is an on-demand read, not recurring monitoring or notification delivery.
+Manual scenarios without an Earn source receive a NO_EARN_SOURCE result and do
+not trigger an unnecessary network request. Cash figures are not sent to Earn.
+
+A review retains the original scenario receipt and compares the captured vault
+with the latest returned Arc/USDC identity. It reports exact signed liquidity
+changes, old/new reported APY, status/protocol changes and whether the saved
+reviewable amount exceeds its entered liquidity-share bound at the new reported
+liquidity. It never changes the entered simple rate, recomputes profit or proposes
+new deposits, withdrawals or allocations. Zero reported liquidity is displayed as
+zero; missing liquidity/APY remain unknown, without invented zero values.
+
+An explicit recent response timestamp is required. A response older than the
+captured source is rejected for current comparison. Provider liquidity timestamps
+are checked if present; an absent provider timestamp is not fabricated. Duplicate
+identities, wrong assets/chains, stale/future timestamps and missing responses
+remain unavailable/partial. A vault missing from the returned discovery page is
+not declared closed: the endpoint may return only a page of opportunities.
+Recent/cached responses and matching numbers do not establish underlying freshness,
+withdrawal availability or current investment eligibility.
+
+The registered `cofferhouse.treasury.idle-source-review-receipt.v1` artifact seals
+the original saved receipts and dated review observations. Comparison/scenario
+receipts stay intact; review creation time is separate from their original source
+timestamps. The interface labels the review as dated, including when it is
+unchanged or incomplete. Subsequent API changes do not silently rewrite an earlier
+review. Saving/replacing a slot invalidates its previous review. Clearing slots or
+form figures removes it. In-flight checks are guarded by saved-state identity and
+a generation counter so clearing or replacing snapshots cannot resurrect results.
+
+The source controls, findings and download labels support EN/zh/ja/hi/es. Tests
+cover changed/unchanged, inactive and zero-liquidity observations, missing metrics,
+stale/future/older responses, paginated omission, duplicate/unsupported identities,
+manual scenarios, preserved rates/timestamps, integrity and translations. Browser
+acceptance additionally covers refresh failure, downloads, liquidity-share drift,
+mobile layout and clearing saved scenarios while a refresh is in flight.
