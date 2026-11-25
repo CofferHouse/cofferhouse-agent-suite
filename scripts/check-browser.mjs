@@ -84,6 +84,7 @@ try {
     let failGateway = false;
     let failExposure = false;
     let failEarn = false;
+    let earnLiquidity = '1000000', earnApy = 0.05, earnStatus = 'active', holdEarn = null, earnStarted = null;
     let solanaConfigured = false;
     let failMeteora = false;
     let failMeteoraPosition = false;
@@ -144,8 +145,9 @@ try {
         status = failExposure ? 502 : 200;
         body = failExposure ? { ok: false } : { ok: true, observation: exposure };
       } else if (url.pathname === "/api/app-kits/earn") {
+        if (holdEarn) { earnStarted(); await holdEarn; }
         status = failEarn ? 502 : 200;
-        body = failEarn ? { ok: false } : { observedAt: new Date().toISOString(), vaults: [{ vaultAddress: vault, protocol: "MORPHO", name: "Browser fixture vault", asset: "USDC", currentApy: 0.05, liquidity: "1000000", totalDeposits: "2000000", status: "active" }] };
+        body = failEarn ? { ok: false } : { observedAt: new Date().toISOString(), vaults: [{ vaultAddress: vault, protocol: "MORPHO", name: "Browser fixture vault", asset: "USDC", currentApy: earnApy, liquidity: earnLiquidity, totalDeposits: "2000000", status: earnStatus }] };
       } else if (url.pathname === "/api/agent/status") {
         body = { configured: false, capabilities: {}, history: [] };
       } else {
@@ -495,11 +497,28 @@ try {
     assert.equal(earnIdleReceipt.scenario.marketSource.amountUsdc, '1000000');
     assert.equal(earnIdleReceipt.scenario.marketSource.reportedApyPct, 5);
     assert.equal(earnIdleReceipt.scenario.assumptions.scenarioAnnualSimpleRateBps, 300);
+    await idle.locator('.idle-capital-save-a').click();
+    earnLiquidity = '30000'; earnApy = 0.02; earnStatus = 'paused';
+    await idle.locator('.idle-source-review-run').click();
+    await idle.locator('.idle-source-review-download').waitFor();
+    const sourceReviewDownload = page.waitForEvent('download');
+    await idle.locator('.idle-source-review-download').click();
+    const sourceReviewReceipt = JSON.parse(await readFile(await (await sourceReviewDownload).path(), 'utf8'));
+    assert.equal(verifyReceiptDocument(sourceReviewReceipt).valid, true);
+    assert.equal(sourceReviewReceipt.snapshots.a.receiptId, earnIdleReceipt.receiptId);
+    assert.equal(sourceReviewReceipt.snapshots.a.scenario.assumptions.scenarioAnnualSimpleRateBps, 300);
+    assert.equal(sourceReviewReceipt.reviews[0].status, 'CHANGED');
+    assert.equal(sourceReviewReceipt.reviews[0].deltaLiquidityUsdc, '-970000.000000');
+    assert.ok(sourceReviewReceipt.reviews[0].issues.includes('VAULT_NOT_ACTIVE'));
+    assert.ok(sourceReviewReceipt.reviews[0].issues.includes('CAPTURED_SIZE_EXCEEDS_SHARE'));
+    assert.equal(await idle.locator('.idle-capital-download').count(), 0);
+    earnLiquidity = '1000000'; earnApy = 0.05; earnStatus = 'active';
     for (const [language, locale] of [['zh','zh-CN'],['ja','ja'],['hi','hi'],['es','es']]) {
       await page.locator('#holder-language').selectOption(language);
       await page.waitForFunction(locale => document.documentElement.lang === locale, locale);
       assert.notEqual(await idle.locator('.idle-capital-refresh-earn').innerText(), 'REFRESH EARN SOURCES');
       assert.notEqual(await idle.locator('.idle-capital-manual').innerText(), 'USE MANUAL LIQUIDITY');
+      assert.notEqual(await idle.locator('.idle-source-review-download').innerText(), 'DOWNLOAD EARN SOURCE REVIEW');
       assert.match(await idle.locator('.idle-capital-source-card').innerText(), /1000000 USDC/);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
     }
@@ -519,6 +538,9 @@ try {
     await idle.locator('.idle-capital-refresh-earn').click();
     await page.waitForFunction(() => document.querySelector('.earn-kit-panel.error') !== null);
     assert.equal(await idle.locator('.idle-capital-download').count(), 0);
+    await idle.locator('.idle-source-review-run').click();
+    await idle.locator('.idle-source-review-download').waitFor();
+    assert.match(await idle.locator('.idle-source-review').innerText(), /Current Earn evidence is unavailable/);
     await idle.locator('button[type="submit"]').click();
     assert.match(await idle.locator('.idle-capital-result').innerText(), /Earn source is unavailable/);
     await idle.locator('.idle-capital-manual').click();
@@ -527,6 +549,16 @@ try {
     failEarn = false;
     await idle.locator('.idle-capital-refresh-earn').click();
     await idle.locator('.idle-capital-import:not([disabled])').waitFor();
+    let releaseEarn;
+    holdEarn = new Promise(resolve => { releaseEarn = resolve; });
+    const earnReviewStarted = new Promise(resolve => { earnStarted = resolve; });
+    await idle.locator('.idle-source-review-run').click();
+    await earnReviewStarted;
+    await idle.locator('.idle-comparison-clear').click();
+    releaseEarn(); holdEarn = null;
+    await idle.locator('.idle-capital-import:not([disabled])').waitFor();
+    assert.equal(await idle.locator('.idle-source-review-download').count(), 0);
+    assert.equal(await idle.locator('.idle-source-review-run').count(), 0);
     await idle.locator('.idle-capital-clear').click();
 
     const lp=page.locator(".lp-scenario");

@@ -5,6 +5,7 @@ import { earnLiquiditySource, earnLiquiditySources, earnSourceIssues, planIdleUs
 import { captureIdleCapitalScenario } from './idle-capital-comparison.js';
 import { createIdleCapitalComparisonReceipt } from '../evidence/idle-capital-comparison-receipt.js';
 import { idleCapitalComparisonHtml } from './idle-capital-comparison-view.js';
+import { createIdleSourceReviewReceipt } from '../evidence/idle-source-review-receipt.js';
 
 export const idleCapitalFields = Object.freeze([
   { title: 'Cash and commitments', fields: [
@@ -138,7 +139,7 @@ export function mountIdleCapital(root, state, { now = Date.now, download = () =>
   const output = panel.querySelector('.idle-capital-output');
   const status = panel.querySelector('.idle-capital-status');
   const sourceSelect = panel.querySelector('.idle-capital-vault');
-  function renderComparison() { panel.querySelector('.idle-capital-comparison-output').innerHTML = idleCapitalComparisonHtml(state.saved); }
+  function renderComparison() { const target = root.querySelector('.idle-capital-comparison-output'); if (target) target.innerHTML = idleCapitalComparisonHtml(state.saved); }
   function renderSource() {
     panel.querySelector('.idle-capital-source-card').innerHTML = sourceDetailsHtml(state);
     const liquidityInput = form.elements.namedItem('vaultAvailableLiquidityUsdc');
@@ -208,10 +209,11 @@ export function mountIdleCapital(root, state, { now = Date.now, download = () =>
       status.textContent = 'Check all amounts, times and rate assumptions.';
     }
   });
-  panel.addEventListener('click', event => {
+  panel.addEventListener('click', async event => {
     for (const key of ['a', 'b']) if (event.target.closest('.idle-capital-save-' + key) && state.receipt) {
       try {
         state.saved[key] = captureIdleCapitalScenario(state.receipt);
+        state.saved.sourceReview = null; state.saved.reviewMode = 'idle'; state.saved.reviewGeneration = (state.saved.reviewGeneration ?? 0) + 1;
         state.saved.error = false; state.saved.receipt = null;
         if (state.saved.a && state.saved.b) state.saved.receipt = createIdleCapitalComparisonReceipt(state.saved.a, state.saved.b, { generatedAt: new Date(now()).toISOString() });
       } catch { state.saved.error = true; state.saved.receipt = null; }
@@ -219,6 +221,23 @@ export function mountIdleCapital(root, state, { now = Date.now, download = () =>
     }
     if (event.target.closest('.idle-comparison-clear')) { state.saved = { a: null, b: null, receipt: null, error: false }; renderComparison(); }
     if (event.target.closest('.idle-comparison-download') && state.saved.receipt) download(state.saved.receipt);
+    if (event.target.closest('.idle-source-review-run') && state.saved.reviewMode !== 'loading') {
+      const saved = state.saved;
+      const generation = (saved.reviewGeneration ?? 0) + 1;
+      saved.reviewGeneration = generation; saved.reviewMode = 'loading'; saved.sourceReview = null;
+      renderComparison();
+      try {
+        if (saved.a?.scenario.marketSource || saved.b?.scenario.marketSource) await refreshEarn();
+        if (state.saved !== saved || saved.reviewGeneration !== generation) return;
+        saved.sourceReview = createIdleSourceReviewReceipt(saved, getEarnData(), { now: now() });
+        saved.reviewMode = 'ready';
+      } catch {
+        if (state.saved !== saved || saved.reviewGeneration !== generation) return;
+        saved.reviewMode = 'error'; saved.sourceReview = null;
+      }
+      renderComparison();
+    }
+    if (event.target.closest('.idle-source-review-download') && state.saved.sourceReview) download(state.saved.sourceReview);
     if (event.target.closest('.idle-capital-manual')) {
       state.source = null; state.sourceIssue = false; state.pendingVault = ''; sourceSelect.value = '';
       invalidate('Exit liquidity is currently a manual assumption.'); renderSource();

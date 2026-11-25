@@ -459,3 +459,7 @@ html:is([lang='zh-CN'],[lang='ja'],[lang='hi']) :is(h1,h2,h3,h4,.holder-language
   .idle-comparison-table td { min-width: 0; border-bottom: 0; padding: 9px 5px; }
   .idle-comparison-cell-label { display: block; font-weight: 700; margin-bottom: 5px; }
 }
+.idle-source-review { margin-top: 20px; padding-top: 14px; border-top: 1px solid #8c9ab0; }
+.idle-source-review article { margin-block: 14px; padding: 12px; border: 1px solid #9baac0; min-width: 0; }
+.idle-source-review dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+.idle-source-review dd { margin: 5px 0 0; overflow-wrap: anywhere; }
