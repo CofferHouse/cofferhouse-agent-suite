@@ -85,6 +85,7 @@ try {
     let failExposure = false;
     let failEarn = false;
     let earnLiquidity = '1000000', earnApy = 0.05, earnStatus = 'active', holdEarn = null, earnStarted = null;
+    let earnRequestCount = 0;
     let solanaConfigured = false;
     let failMeteora = false;
     let failMeteoraPosition = false;
@@ -145,6 +146,7 @@ try {
         status = failExposure ? 502 : 200;
         body = failExposure ? { ok: false } : { ok: true, observation: exposure };
       } else if (url.pathname === "/api/app-kits/earn") {
+        earnRequestCount += 1;
         if (holdEarn) { earnStarted(); await holdEarn; }
         status = failEarn ? 502 : 200;
         body = failEarn ? { ok: false } : { observedAt: new Date().toISOString(), vaults: [{ vaultAddress: vault, protocol: "MORPHO", name: "Browser fixture vault", asset: "USDC", currentApy: earnApy, liquidity: earnLiquidity, totalDeposits: "2000000", status: earnStatus }] };
@@ -476,6 +478,55 @@ try {
     assert.equal(await idle.locator('.idle-capital-download').count(), 0);
     assert.equal(await idle.locator('input[name="withdrawalTermsReviewed"]').isChecked(), false);
     assert.equal(await idle.locator('.idle-comparison-clear').count(), 0);
+
+    // Original receipt files restore saved history after a page reload, never the live form.
+    await page.reload();
+    await page.locator('.suite-tab[data-view="strategy"]').click();
+    await idle.locator('.idle-capital-import:not([disabled])').waitFor();
+    assert.equal(await idle.locator('input[name="walletUsdc"]').inputValue(), '');
+    const earnReadsBeforeRestore = earnRequestCount;
+    await idle.locator('.idle-scenario-import[data-slot="a"]').setInputFiles({name:'scenario-a.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(idleReceipt))});
+    await page.waitForFunction(() => document.querySelector('.idle-scenario-import-status[data-slot="a"]')?.textContent.includes('Historical scenario loaded'));
+    await idle.locator('.idle-scenario-import[data-slot="b"]').setInputFiles({name:'scenario-b.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(blockedReceipt))});
+    await idle.locator('.idle-comparison-download').waitFor();
+    const restoredPairDownload = page.waitForEvent('download');
+    await idle.locator('.idle-comparison-download').click();
+    const restoredPair = JSON.parse(await readFile(await (await restoredPairDownload).path(),'utf8'));
+    assert.equal(restoredPair.snapshots.a.receiptId,idleReceipt.receiptId);
+    assert.equal(restoredPair.snapshots.a.generatedAt,idleReceipt.generatedAt);
+    assert.equal(restoredPair.snapshots.b.receiptId,blockedReceipt.receiptId);
+    assert.equal(verifyReceiptDocument(restoredPair).valid,true);
+    assert.equal(await idle.locator('input[name="walletUsdc"]').inputValue(),'');
+    assert.equal(earnRequestCount,earnReadsBeforeRestore);
+    const badArchive=structuredClone(idleReceipt);badArchive.scenario.protectedUsdc='0';
+    for(const payload of [Buffer.from(JSON.stringify(badArchive)),Buffer.from(JSON.stringify(restoredPair)),Buffer.alloc(64001,32)]) {
+      await idle.locator('.idle-scenario-import[data-slot="a"]').setInputFiles({name:'invalid.json',mimeType:'application/json',buffer:payload});
+      await page.waitForFunction(() => document.querySelector('.idle-scenario-import-status[data-slot="a"]')?.textContent.includes('Scenario file rejected'));
+      assert.equal(await idle.locator('.idle-comparison-slots code').first().textContent(),idleReceipt.receiptId);
+      assert.equal(await idle.locator('.idle-comparison-download').count(),1);
+    }
+    for(const [language,locale] of [['zh','zh-CN'],['ja','ja'],['hi','hi'],['es','es']]) {
+      await page.locator('#holder-language').selectOption(language);
+      await page.waitForFunction(locale=>document.documentElement.lang===locale,locale);
+      assert.notEqual(await idle.locator('.idle-scenario-imports label').first().innerText(),'OPEN SCENARIO A');
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);
+    }
+    await page.locator('#holder-language').selectOption('en');
+    await page.waitForFunction(()=>document.documentElement.lang==='en');
+    await page.evaluate(()=>{
+      window.__qaOriginalScenarioRead=File.prototype.arrayBuffer;
+      File.prototype.arrayBuffer=function(){
+        if(this.name==='delayed-scenario.json') return new Promise(resolve=>{window.__qaReleaseScenarioRead=()=>window.__qaOriginalScenarioRead.call(this).then(resolve);});
+        return window.__qaOriginalScenarioRead.call(this);
+      };
+    });
+    await idle.locator('.idle-scenario-import[data-slot="a"]').setInputFiles({name:'delayed-scenario.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(idleReceipt))});
+    await page.waitForFunction(()=>typeof window.__qaReleaseScenarioRead==='function');
+    await idle.locator('.idle-capital-clear').click();
+    await page.evaluate(async()=>{await window.__qaReleaseScenarioRead();File.prototype.arrayBuffer=window.__qaOriginalScenarioRead;await new Promise(requestAnimationFrame);});
+    assert.equal(await idle.locator('.idle-comparison-clear').count(),0);
+    assert.equal(await idle.locator('.idle-comparison-download').count(),0);
+    assert.equal(await idle.locator('input[name="walletUsdc"]').inputValue(),'');
 
     // Imported liquidity is source-bound; cash and the simple rate remain user assumptions.
     await idle.locator('.idle-capital-example').click();
