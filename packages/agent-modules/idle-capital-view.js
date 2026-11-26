@@ -6,6 +6,7 @@ import { captureIdleCapitalScenario } from './idle-capital-comparison.js';
 import { createIdleCapitalComparisonReceipt } from '../evidence/idle-capital-comparison-receipt.js';
 import { idleCapitalComparisonHtml } from './idle-capital-comparison-view.js';
 import { createIdleSourceReviewReceipt } from '../evidence/idle-source-review-receipt.js';
+import { readIdleCapitalScenarioFile } from './idle-scenario-import.js';
 
 export const idleCapitalFields = Object.freeze([
   { title: 'Cash and commitments', fields: [
@@ -139,6 +140,15 @@ export function mountIdleCapital(root, state, { now = Date.now, download = () =>
   const output = panel.querySelector('.idle-capital-output');
   const status = panel.querySelector('.idle-capital-status');
   const sourceSelect = panel.querySelector('.idle-capital-vault');
+  function saveSlot(key, receipt) {
+    const snapshot = captureIdleCapitalScenario(receipt);
+    const a = key === 'a' ? snapshot : state.saved.a, b = key === 'b' ? snapshot : state.saved.b;
+    const comparison = a && b ? createIdleCapitalComparisonReceipt(a, b, { generatedAt: new Date(now()).toISOString() }) : null;
+    state.saved[key] = snapshot; state.saved.receipt = comparison; state.saved.error = false;
+    state.saved.sourceReview = null; state.saved.reviewMode = 'idle'; state.saved.reviewGeneration = (state.saved.reviewGeneration ?? 0) + 1;
+    state.saved.importTokens ??= {}; state.saved.importStatus ??= {};
+    state.saved.importTokens[key] = (state.saved.importTokens[key] ?? 0) + 1; state.saved.importStatus[key] = '';
+  }
   function renderComparison() { const target = root.querySelector('.idle-capital-comparison-output'); if (target) target.innerHTML = idleCapitalComparisonHtml(state.saved); }
   function renderSource() {
     panel.querySelector('.idle-capital-source-card').innerHTML = sourceDetailsHtml(state);
@@ -148,6 +158,24 @@ export function mountIdleCapital(root, state, { now = Date.now, download = () =>
     panel.querySelector('.idle-capital-input-origin').textContent = state.source ? 'Cash, costs, timing and simple rate remain your estimates; the selected liquidity is a provider report.' : 'Inputs are your estimates; balances, exit liquidity and withdrawal timing are not verified.';
   }
   renderSource();
+  panel.addEventListener('change', async event => {
+    if (!event.target.matches('.idle-scenario-import')) return;
+    const key = event.target.dataset.slot, file = event.target.files?.[0];
+    if (!['a','b'].includes(key) || !file) return;
+    const saved = state.saved;
+    saved.importTokens ??= {}; saved.importStatus ??= {};
+    const token = (saved.importTokens[key] ?? 0) + 1;
+    saved.importTokens[key] = token; saved.importStatus[key] = 'loading'; renderComparison();
+    try {
+      const receipt = await readIdleCapitalScenarioFile(file, { now: now() });
+      if (state.saved !== saved || saved.importTokens[key] !== token) return;
+      saveSlot(key, receipt); saved.importStatus[key] = 'loaded';
+    } catch {
+      if (state.saved !== saved || saved.importTokens[key] !== token) return;
+      saved.importStatus[key] = 'error';
+    }
+    renderComparison();
+  });
   function read() {
     for (const name of [...names, 'observedAt']) state.values[name] = form.elements.namedItem(name).value.trim();
     state.withdrawalTermsReviewed = form.elements.namedItem('withdrawalTermsReviewed').checked;
@@ -212,10 +240,7 @@ export function mountIdleCapital(root, state, { now = Date.now, download = () =>
   panel.addEventListener('click', async event => {
     for (const key of ['a', 'b']) if (event.target.closest('.idle-capital-save-' + key) && state.receipt) {
       try {
-        state.saved[key] = captureIdleCapitalScenario(state.receipt);
-        state.saved.sourceReview = null; state.saved.reviewMode = 'idle'; state.saved.reviewGeneration = (state.saved.reviewGeneration ?? 0) + 1;
-        state.saved.error = false; state.saved.receipt = null;
-        if (state.saved.a && state.saved.b) state.saved.receipt = createIdleCapitalComparisonReceipt(state.saved.a, state.saved.b, { generatedAt: new Date(now()).toISOString() });
+        saveSlot(key, state.receipt);
       } catch { state.saved.error = true; state.saved.receipt = null; }
       renderComparison();
     }

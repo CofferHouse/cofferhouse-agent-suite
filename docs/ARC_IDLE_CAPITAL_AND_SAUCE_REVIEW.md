@@ -281,3 +281,43 @@ stale/future/older responses, paginated omission, duplicate/unsupported identiti
 manual scenarios, preserved rates/timestamps, integrity and translations. Browser
 acceptance additionally covers refresh failure, downloads, liquidity-share drift,
 mobile layout and clearing saved scenarios while a refresh is in flight.
+
+## Reopening downloaded scenario files (2026-11-26)
+
+Original `cofferhouse.treasury.idle-capital-receipt.v1` JSON downloads can now be
+opened into saved slot A or B after closing/reloading the page. This is a local
+file read, not an upload. It does not fill the active form, connect a wallet,
+refresh Earn or reinstate spending authority. Comparison/review bundles and other
+receipt schemas are deliberately not accepted by these single-scenario controls.
+
+The reader enforces a 64,000-byte UTF-8 limit before parsing and rejects malformed
+UTF-8, excessive nesting/node/array counts, prototype-related keys, nonfinite
+numbers and unexpected root fields. It verifies the receipt's integrity and
+recomputes numeric outputs using the original capture timestamp. Provenance must
+match the scenario mode; unverified-data and disabled-execution boundaries remain
+mandatory. Earn source identity, decimal amount, timestamps, source-check status
+and metadata types are checked separately. Future-dated captures beyond a short
+clock tolerance are rejected. The exported checksum is public consistency data:
+anyone can create a checksum, so it is not authentication of figures or author.
+
+Past captures are allowed as historical records. Their IDs, original capture and
+provider timestamps, entered assumptions and captured decisions stay unchanged.
+No old source becomes fresh merely by opening a file. Any current source review
+still requires the explicit existing Earn review action. Rendering escapes file
+metadata as text; source fields are not executable code or fetched URLs.
+
+An invalid file leaves its saved slot, comparison and prior source review intact.
+Successful replacement invalidates the old source review and regenerates the
+comparison when both slots exist. Reads use per-slot generation tokens and saved
+state identity, so late file reads cannot overwrite a newer selection or revive
+cleared scenarios. Independent A/B reads do not cancel one another. Clearing form
+figures or saved slots also cancels pending restoration. Imported records remain
+in memory until the page closes; nothing is written automatically to browser
+storage. All file labels and feedback support EN/zh/ja/hi/es.
+
+Tests cover historical fidelity, detached copies, UTF-8/BOM, byte limits, malformed
+and excessive structures, unsupported archives, tampering/resealed bad math,
+executable/verified claims, strict source metadata and escaped names. Browser
+acceptance covers restoration after reload, comparison export, no Earn requests
+or form autofill during import, rejection without slot loss, translated controls,
+mobile layout and clearing while a file read is in flight.

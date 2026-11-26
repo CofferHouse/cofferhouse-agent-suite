@@ -1,6 +1,13 @@
 // Columns: English, Simplified Chinese, Japanese, Hindi, Spanish.
 // Proper names, contract addresses, signed messages and exported evidence retain their original values.
 export const holderTranslations = [
+["Open an original USDC scenario JSON file, up to 64 kB. It is checked locally and loaded only as saved history.","打开原始 USDC 情景 JSON 文件，最大 64 kB。文件仅在本地检查，并作为历史记录载入。","元のUSDCシナリオJSONファイル（64 kBまで）を開きます。端末内で検査し、保存履歴としてのみ読み込みます。","मूल USDC परिदृश्य JSON फ़ाइल खोलें, अधिकतम 64 kB। जाँच स्थानीय है और केवल इतिहास के रूप में लोड होती है।","Abre un archivo JSON original de escenario USDC, de hasta 64 kB. Se revisa localmente y se carga solo como historial."],
+["OPEN SCENARIO A","打开情景 A","シナリオAを開く","परिदृश्य A खोलें","ABRIR ESCENARIO A"],
+["OPEN SCENARIO B","打开情景 B","シナリオBを開く","परिदृश्य B खोलें","ABRIR ESCENARIO B"],
+["Checking scenario file…","正在检查情景文件…","シナリオファイルを確認中…","परिदृश्य फ़ाइल की जाँच हो रही है…","Revisando archivo de escenario…"],
+["Historical scenario loaded. Its original dates remain unchanged.","历史情景已载入，原始日期保持不变。","過去のシナリオを読み込みました。元の日時は変更していません。","ऐतिहासिक परिदृश्य लोड हुआ। मूल तिथियाँ नहीं बदलीं।","Se cargó el escenario histórico. Sus fechas originales no cambiaron."],
+["Scenario file rejected. The saved slot is unchanged.","情景文件已拒绝，已保存内容保持不变。","シナリオファイルを拒否しました。保存済みの内容は変更していません。","परिदृश्य फ़ाइल अस्वीकार हुई। सहेजा स्लॉट नहीं बदला।","Se rechazó el archivo. El escenario guardado no cambió."],
+["Integrity checks do not authenticate the figures or their author. Comparison and review files are not accepted here.","完整性检查不验证数据或作者身份。此处不接受比较或检查报告文件。","整合性検査は数値や作成者を認証しません。比較や確認レポートのファイルはここでは読み込めません。","अखंडता जाँच आँकड़ों या लेखक को प्रमाणित नहीं करती। यहाँ तुलना और समीक्षा फ़ाइलें स्वीकार नहीं हैं।","La verificación de integridad no autentica los datos ni a su autor. Aquí no se aceptan archivos de comparación ni de revisión."],
 ["Review saved sources against Earn","对照 Earn 检查已保存的数据源","保存した情報源をEarnで確認","सहेजे स्रोतों की Earn से जाँच","Revisar fuentes guardadas con Earn"],
 ["A dated check only. Saved scenarios stay unchanged; this is not live monitoring.","仅为带时间戳的检查。已保存情景保持不变；并非实时监控。","日時を記録した確認です。保存シナリオは変更せず、常時監視も行いません。","केवल समय दर्ज जाँच। सहेजे परिदृश्य नहीं बदलते; यह लाइव निगरानी नहीं है।","Es una revisión con fecha. Los escenarios guardados no cambian; no es monitoreo en vivo."],
 ["Checking saved Earn sources…","正在检查已保存的 Earn 数据源…","保存したEarn情報源を確認中…","सहेजे Earn स्रोत जाँचे जा रहे हैं…","Revisando fuentes Earn guardadas…"],

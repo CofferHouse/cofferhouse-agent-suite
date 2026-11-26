@@ -13,7 +13,7 @@ test('USDC form begins blank and cannot imply live balances or ready approval', 
   assert.equal(state.withdrawalTermsReviewed, false); assert.equal(state.result, null);
   const html = idleCapitalHtml(state);
   assert.match(html, /balances, exit liquidity and withdrawal timing are not verified/);
-  assert.ok(!html.includes('idle-capital-download')); assert.ok(!html.includes(' checked'));
+  assert.ok(!html.includes('idle-capital-download')); assert.ok(!/<input\b[^>]*\schecked(?:\s|=|>)/.test(html));
   assert.match(html, /name="walletUsdc"/); assert.match(html, /name="observedAt"/);
 });
 test('percent conversion preserves basis points without floating point or empty-number coercion', () => {
@@ -57,3 +57,4 @@ test('form labels and decision text translate in every supported non-English lan
   for (const lang of ['zh','ja','hi','es']) for (const label of labels) assert.notEqual(translateHolderText(label, lang), label, lang + ': ' + label);
   assert.throws(() => createIdleCapitalReceipt({ schema: 'unrelated' }));
 });
+
