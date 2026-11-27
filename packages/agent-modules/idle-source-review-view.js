@@ -19,5 +19,5 @@ export function idleSourceReviewHtml(saved) {
       '<div><dt>New reported APY (%)</dt><dd data-no-translate>' + value(report.current?.reportedApyPct) + '</dd></div>' +
       '<div><dt>Earn response timestamp (UTC)</dt><dd data-no-translate>' + value(report.current?.retrievedAt) + '</dd></div></dl>' +
       (report.issues.length ? '<ul>' + report.issues.map(issue => '<li>' + h(issues[issue]) + '</li>').join('') + '</ul>' : '') + '</article>').join('') +
-      '<p>Underlying data freshness and withdrawals remain unverified. A response may be cached.</p><button class="idle-source-review-download" type="button">DOWNLOAD EARN SOURCE REVIEW</button>' : '') + '</section>';
+      '<p>Underlying data freshness and withdrawals remain unverified. A response may be cached.</p><button class="idle-source-review-download" type="button">DOWNLOAD EARN SOURCE REVIEW</button><button class="idle-source-review-open-guardian" type="button">VIEW GUARDIAN SIGNALS</button>' : '') + '</section>';
 }

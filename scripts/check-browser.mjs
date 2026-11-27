@@ -562,6 +562,33 @@ try {
     assert.equal(sourceReviewReceipt.reviews[0].deltaLiquidityUsdc, '-970000.000000');
     assert.ok(sourceReviewReceipt.reviews[0].issues.includes('VAULT_NOT_ACTIVE'));
     assert.ok(sourceReviewReceipt.reviews[0].issues.includes('CAPTURED_SIZE_EXCEEDS_SHARE'));
+    await idle.locator('.idle-source-review-open-guardian').click();
+    const earnGuardian = page.locator('.guardian-earn-panel');
+    await earnGuardian.locator('.guardian-earn-download').waitFor();
+    assert.match(await earnGuardian.locator('.guardian-earn-target h4').first().innerText(), /Priority: high/);
+    const signalsDownload = page.waitForEvent('download');
+    await earnGuardian.locator('.guardian-earn-download').click();
+    const earnSignals = JSON.parse(await readFile(await (await signalsDownload).path(), 'utf8'));
+    assert.equal(verifyReceiptDocument(earnSignals).valid,true);
+    assert.equal(earnSignals.signals.sourceReviewReceiptId,sourceReviewReceipt.receiptId);
+    assert.equal(earnSignals.signals.liveWatchRegistered,false);
+    assert.equal(earnSignals.signals.delivery.sent,false);
+    assert.deepEqual(earnSignals.signals.execution,{prepared:false,signed:false,submitted:false});
+    await earnGuardian.locator('input[name="liquidityDropPct"]').fill('90.25');
+    assert.equal(await earnGuardian.locator('.guardian-earn-download').count(),0);
+    await earnGuardian.locator('button[type="submit"]').click();
+    await earnGuardian.locator('.guardian-earn-download').waitFor();
+    for(const [language,locale] of [['zh','zh-CN'],['ja','ja'],['hi','hi'],['es','es']]) {
+      await page.locator('#holder-language').selectOption(language);
+      await page.waitForFunction(locale=>document.documentElement.lang===locale,locale);
+      assert.notEqual(await earnGuardian.locator('h3').innerText(),'Guardian · Earn review attention');
+      assert.notEqual(await earnGuardian.locator('.guardian-earn-download').innerText(),'DOWNLOAD GUARDIAN EARN SIGNALS');
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);
+    }
+    await page.locator('#holder-language').selectOption('en');
+    await page.waitForFunction(()=>document.documentElement.lang==='en');
+    await earnGuardian.locator('.guardian-earn-open-strategy').click();
+
     assert.equal(await idle.locator('.idle-capital-download').count(), 0);
     earnLiquidity = '1000000'; earnApy = 0.05; earnStatus = 'active';
     for (const [language, locale] of [['zh','zh-CN'],['ja','ja'],['hi','hi'],['es','es']]) {
@@ -592,6 +619,11 @@ try {
     await idle.locator('.idle-source-review-run').click();
     await idle.locator('.idle-source-review-download').waitFor();
     assert.match(await idle.locator('.idle-source-review').innerText(), /Current Earn evidence is unavailable/);
+    await idle.locator('.idle-source-review-open-guardian').click();
+    assert.match(await earnGuardian.locator('.guardian-earn-target h4').first().innerText(),/Priority: evidence needed/);
+    assert.ok(!(await earnGuardian.innerText()).includes('Priority: high'));
+    await earnGuardian.locator('.guardian-earn-open-strategy').click();
+
     await idle.locator('button[type="submit"]').click();
     assert.match(await idle.locator('.idle-capital-result').innerText(), /Earn source is unavailable/);
     await idle.locator('.idle-capital-manual').click();

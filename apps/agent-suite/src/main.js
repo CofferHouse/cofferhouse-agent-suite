@@ -1,3 +1,4 @@
+import { createGuardianEarnState, syncGuardianEarn, guardianEarnHtml, mountGuardianEarn } from "../../../packages/agent-modules/guardian-earn-view.js";
 import { createIdleCapitalState, idleCapitalHtml, mountIdleCapital, reconcileIdleCapitalSource } from "../../../packages/agent-modules/idle-capital-view.js";
 import { evaluateLiquidityCashflows } from "../../../packages/agent-modules/liquidity-cashflows.js";
 import { meteoraHistoryHtml, currentHistoryReceipt } from "../../../packages/agent-modules/meteora-history-view.js";
@@ -95,6 +96,7 @@ let meteoraBaselineState = { receipt: null, error: false };
 let meteoraBaselineImport = 0;
 let meteoraPositionState = { mode: "idle", pool: "", user: "", position: "", result: null };
 let idleCapitalState = createIdleCapitalState();
+const guardianEarnState = createGuardianEarnState();
 let lpScenarioState = { assumptions: { ...defaultLiquidityScenario }, result: null, error: false };
 let scoutDiscoveryState = { mode: "idle", chains: [5042, 8453, 1], asset: "", networks: [] };
 let gatewayState = { mode: "idle", observation: null };
@@ -202,6 +204,7 @@ function render() {
   const earnAnalysis = analyzeEarnOpportunities(earnKitState.data?.vaults ?? [], earnOpportunityPreferences);
   const idleEarnData = earnKitState.mode === 'ready' ? earnKitState.data : null;
   reconcileIdleCapitalSource(idleCapitalState, idleEarnData);
+  syncGuardianEarn(guardianEarnState, idleCapitalState.saved.sourceReview);
   const earnReceipt = earnAnalysis.opportunities.length ? createEarnOpportunityReceipt(earnAnalysis) : null;
   const earnStrategyProposal = buildEarnStrategy(earnAnalysis, strategyPreferences);
   const earnStrategyReceipt = createEarnStrategyReceipt(earnStrategyProposal);
@@ -687,6 +690,7 @@ function render() {
           <div class="guardian-comparison"><div><span>BASELINE LIQUIDITY</span><b>${formatMoney(guardianWatch.baseline.liquidityUsd)}</b></div><div><span>CURRENT LIQUIDITY</span><b>${formatMoney(guardianObservation.current?.liquidityUsd)}</b></div><div><span>BASELINE STATUS</span><b>${h(guardianWatch.baseline.status)}</b></div><div><span>CURRENT STATUS</span><b>${h(guardianObservation.current?.status ?? "MISSING")}</b></div></div>
           <div class="guardian-boundary"><b>NO AUTOMATED EXIT</b><span>Guardian can propose attention or stopping research. Any future rebalance, withdrawal or swap must create a new Action Center intent.</span></div>
         </div>`}
+        ${guardianEarnHtml(guardianEarnState, idleCapitalState.saved.sourceReview)}
         <section class="guardian-durable ${durableGuardianActive ? "active" : "idle"}">
           <div><span>GUARDIAN · 24/7 SERVER WATCHLIST</span><b>${durableGuardianRegistrations.length} / 20 ACTIVE</b><small>${h(durableGuardianMessage)}</small></div>
           ${durableGuardianActive && selectedDurableReceipt ? `<div class="guardian-durable-result"><span>SELECTED MARKET · LATEST DECISION</span><b>${h(selectedDurableReceipt.observation.decision.replaceAll("_", " "))}</b><small>${h(new Date(selectedDurableReceipt.generatedAt).toLocaleString())} · ${serverRuntime.guardianHistory.length} stored receipt${serverRuntime.guardianHistory.length === 1 ? "" : "s"}</small></div>` : ""}
@@ -813,7 +817,8 @@ function render() {
 
   mountMembershipRoom();
   mountBotLab();
-  mountIdleCapital(app, idleCapitalState, { download: downloadScoutReceipt, getEarnData: () => earnKitState.mode === 'ready' ? earnKitState.data : null, refreshEarn: loadEarnKitVaults });
+  mountIdleCapital(app, idleCapitalState, { download: downloadScoutReceipt, getEarnData: () => earnKitState.mode === 'ready' ? earnKitState.data : null, refreshEarn: loadEarnKitVaults, openGuardian: () => openSuiteView("guardian") });
+  mountGuardianEarn(app, guardianEarnState, idleCapitalState.saved.sourceReview, { download: downloadScoutReceipt, openStrategy: () => openSuiteView("strategy") });
   document.querySelectorAll(".suite-view").forEach((view) => {
     const isActive = view.classList.contains("is-active");
     view.toggleAttribute("inert", !isActive);

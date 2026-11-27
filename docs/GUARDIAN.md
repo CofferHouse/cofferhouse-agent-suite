@@ -73,3 +73,11 @@ RPC verification or proof of withdrawability. No new automatic action or outboun
 notification is enabled. These network watches are operator-managed in this stage;
 Holder Center registration and notification subscriptions remain subsequent work.
 A compare-and-set prevents a concurrent run from overwriting registration changes.
+
+## Earn scenario review attention
+
+Strategy Lab's saved Earn source review can be opened in Guardian. This is a dated, local research panel independent of the approved-intent baseline and durable server watchlist. It never registers a watch, sends Telegram, prepares a transaction or authorizes an exit.
+
+Default attention thresholds are a 10% relative liquidity decline and a 1 percentage-point decline in reported APY. Both accept decimal strings from 0 to 100 with up to two decimals. Liquidity comparisons use exact USDC units; APY comparisons use millionths of a percentage point. Changes to limits clear the downloadable result until applied. Inactive vaults, protocol changes, zero liquidity or a captured amount exceeding its liquidity-share cap get high priority. Missing or expired evidence requests new evidence rather than implying a loss or a safe investment. Reviews and available provider timestamps must be no more than five minutes old; provider freshness remains unverified.
+
+Each vault appears once, with references to scenarios A and B and deduplicated findings. Original scenarios remain unchanged. The sealed `cofferhouse.guardian.earn-receipt.v1` artifact retains the source review, limits, evaluation time and disabled delivery/execution flags. Seals establish local consistency, not provider authentication. Refresh reviews manually in Strategy Lab; this panel performs no background monitoring.

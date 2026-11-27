@@ -21,3 +21,5 @@ export * from "./interop-receipt.js";
 export * from "./idle-capital-receipt.js";
 export * from "./idle-capital-comparison-receipt.js";
 export * from "./idle-source-review-receipt.js";
+
+export { createGuardianEarnReceipt } from './guardian-earn-receipt.js';
