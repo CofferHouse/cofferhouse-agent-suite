@@ -133,7 +133,7 @@ export function idleCapitalHtml(state, earnData = null) {
     '<p>No deposit, approval or signature. Capital losses and changing rates are not modeled.</p></section>';
 }
 
-export function mountIdleCapital(root, state, { now = Date.now, download = () => {}, getEarnData = () => null, refreshEarn = () => {} } = {}) {
+export function mountIdleCapital(root, state, { now = Date.now, download = () => {}, getEarnData = () => null, refreshEarn = () => {}, openGuardian = () => {} } = {}) {
   const panel = root.querySelector('.idle-capital-panel');
   if (!panel) return;
   const form = panel.querySelector('.idle-capital-form');
@@ -262,6 +262,7 @@ export function mountIdleCapital(root, state, { now = Date.now, download = () =>
       }
       renderComparison();
     }
+    if (event.target.closest('.idle-source-review-open-guardian')) openGuardian();
     if (event.target.closest('.idle-source-review-download') && state.saved.sourceReview) download(state.saved.sourceReview);
     if (event.target.closest('.idle-capital-manual')) {
       state.source = null; state.sourceIssue = false; state.pendingVault = ''; sourceSelect.value = '';

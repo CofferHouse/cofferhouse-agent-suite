@@ -1,5 +1,6 @@
 import { verifySealedDocument } from "./integrity.js";
 export const receiptSchemas = Object.freeze([
+  "cofferhouse.guardian.earn-receipt.v1",
   "cofferhouse.scout.receipt.v2", "cofferhouse.scout.simulation-receipt.v2",
   "cofferhouse.scout.discovery-receipt.v1",
   "cofferhouse.scout.solana-discovery-receipt.v1",
